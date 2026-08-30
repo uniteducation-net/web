@@ -1,5 +1,6 @@
 import { FaFacebook, FaInstagram, FaLinkedin, FaTwitter } from "react-icons/fa";
 
+import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -29,23 +30,9 @@ const sections = [
 ];
 
 interface FooterProps {
-  logo?: {
-    url: string;
-    src: string;
-    alt: string;
-    title: string;
-  };
   className?: string;
 }
-const Footer = ({
-  logo = {
-    url: "https://www.shadcnblocks.com",
-    src: "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/logos/shadcnblockscom-icon.svg",
-    alt: "logo",
-    title: "Shadcnblocks.com",
-  },
-  className,
-}: FooterProps) => {
+const Footer = ({ className }: FooterProps) => {
   return (
     <section className={cn("py-32", className)}>
       <div className="container">
@@ -54,15 +41,7 @@ const Footer = ({
             <div className="col-span-4 flex w-full flex-col gap-6 lg:col-span-2">
               {/* Logo */}
               <div className="flex items-center gap-2 lg:justify-start">
-                <a href="https://shadcnblocks.com">
-                  <img
-                    src={logo.src}
-                    alt={logo.alt}
-                    title={logo.title}
-                    className="h-8"
-                  />
-                </a>
-                <h2 className="text-xl font-semibold">{logo.title}</h2>
+                <Logo className="[&_.logo-text]:text-xl" />
               </div>
               <p className="text-muted-foreground">
                 A collection of 100+ responsive HTML templates for your startup
