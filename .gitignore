@@ -23,6 +23,10 @@
 # misc
 .DS_Store
 *.pem
+/certificates/
+
+# pnpm
+.pnpm-store/
 
 # debug
 npm-debug.log*
