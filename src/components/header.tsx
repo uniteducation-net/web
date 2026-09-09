@@ -2,6 +2,7 @@
 
 import type { LucideIcon } from "lucide-react";
 import {
+  Earth,
   GraduationCap,
   HandCoins,
   HandHeart,
@@ -9,7 +10,6 @@ import {
   HeartHandshake,
   Menu,
   Milestone,
-  Rocket,
   Target,
   UserPlus,
   Users,
@@ -48,7 +48,7 @@ const DATA_ABOUT: DropdownItem[] = [
     title: "The Project",
     description: "What we're building and why it matters.",
     href: "#",
-    icon: Rocket,
+    icon: Earth,
   },
   {
     title: "Mission",

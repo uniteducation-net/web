@@ -1,5 +1,83 @@
 {
   "common": {
     "language": "Sprache"
+  },
+  "cookieBanner": {
+    "title": "Cookie-Einstellungen",
+    "description": "Alle akzeptieren oder Kategorien individuell auswählen.",
+    "categories": [
+      {
+        "id": "essential",
+        "label": "Essenziell",
+        "description": "Erforderlich, damit die Website funktioniert.",
+        "required": true
+      },
+      {
+        "id": "analytics",
+        "label": "Analyse",
+        "description": "Hilft uns zu verstehen, wie Besucher die Website nutzen."
+      },
+      {
+        "id": "marketing",
+        "label": "Marketing",
+        "description": "Wird für relevante Werbung und Kampagnenmessung verwendet."
+      }
+    ],
+    "rejectText": "Ablehnen",
+    "customizeText": "Anpassen",
+    "hideText": "Ausblenden",
+    "acceptText": "Alle akzeptieren",
+    "saveText": "Speichern"
+  },
+  "legalOverview": {
+    "heading": "Rechtliches",
+    "readText": "Lesen",
+    "lastUpdatedText": "Zuletzt aktualisiert",
+    "items": [
+      {
+        "id": "impressum",
+        "title": "Impressum",
+        "description": "Wer wir sind und wie Sie uns erreichen.",
+        "lastUpdated": "10.09.2026"
+      },
+      {
+        "id": "privacy",
+        "title": "Datenschutzerklärung",
+        "description": "Wie wir Ihre Daten erheben, verwenden und schützen.",
+        "lastUpdated": "10.09.2026"
+      },
+      {
+        "id": "terms",
+        "title": "Nutzungsbedingungen (AGB)",
+        "description": "Die Regeln für die Nutzung unserer Plattform und Dienste.",
+        "lastUpdated": "10.09.2026"
+      },
+      {
+        "id": "copyright",
+        "title": "Urheberrecht & Lizenzen",
+        "description": "Urheberrecht an Inhalten und offene Lizenzbedingungen.",
+        "lastUpdated": "10.09.2026"
+      },
+      {
+        "id": "community",
+        "title": "Community-Richtlinien",
+        "description": "Wie wir unsere Community sicher und respektvoll halten.",
+        "lastUpdated": "10.09.2026"
+      }
+    ]
+  },
+  "updates": {
+    "heading": "Aktuelles",
+    "readMore": "Weiterlesen"
+  },
+  "team": {
+    "heading": "Team"
+  },
+  "events": {
+    "heading": "Veranstaltungen",
+    "upcoming": "Bevorstehend",
+    "past": "Vergangen",
+    "details": "Details",
+    "register": "Anmelden"
   }
 }

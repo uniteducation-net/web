@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist_Mono, Inter, Nunito, Poppins } from "next/font/google";
 import { notFound } from "next/navigation";
+import { CookieBanner } from "@/components/cookie-banner";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { hasLocale, i18n } from "@/i18n-config";
@@ -55,6 +56,7 @@ export default async function RootLayout({
         <Header languageLabel={dict.common.language} />
         {children}
         <Footer />
+        <CookieBanner {...dict.cookieBanner} />
       </body>
     </html>
   );

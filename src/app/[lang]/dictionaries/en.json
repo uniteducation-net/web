@@ -1,5 +1,83 @@
 {
   "common": {
     "language": "Language"
+  },
+  "cookieBanner": {
+    "title": "Cookie settings",
+    "description": "Accept all or expand to choose categories.",
+    "categories": [
+      {
+        "id": "essential",
+        "label": "Essential",
+        "description": "Required for the site to function.",
+        "required": true
+      },
+      {
+        "id": "analytics",
+        "label": "Analytics",
+        "description": "Helps us understand how visitors use the site."
+      },
+      {
+        "id": "marketing",
+        "label": "Marketing",
+        "description": "Used for relevant promotions and campaign measurement."
+      }
+    ],
+    "rejectText": "Reject",
+    "customizeText": "Customize",
+    "hideText": "Hide",
+    "acceptText": "Accept all",
+    "saveText": "Save"
+  },
+  "legalOverview": {
+    "heading": "Legal",
+    "readText": "Read",
+    "lastUpdatedText": "Last updated",
+    "items": [
+      {
+        "id": "impressum",
+        "title": "Impressum (Legal Notice)",
+        "description": "Who we are and how to reach us.",
+        "lastUpdated": "10.09.2026"
+      },
+      {
+        "id": "privacy",
+        "title": "Privacy Policy",
+        "description": "How we collect, use, and protect your data.",
+        "lastUpdated": "10.09.2026"
+      },
+      {
+        "id": "terms",
+        "title": "Terms of Service",
+        "description": "The rules for using our platform and services.",
+        "lastUpdated": "10.09.2026"
+      },
+      {
+        "id": "copyright",
+        "title": "Copyright & Open Licensing",
+        "description": "Content ownership and open licensing terms.",
+        "lastUpdated": "10.09.2026"
+      },
+      {
+        "id": "community",
+        "title": "Community Guidelines",
+        "description": "How we keep our community safe and respectful.",
+        "lastUpdated": "10.09.2026"
+      }
+    ]
+  },
+  "updates": {
+    "heading": "Updates",
+    "readMore": "Read more"
+  },
+  "team": {
+    "heading": "Team"
+  },
+  "events": {
+    "heading": "Events",
+    "upcoming": "Upcoming",
+    "past": "Past",
+    "details": "Details",
+    "register": "Register"
   }
 }
