@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
 
-import { UpdateCard } from "@/components/content/update-card";
 import { hasLocale } from "@/i18n-config";
 import { getAllContent } from "@/lib/content";
+import { formatDate } from "@/lib/utils";
 import { getDictionary } from "../dictionaries";
+import { Highlights } from "./_components/highlights";
+import { LatestUpdates } from "./_components/latest-updates";
 
 export default async function UpdatesPage({
   params,
@@ -19,21 +21,32 @@ export default async function UpdatesPage({
     b.frontmatter.date.localeCompare(a.frontmatter.date),
   );
 
+  const toPost = (entry: (typeof updates)[number]) => ({
+    slug: entry.slug,
+    title: entry.frontmatter.title,
+    description: entry.frontmatter.description,
+    summary: entry.frontmatter.description,
+    label: entry.frontmatter.tags?.[0],
+    published: formatDate(entry.frontmatter.date, lang),
+    image: entry.frontmatter.cover,
+    href: `/${lang}/updates/${entry.slug}`,
+  });
+
+  const highlighted = updates
+    .filter((entry) => entry.frontmatter.highlight)
+    .map(toPost);
+
   return (
-    <section className="container max-w-3xl py-24 md:py-32">
-      <h1 className="font-heading text-3xl font-semibold tracking-tighter md:text-5xl">
-        {dict.updates.heading}
-      </h1>
-      <div className="mt-10 flex flex-col">
-        {updates.map((entry) => (
-          <UpdateCard
-            key={entry.slug}
-            entry={entry}
-            locale={lang}
-            readMoreText={dict.updates.readMore}
-          />
-        ))}
-      </div>
-    </section>
+    <>
+      <Highlights
+        heading={dict.updates.highlightsHeading}
+        items={highlighted}
+      />
+      <LatestUpdates
+        heading={dict.updates.latestHeading}
+        description={dict.updates.latestDescription}
+        posts={updates.map(toPost)}
+      />
+    </>
   );
 }

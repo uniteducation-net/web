@@ -35,7 +35,7 @@ const faqs = {
         "Creating a FAQ section starts with gathering the most frequent questions you receive from your users or customers. Once you have a list, you need to write clear, detailed, and helpful answers to each question.",
     },
   ],
-  billing: [
+  forEducators: [
     {
       question: "How do I change my billing information?",
       answer:
@@ -59,11 +59,11 @@ const faqs = {
   ],
 };
 
-interface Faq8Props {
+interface FaqProps {
   className?: string;
 }
 
-const Faq8 = ({ className }: Faq8Props) => {
+const Faq = ({ className }: FaqProps) => {
   return (
     <section className={cn("py-32", className)}>
       <div className="container">
@@ -84,9 +84,9 @@ const Faq8 = ({ className }: Faq8Props) => {
           </Accordion>
         </div>
         <div className="mt-10 grid gap-4 border-t pt-4 md:grid-cols-3 md:gap-10">
-          <h3 className="text-xl font-medium">Billing</h3>
+          <h3 className="text-xl font-medium">For educators</h3>
           <Accordion type="multiple" className="md:col-span-2">
-            {faqs.billing.map((faq, index) => (
+            {faqs.forEducators.map((faq, index) => (
               <AccordionItem key={index} value={`item-${index}`}>
                 <AccordionTrigger className="text-left">
                   {faq.question}
@@ -101,4 +101,4 @@ const Faq8 = ({ className }: Faq8Props) => {
   );
 };
 
-export { Faq8 };
+export { Faq };

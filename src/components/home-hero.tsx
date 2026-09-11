@@ -1,22 +1,31 @@
 "use client";
 import { Play } from "lucide-react";
-import { useRef, useState } from "react";
+import Link from "next/link";
+import { useState } from "react";
 
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-interface HomeHeroProps {
-  className?: string;
+interface HomeHeroDict {
+  heading: string;
+  subtitle: string;
+  forTeachers: string;
+  getInvolved: string;
+  playLabel: string;
+  videoTitle: string;
 }
 
-const HomeHero = ({ className }: HomeHeroProps) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+interface HomeHeroProps {
+  className?: string;
+  /** Localized hero copy, from the dictionary. */
+  dict: HomeHeroDict;
+}
 
-  const handlePlayClick = () => {
-    void videoRef.current?.play();
-  };
+const VIDEO_ID = "7BU9iHbUm8M";
+
+const HomeHero = ({ className, dict }: HomeHeroProps) => {
+  const [isPlaying, setIsPlaying] = useState(false);
 
   return (
     <section
@@ -29,18 +38,24 @@ const HomeHero = ({ className }: HomeHeroProps) => {
       <div className="relative z-10 container pt-12 md:pt-24">
         <div className="flex flex-col items-center gap-5">
           <h1 className="max-w-[25rem] bg-linear-to-r from-foreground via-foreground/70 to-foreground/80 bg-clip-text py-2 text-center font-heading text-4xl leading-[1.1] font-semibold tracking-tighter text-transparent md:max-w-[43.75rem] md:text-6xl lg:max-w-[56.25rem] lg:text-[5rem]">
-            Ship enterprise AI workflows without the wait
+            {dict.heading}
           </h1>
           <p className="max-w-[22.5rem] text-center text-base text-muted-foreground md:max-w-[35rem] lg:text-lg">
-            Connect your stack, define agent behavior in plain language, and
-            deploy governed automations across teams in minutes.
+            {dict.subtitle}
           </p>
-          <div className="pt-6">
+          <div className="flex items-center gap-8 pt-6">
             <Button
               asChild
               className="block h-fit w-fit animate-shadow-ping rounded-md px-6 py-3.5 text-center text-lg"
             >
-              <a href="#">Start building</a>
+              <Link href="/resources">{dict.forTeachers}</Link>
+            </Button>
+            <Button
+              asChild
+              variant="link"
+              className="text-lg underline"
+            >
+              <Link href="/get-involved">{dict.getInvolved}</Link>
             </Button>
           </div>
         </div>
@@ -52,30 +67,37 @@ const HomeHero = ({ className }: HomeHeroProps) => {
                 className="overflow-hidden rounded-t-sm"
               >
                 <div className="relative size-full">
-                  <video
-                    ref={videoRef}
-                    src="https://deifkwefumgah.cloudfront.net/shadcnblocks/block/man-1.mp4"
-                    muted
-                    playsInline
-                    preload="metadata"
-                    loop
-                    className="size-full rounded-t-sm object-cover object-center"
-                    onPlay={() => setIsPlaying(true)}
-                    onPause={() => setIsPlaying(false)}
-                    onEnded={() => setIsPlaying(false)}
-                  />
-                  {!isPlaying && (
-                    <Button
-                      type="button"
-                      onClick={handlePlayClick}
-                      size="icon"
-                      aria-label="Play video"
-                      className="absolute top-1/2 left-1/2 z-30 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full bg-secondary text-secondary-foreground shadow-[0_0_0_14px_var(--color-border)] transition-all hover:bg-secondary/90 hover:shadow-[0_0_0_0px_var(--color-border)] md:h-14 md:w-14 lg:h-20 lg:w-20"
-                    >
-                      <div className="m-auto aspect-square w-[45%]">
-                        <Play className="h-full! w-full! fill-current stroke-current" />
-                      </div>
-                    </Button>
+                  {isPlaying ? (
+                    <iframe
+                      src={`https://www.youtube-nocookie.com/embed/${VIDEO_ID}?autoplay=1&rel=0`}
+                      title={dict.videoTitle}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      referrerPolicy="strict-origin-when-cross-origin"
+                      allowFullScreen
+                      className="size-full rounded-t-sm"
+                    />
+                  ) : (
+                    <>
+                      {/* Facade: only the cover shows until the user clicks play */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={`https://i.ytimg.com/vi/${VIDEO_ID}/maxresdefault.jpg`}
+                        alt=""
+                        loading="lazy"
+                        className="size-full rounded-t-sm object-cover object-center"
+                      />
+                      <Button
+                        type="button"
+                        onClick={() => setIsPlaying(true)}
+                        size="icon"
+                        aria-label={dict.playLabel}
+                        className="absolute top-1/2 left-1/2 z-30 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full bg-secondary text-secondary-foreground shadow-[0_0_0_14px_var(--color-border)] transition-all hover:bg-secondary/90 hover:shadow-[0_0_0_0px_var(--color-border)] md:h-14 md:w-14 lg:h-20 lg:w-20"
+                      >
+                        <div className="m-auto aspect-square w-[45%]">
+                          <Play className="h-full! w-full! fill-current stroke-current" />
+                        </div>
+                      </Button>
+                    </>
                   )}
                 </div>
               </AspectRatio>

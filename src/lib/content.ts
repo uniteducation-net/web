@@ -2,19 +2,21 @@ import "server-only";
 
 import fs from "node:fs";
 import path from "node:path";
-import type { StaticImageData } from "next/image";
 import { cache } from "react";
-import type { ComponentType, SVGProps } from "react";
+import type { ComponentType } from "react";
 
 import { i18n, type Locale } from "@/i18n-config";
 
 /**
  * File-based content layer.
  *
- * Content lives in `src/content/<type>/<slug>/<locale>.mdx` with co-located
- * assets (images, SVGs). Slugs must be identical across locales so the
- * language switcher can swap the locale segment. When `<locale>.mdx` is
- * missing, the default locale (en) is used as a fallback.
+ * Content lives in `src/content/<type>/<slug>/<locale>.mdx`. Slugs must be
+ * identical across locales so the language switcher can swap the locale
+ * segment. The default-locale (en) file holds all shared fields (media,
+ * links, ordering); other locale files only override translatable text.
+ * When `<locale>.mdx` is missing entirely, the default locale (en) is used
+ * as a fallback. All media lives on ImageKit — frontmatter references are
+ * paths relative to the urlEndpoint, rendered with `@imagekit/next`.
  */
 
 export type ContentType = "updates" | "team" | "legal" | "events";
@@ -34,8 +36,10 @@ export interface UpdateFrontmatter {
   /** Slug of a team member in src/content/team/ */
   author?: string;
   tags?: string[];
-  /** Filename of a raster image co-located in the item folder, e.g. "cover.jpg" */
+  /** ImageKit path relative to the urlEndpoint, e.g. "/illustrations/together.svg" */
   cover?: string;
+  /** Featured in the "Highlights" carousel on the updates overview. */
+  highlight?: boolean;
   draft?: boolean;
 }
 
@@ -48,10 +52,15 @@ export interface TeamFrontmatter {
     github?: string;
     website?: string;
   };
-  /** Filenames co-located in the item folder (raster or .svg) */
+  /** ImageKit paths relative to the urlEndpoint, e.g. "/team/kiarash/kiarash1.jpg" */
   image?: string;
   hoverImage?: string;
   order?: number;
+  /** Separated sections for the member page — kept out of the MDX body so
+   *  they can be rendered individually. */
+  whyUnited?: string;
+  bio?: string;
+  other?: string;
 }
 
 export interface LegalFrontmatter {
@@ -97,8 +106,20 @@ export interface ContentEntry<FM> {
    *  locale when the EN fallback kicked in). */
   locale: Locale;
   frontmatter: FM;
+  /** Estimated reading time of the MDX body, in minutes (min 1). */
+  readingTime: number;
   Content: ComponentType;
 }
+
+const WORDS_PER_MINUTE = 200;
+
+/** Rough word-count reading time: strips the frontmatter block, counts words
+ *  containing at least one letter or digit. */
+const estimateReadingTime = (raw: string): number => {
+  const body = raw.replace(/^---[\s\S]*?---/, "");
+  const words = body.split(/\s+/).filter((word) => /[\p{L}\p{N}]/u.test(word));
+  return Math.max(1, Math.round(words.length / WORDS_PER_MINUTE));
+};
 
 /** Directory names = slugs, for all content of a type. Runs at build time. */
 export const getSlugs = cache((type: ContentType): string[] => {
@@ -114,7 +135,12 @@ const localeFile = (type: ContentType, slug: string, locale: Locale) =>
   path.join(CONTENT_DIR, type, slug, `${locale}.mdx`);
 
 /** Load one content item, falling back to the default locale. Null if the
- *  slug does not exist at all. Memoized per request via React cache(). */
+ *  slug does not exist at all. Memoized per request via React cache().
+ *
+ *  The default-locale (en) file is the source of truth for shared fields
+ *  (images, links, order, dates): when a locale file exists alongside it,
+ *  the two frontmatter objects are merged — the locale file only needs to
+ *  carry the translated text fields. */
 export const getContent = cache(
   async <T extends ContentType>(
     type: T,
@@ -128,14 +154,25 @@ export const getContent = cache(
         : null;
     if (!resolvedLocale) return null;
 
-    const mod = (await import(
-      `@/content/${type}/${slug}/${resolvedLocale}.mdx`
-    )) as MdxModule<Frontmatter<T>>;
+    const load = async (l: Locale) =>
+      (await import(`@/content/${type}/${slug}/${l}.mdx`)) as MdxModule<
+        Frontmatter<T>
+      >;
+
+    const mod = await load(resolvedLocale);
+    const base =
+      resolvedLocale !== i18n.defaultLocale &&
+      fs.existsSync(localeFile(type, slug, i18n.defaultLocale))
+        ? await load(i18n.defaultLocale)
+        : null;
 
     return {
       slug,
       locale: resolvedLocale,
-      frontmatter: mod.frontmatter,
+      frontmatter: { ...base?.frontmatter, ...mod.frontmatter },
+      readingTime: estimateReadingTime(
+        fs.readFileSync(localeFile(type, slug, resolvedLocale), "utf8"),
+      ),
       Content: mod.default,
     };
   },
@@ -155,35 +192,5 @@ export const getAllContent = cache(
         entry !== null &&
         !(entry.frontmatter as { draft?: boolean }).draft,
     );
-  },
-);
-
-// ---------------------------------------------------------------------------
-// Co-located assets
-// ---------------------------------------------------------------------------
-
-/** A co-located asset resolved through the bundler: raster files come back as
- *  StaticImageData (hashed URL, next/image-optimizable), .svg files come back
- *  as React components (via the SVGR rule in next.config.ts). */
-export type ResolvedAsset =
-  | { kind: "image"; data: StaticImageData }
-  | { kind: "component"; Component: ComponentType<SVGProps<SVGSVGElement>> };
-
-/** Resolve a frontmatter-referenced asset filename ("cover.jpg", "main.svg")
- *  inside an item folder. Null when the file does not exist. */
-export const getAsset = cache(
-  async (
-    type: ContentType,
-    slug: string,
-    file: string | undefined,
-  ): Promise<ResolvedAsset | null> => {
-    if (!file) return null;
-    if (!fs.existsSync(path.join(CONTENT_DIR, type, slug, file))) return null;
-    const mod = await import(`@/content/${type}/${slug}/${file}`);
-    const asset = mod.default;
-    if (typeof asset === "function") {
-      return { kind: "component", Component: asset };
-    }
-    return { kind: "image", data: asset as StaticImageData };
   },
 );

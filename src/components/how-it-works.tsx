@@ -1,3 +1,5 @@
+"use client";
+
 import {
   BookOpen,
   ChevronRight,
@@ -5,7 +7,7 @@ import {
   HeartHandshake,
   Rocket,
 } from "lucide-react";
-import Image from "next/image";
+import { IllustrationImage } from "@/components/illustration-image";
 import {
   Accordion,
   AccordionContent,
@@ -25,9 +27,7 @@ const steps = [
     title: "We Learn from Teachers",
     description:
       "We personally talk to teachers from all over the world to hear their insights on what they need to do their jobs well.",
-    image: "/assets/educator.svg",
-    width: 851,
-    height: 557,
+    image: "/illustrations/educator.svg",
     alt: "Illustration of an educator teaching",
   },
   {
@@ -39,9 +39,7 @@ const steps = [
     title: "We Gather Resources & Research",
     description:
       "Based on input from teachers, our own research, and work with professionals, we build personalized courses and suggest tailored content and resources.",
-    image: "/assets/team-collaboration.svg",
-    width: 936,
-    height: 505,
+    image: "/illustrations/team-collaboration.svg",
     alt: "Illustration of a team collaborating",
   },
   {
@@ -53,9 +51,7 @@ const steps = [
     title: "We Put the Latest Technology to Work",
     description:
       "We deliver the knowledge, resources, tools, and technology teachers need around the globe using the latest technologies.",
-    image: "/assets/deploy-globally.svg",
-    width: 960,
-    height: 645,
+    image: "/illustrations/deploy-globally.svg",
     alt: "Illustration of a global technology deployment",
   },
   {
@@ -66,9 +62,7 @@ const steps = [
     title: "Accessible to All, Free Forever",
     description:
       "New and existing teachers get access to all of these resources for free — forever.",
-    image: "/assets/showing-support.svg",
-    width: 661,
-    height: 514,
+    image: "/illustrations/showing-support.svg",
     alt: "Illustration of people supporting each other",
   },
 ];
@@ -81,7 +75,7 @@ const HowItWorks = ({ className }: HowItWorksProps) => {
   return (
     <section className={cn("py-32", className)}>
       <div className="container">
-        <h2 className="mb-10 text-center font-heading text-3xl font-semibold tracking-tight md:text-4xl">
+        <h2 className="mb-10 text-center font-heading text-3xl font-semibold tracking-tight md:text-5xl">
           How It Works
         </h2>
         <Accordion
@@ -120,12 +114,10 @@ const HowItWorks = ({ className }: HowItWorksProps) => {
                       {step.description}
                     </p>
                   </div>
-                  <Image
+                  <IllustrationImage
                     src={step.image}
-                    width={step.width}
-                    height={step.height}
                     alt={step.alt}
-                    className="aspect-video max-h-[450px] rounded-xl border object-contain"
+                    className="aspect-video max-h-[450px] w-full rounded-xl border"
                   />
                 </div>
               </AccordionContent>
@@ -176,12 +168,10 @@ const HowItWorks = ({ className }: HowItWorksProps) => {
                 <h3 className="mb-2 text-2xl font-medium">{step.title}</h3>
                 <p className="text-muted-foreground">{step.description}</p>
               </div>
-              <Image
+              <IllustrationImage
                 src={step.image}
-                width={step.width}
-                height={step.height}
                 alt={step.alt}
-                className="aspect-video max-h-[450px] rounded-xl object-contain"
+                className="aspect-video max-h-[450px] w-full rounded-xl"
               />
             </TabsContent>
           ))}

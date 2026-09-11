@@ -36,83 +36,52 @@ import {
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
 
-interface DropdownItem {
-  title: string;
-  description: string;
+interface NavLink {
   href: string;
   icon: LucideIcon;
 }
 
-const DATA_ABOUT: DropdownItem[] = [
-  {
-    title: "The Project",
-    description: "What we're building and why it matters.",
-    href: "#",
-    icon: Earth,
-  },
-  {
-    title: "Mission",
-    description: "Our goal: education for every learner.",
-    href: "#",
-    icon: Target,
-  },
-  {
-    title: "Values",
-    description: "The principles that guide our work.",
-    href: "#",
-    icon: HeartHandshake,
-  },
-  {
-    title: "Milestones",
-    description: "Key moments on our journey so far.",
-    href: "#",
-    icon: Milestone,
-  },
-  {
-    title: "Team",
-    description: "Meet the people behind the project.",
-    href: "#",
-    icon: Users,
-  },
+interface DropdownItem extends NavLink {
+  title: string;
+  description: string;
+}
+
+const LINKS_ABOUT: NavLink[] = [
+  { href: "#", icon: Earth },
+  { href: "#", icon: Target },
+  { href: "#", icon: HeartHandshake },
+  { href: "#", icon: Milestone },
+  { href: "#", icon: Users },
 ];
 
-const DATA_GET_INVOLVED: DropdownItem[] = [
-  {
-    title: "Become a Volunteer",
-    description: "Give your time to support learners.",
-    href: "#",
-    icon: HandHeart,
-  },
-  {
-    title: "Become a Partner",
-    description: "Collaborate with us on shared goals.",
-    href: "#",
-    icon: Handshake,
-  },
-  {
-    title: "Become a Member",
-    description: "Join our community and shape our work.",
-    href: "#",
-    icon: UserPlus,
-  },
-  {
-    title: "Become a Sponsor",
-    description: "Fund learning opportunities that matter.",
-    href: "#",
-    icon: HandCoins,
-  },
-  {
-    title: "Share Your Knowledge",
-    description: "Teach, mentor, or create content with us.",
-    href: "#",
-    icon: GraduationCap,
-  },
+const LINKS_GET_INVOLVED: NavLink[] = [
+  { href: "#", icon: HandHeart },
+  { href: "#", icon: Handshake },
+  { href: "#", icon: UserPlus },
+  { href: "#", icon: HandCoins },
+  { href: "#", icon: GraduationCap },
 ];
+
+interface HeaderDict {
+  about: { label: string; items: { title: string; description: string }[] };
+  getInvolved: { label: string; items: { title: string; description: string }[] };
+  resources: string;
+  updates: string;
+  donate: string;
+  menuLabel: string;
+  existingCustomer: string;
+  login: string;
+  startNow: string;
+}
 
 interface HeaderProps {
   className?: string;
+  /** Localized header labels and dropdown content, from the dictionary. */
+  dict: HeaderDict;
   /** Localized chrome label for the language switcher, from the dictionary. */
   languageLabel: string;
+  /** Locale-prefixed href for the Updates nav item, e.g. "/en/updates". */
+  updatesHref: string;
 }
 
 /** Same width + gutters as the header (`container` + `max-w-7xl`). */
@@ -122,8 +91,15 @@ const mobileNavInner = "container mx-auto max-w-7xl";
 const mobileNavTriggerRow =
   "mx-auto flex w-full max-w-7xl items-center justify-between gap-2 px-4 py-4 hover:no-underline sm:px-6 lg:px-8";
 
-const Header = ({ className, languageLabel }: HeaderProps) => {
+const Header = ({ className, dict, languageLabel, updatesHref }: HeaderProps) => {
   const [open, setOpen] = useState(false);
+  const dataAbout: DropdownItem[] = LINKS_ABOUT.map((link, i) => ({
+    ...link,
+    ...dict.about.items[i],
+  }));
+  const dataGetInvolved: DropdownItem[] = LINKS_GET_INVOLVED.map(
+    (link, i) => ({ ...link, ...dict.getInvolved.items[i] }),
+  );
   return (
     <section className={cn("inset-x-0 top-0 z-20 bg-background", className)}>
       <div className="container mx-auto">
@@ -133,11 +109,11 @@ const Header = ({ className, languageLabel }: HeaderProps) => {
             <NavigationMenuList>
               <NavigationMenuItem>
                 <NavigationMenuTrigger className="h-12 px-3.5 text-lg">
-                  About
+                  {dict.about.label}
                 </NavigationMenuTrigger>
                 <NavigationMenuContent className="min-w-[420px] p-4">
                   <div className="grid grid-rows-1 gap-6">
-                    {DATA_ABOUT.map((item, index) => (
+                    {dataAbout.map((item, index) => (
                       <NavigationMenuLink
                         key={index}
                         href={item.href}
@@ -161,11 +137,11 @@ const Header = ({ className, languageLabel }: HeaderProps) => {
               </NavigationMenuItem>
               <NavigationMenuItem>
                 <NavigationMenuTrigger className="h-12 px-3.5 text-lg">
-                  Get Involved
+                  {dict.getInvolved.label}
                 </NavigationMenuTrigger>
                 <NavigationMenuContent className="min-w-[420px] p-4">
                   <div className="grid grid-rows-1 gap-6">
-                    {DATA_GET_INVOLVED.map((item, index) => (
+                    {dataGetInvolved.map((item, index) => (
                       <NavigationMenuLink
                         key={index}
                         href={item.href}
@@ -187,20 +163,23 @@ const Header = ({ className, languageLabel }: HeaderProps) => {
                   </div>
                 </NavigationMenuContent>
               </NavigationMenuItem>
-              <Button variant="ghost" className="h-12 px-4 text-lg">
-                Updates
+              <Button variant="ghost" className="h-12 px-4 text-lg" asChild>
+                <a href="/resources">{dict.resources}</a>
+              </Button>
+              <Button variant="ghost" className="h-12 px-4 text-lg" asChild>
+                <a href={updatesHref}>{dict.updates}</a>
               </Button>
             </NavigationMenuList>
           </NavigationMenu>
           <div className="hidden items-center gap-4 lg:flex">
             <LanguageSwitcher languageLabel={languageLabel} />
-            <Button className="h-12 px-4 text-lg">Donate</Button>
+            <Button className="h-12 px-4 text-lg">{dict.donate}</Button>
           </div>
           <div className="flex items-center gap-4 lg:hidden">
             <Button
               variant="outline"
               size="icon"
-              aria-label="Main Menu"
+              aria-label={dict.menuLabel}
               onClick={() => {
                 if (open) {
                   setOpen(false);
@@ -226,13 +205,13 @@ const Header = ({ className, languageLabel }: HeaderProps) => {
                 <AccordionTrigger className={mobileNavTriggerRow}>
                   <div className="flex min-w-0 flex-1 items-center">
                     <span className="text-left text-sm font-medium">
-                      About
+                      {dict.about.label}
                     </span>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pb-4 [&_a]:no-underline hover:[&_a]:no-underline">
                   <div className={cn(mobileNavInner, "space-y-4")}>
-                    {DATA_ABOUT.map((item, index) => (
+                    {dataAbout.map((item, index) => (
                       <a
                         key={index}
                         href={item.href}
@@ -262,13 +241,13 @@ const Header = ({ className, languageLabel }: HeaderProps) => {
                 <AccordionTrigger className={mobileNavTriggerRow}>
                   <div className="flex min-w-0 flex-1 items-center">
                     <span className="text-left text-sm font-medium">
-                      Get Involved
+                      {dict.getInvolved.label}
                     </span>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pb-4 [&_a]:no-underline hover:[&_a]:no-underline">
                   <div className={cn(mobileNavInner, "space-y-3")}>
-                    {DATA_GET_INVOLVED.map((item, index) => (
+                    {dataGetInvolved.map((item, index) => (
                       <a
                         key={index}
                         href={item.href}
@@ -293,13 +272,24 @@ const Header = ({ className, languageLabel }: HeaderProps) => {
             </Accordion>
             <div className="border-b border-dashed border-border">
               <a
-                href="#"
+                href="/resources"
                 className={cn(
                   mobileNavInner,
                   "block py-4 text-left text-sm font-medium no-underline hover:no-underline",
                 )}
               >
-                Updates
+                {dict.resources}
+              </a>
+            </div>
+            <div className="border-b border-dashed border-border">
+              <a
+                href={updatesHref}
+                className={cn(
+                  mobileNavInner,
+                  "block py-4 text-left text-sm font-medium no-underline hover:no-underline",
+                )}
+              >
+                {dict.updates}
               </a>
             </div>
 
@@ -310,16 +300,16 @@ const Header = ({ className, languageLabel }: HeaderProps) => {
               )}
             >
               <span className="text-center">
-                Existing Customer?{" "}
+                {dict.existingCustomer}{" "}
                 <a
                   href="#"
                   className="font-semibold text-foreground underline-offset-4 hover:underline"
                 >
-                  Login
+                  {dict.login}
                 </a>
               </span>
               <Button className="relative" size="lg">
-                Start now
+                {dict.startNow}
               </Button>
               <div className="flex justify-center">
                 <LanguageSwitcher languageLabel={languageLabel} />

@@ -1,6 +1,66 @@
 {
   "common": {
-    "language": "Sprache"
+    "language": "Sprache",
+    "home": "Startseite"
+  },
+  "header": {
+    "about": {
+      "label": "Über uns",
+      "items": [
+        {
+          "title": "Das Projekt",
+          "description": "Was wir aufbauen und warum es wichtig ist."
+        },
+        {
+          "title": "Mission",
+          "description": "Unser Ziel: Bildung für jeden Lernenden."
+        },
+        {
+          "title": "Werte",
+          "description": "Die Prinzipien, die unsere Arbeit leiten."
+        },
+        {
+          "title": "Meilensteine",
+          "description": "Wichtige Momente auf unserem bisherigen Weg."
+        },
+        {
+          "title": "Team",
+          "description": "Lernen Sie die Menschen hinter dem Projekt kennen."
+        }
+      ]
+    },
+    "getInvolved": {
+      "label": "Mitmachen",
+      "items": [
+        {
+          "title": "Ehrenamtlich mitmachen",
+          "description": "Schenken Sie Ihre Zeit, um Lernende zu unterstützen."
+        },
+        {
+          "title": "Partner werden",
+          "description": "Arbeiten Sie mit uns an gemeinsamen Zielen."
+        },
+        {
+          "title": "Mitglied werden",
+          "description": "Treten Sie unserer Community bei und gestalten Sie unsere Arbeit mit."
+        },
+        {
+          "title": "Förderer werden",
+          "description": "Finanzieren Sie Lernmöglichkeiten, die wirklich zählen."
+        },
+        {
+          "title": "Wissen teilen",
+          "description": "Unterrichten, mentoren oder erstellen Sie Inhalte mit uns."
+        }
+      ]
+    },
+    "resources": "Ressourcen",
+    "updates": "Aktuelles",
+    "donate": "Spenden",
+    "menuLabel": "Hauptmenü",
+    "existingCustomer": "Bereits Kunde?",
+    "login": "Anmelden",
+    "startNow": "Jetzt starten"
   },
   "cookieBanner": {
     "title": "Cookie-Einstellungen",
@@ -68,10 +128,34 @@
   },
   "updates": {
     "heading": "Aktuelles",
-    "readMore": "Weiterlesen"
+    "readMore": "Weiterlesen",
+    "highlightsHeading": "Highlights",
+    "latestHeading": "Neueste Beiträge",
+    "latestDescription": "Neuigkeiten, Rückblicke und Notizen vom UNITED-Team.",
+    "onThisPage": "Auf dieser Seite",
+    "shareArticle": "Artikel teilen",
+    "backToTop": "Nach oben",
+    "minRead": "Min. Lesezeit",
+    "copyLink": "Link kopieren",
+    "linkCopied": "Kopiert!"
+  },
+  "homeHero": {
+    "heading": "Kostenlose Fortbildungsmaterialien für Lehrkräfte",
+    "subtitle": "Helfen Sie uns, den weltweiten Mangel an qualifizierten Lehrkräften zu bekämpfen und die vorhandenen mit neuester Technik zu stärken.",
+    "forTeachers": "Für Lehrkräfte",
+    "getInvolved": "Mitmachen",
+    "playLabel": "Video abspielen",
+    "videoTitle": "YouTube-Videoplayer"
   },
   "team": {
     "heading": "Team"
+  },
+  "activeMembers": {
+    "heading": "Aktive Mitglieder",
+    "cta": {
+      "title": "Das könnten Sie sein!",
+      "text": "Sie möchten UnitEd unterstützen?\nWir freuen uns, von Ihnen zu hören!"
+    }
   },
   "events": {
     "heading": "Veranstaltungen",

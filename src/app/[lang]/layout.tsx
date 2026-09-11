@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { CookieBanner } from "@/components/cookie-banner";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
+import { ImageKitClientProvider } from "@/components/imagekit-provider";
 import { hasLocale, i18n } from "@/i18n-config";
 import { getDictionary } from "./dictionaries";
 import "../globals.css";
@@ -53,10 +54,16 @@ export default async function RootLayout({
       className={`${poppins.variable} ${nunito.variable} ${inter.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Header languageLabel={dict.common.language} />
-        {children}
-        <Footer />
-        <CookieBanner {...dict.cookieBanner} />
+        <ImageKitClientProvider>
+          <Header
+            dict={dict.header}
+            languageLabel={dict.common.language}
+            updatesHref={`/${lang}/updates`}
+          />
+          {children}
+          <Footer />
+          <CookieBanner {...dict.cookieBanner} />
+        </ImageKitClientProvider>
       </body>
     </html>
   );

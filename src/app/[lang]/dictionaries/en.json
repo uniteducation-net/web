@@ -1,6 +1,66 @@
 {
   "common": {
-    "language": "Language"
+    "language": "Language",
+    "home": "Home"
+  },
+  "header": {
+    "about": {
+      "label": "About",
+      "items": [
+        {
+          "title": "The Project",
+          "description": "What we're building and why it matters."
+        },
+        {
+          "title": "Mission",
+          "description": "Our goal: education for every learner."
+        },
+        {
+          "title": "Values",
+          "description": "The principles that guide our work."
+        },
+        {
+          "title": "Milestones",
+          "description": "Key moments on our journey so far."
+        },
+        {
+          "title": "Team",
+          "description": "Meet the people behind the project."
+        }
+      ]
+    },
+    "getInvolved": {
+      "label": "Get Involved",
+      "items": [
+        {
+          "title": "Become a Volunteer",
+          "description": "Give your time to support learners."
+        },
+        {
+          "title": "Become a Partner",
+          "description": "Collaborate with us on shared goals."
+        },
+        {
+          "title": "Become a Member",
+          "description": "Join our community and shape our work."
+        },
+        {
+          "title": "Become a Sponsor",
+          "description": "Fund learning opportunities that matter."
+        },
+        {
+          "title": "Share Your Knowledge",
+          "description": "Teach, mentor, or create content with us."
+        }
+      ]
+    },
+    "resources": "Resources",
+    "updates": "Updates",
+    "donate": "Donate",
+    "menuLabel": "Main Menu",
+    "existingCustomer": "Existing Customer?",
+    "login": "Login",
+    "startNow": "Start now"
   },
   "cookieBanner": {
     "title": "Cookie settings",
@@ -68,10 +128,34 @@
   },
   "updates": {
     "heading": "Updates",
-    "readMore": "Read more"
+    "readMore": "Read more",
+    "highlightsHeading": "Highlights",
+    "latestHeading": "Latest updates",
+    "latestDescription": "News, recaps, and notes from the UNITED team.",
+    "onThisPage": "On this page",
+    "shareArticle": "Share this article",
+    "backToTop": "Back to top",
+    "minRead": "min. read",
+    "copyLink": "Copy link",
+    "linkCopied": "Copied!"
+  },
+  "homeHero": {
+    "heading": "Free training resources for educators",
+    "subtitle": "Help us combat the global lack of qualified teachers and empower the current ones with the latest tech.",
+    "forTeachers": "For Teachers",
+    "getInvolved": "Get Involved",
+    "playLabel": "Play video",
+    "videoTitle": "YouTube video player"
   },
   "team": {
     "heading": "Team"
+  },
+  "activeMembers": {
+    "heading": "Active Members",
+    "cta": {
+      "title": "This Could be You!",
+      "text": "You want to support UnitEd?\nWe are happy to hear from you!"
+    }
   },
   "events": {
     "heading": "Events",

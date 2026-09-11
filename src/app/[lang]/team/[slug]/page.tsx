@@ -1,10 +1,10 @@
+import { Image } from "@imagekit/next";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { ContentArticle } from "@/components/content/content-article";
-import { ContentAsset } from "@/components/content/content-asset";
 import { hasLocale } from "@/i18n-config";
-import { getAsset, getContent, getSlugs } from "@/lib/content";
+import { getContent, getSlugs } from "@/lib/content";
 
 export function generateStaticParams() {
   return getSlugs("team").map((slug) => ({ slug }));
@@ -32,7 +32,6 @@ export default async function TeamMemberPage({
 }: PageProps<"/[lang]/team/[slug]">) {
   const { entry } = await load(params);
   const { frontmatter, Content } = entry;
-  const image = await getAsset("team", entry.slug, frontmatter.image);
 
   return (
     <ContentArticle
@@ -40,12 +39,16 @@ export default async function TeamMemberPage({
       description={frontmatter.role}
       tags={frontmatter.tags}
     >
-      {image && (
-        <ContentAsset
-          asset={image}
-          alt={frontmatter.name}
-          className="mb-8 aspect-square w-40 rounded-xl object-cover"
-        />
+      {frontmatter.image && (
+        <div className="not-prose relative mb-8 aspect-square w-40 overflow-hidden rounded-xl bg-muted">
+          <Image
+            src={frontmatter.image}
+            alt={frontmatter.name}
+            fill
+            sizes="160px"
+            className="object-cover"
+          />
+        </div>
       )}
       <Content />
     </ContentArticle>
