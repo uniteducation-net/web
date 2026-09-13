@@ -2,7 +2,7 @@ import { Copyright, Scale, ScrollText, ShieldCheck, Users } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { BreadcrumbNav } from "@/components/breadcrumb-nav";
-import { LegalOverview } from "@/components/legal/legal-overview";
+import { LegalOverview } from "@/components/terms/legal-overview";
 import { hasLocale } from "@/i18n-config";
 import { getDictionary } from "../dictionaries";
 
@@ -16,7 +16,7 @@ const itemIcons = {
 
 export default async function LegalPage({
   params,
-}: PageProps<"/[lang]/legal">) {
+}: PageProps<"/[lang]/terms">) {
   const { lang } = await params;
   if (!hasLocale(lang)) notFound();
 
@@ -36,7 +36,7 @@ export default async function LegalPage({
         lastUpdatedText={dict.legalOverview.lastUpdatedText}
         items={dict.legalOverview.items.map((item) => ({
           ...item,
-          link: `/${lang}/legal/${item.id}`,
+          link: `/${lang}/terms/${item.id}`,
           icon: itemIcons[item.id as keyof typeof itemIcons],
         }))}
         className="pt-10 md:pt-14"

@@ -58,7 +58,9 @@ export default async function RootLayout({
           <Header
             dict={dict.header}
             languageLabel={dict.common.language}
+            aboutHref={`/${lang}/about`}
             updatesHref={`/${lang}/updates`}
+            membershipHref={`/${lang}/membership`}
           />
           {children}
           <Footer />

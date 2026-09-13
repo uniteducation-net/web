@@ -19,7 +19,7 @@ import { i18n, type Locale } from "@/i18n-config";
  * paths relative to the urlEndpoint, rendered with `@imagekit/next`.
  */
 
-export type ContentType = "updates" | "team" | "legal" | "events";
+export type ContentType = "updates" | "team" | "terms" | "events";
 
 const CONTENT_DIR = path.join(process.cwd(), "src", "content");
 
@@ -85,7 +85,7 @@ export interface EventFrontmatter {
 interface FrontmatterByType {
   updates: UpdateFrontmatter;
   team: TeamFrontmatter;
-  legal: LegalFrontmatter;
+  terms: LegalFrontmatter;
   events: EventFrontmatter;
 }
 

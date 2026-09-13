@@ -1,0 +1,70 @@
+# 00 — Overview: ICM Teacher Workspace
+
+## The final goal (read first, never lose sight of it)
+
+Emerging teachers land on a clean page, chat with an AI that asks a few profile
+questions, then click ONE button ("Save my workspace") which connects their
+GitHub account and creates a **private repo they own**, pre-filled with a
+personalized ICM workspace (https://github.com/RinDig/Interpretable-Context-Methodology).
+After that, they work in a 3-column IDE-like view:
+
+- **Left:** collapsible sidebar — file tree (live from their repo) + Settings + user menu pinned at the bottom
+- **Center:** selected file rendered as formatted markdown preview (NO terminal, NO raw code view in v1)
+- **Right:** collapsible AI agent chat — the same assistant from onboarding, now able to read/edit files in the repo
+
+## Non-negotiable constraints
+
+- **No database. Ever.** The user's GitHub repo is the state. Sessions are an encrypted cookie.
+- **No passwords / no email auth.** GitHub OAuth only, hand-rolled (~2 routes). No Better Auth, no NextAuth.
+- **NGO budget ≈ $0.** LLM calls default to Vercel AI Gateway free tier ("AI on us"), with BYOK + OpenRouter OAuth as user options in Settings.
+- **Users own everything.** The repo is in THEIR GitHub account, private, created from our template.
+
+## Stack
+
+| Layer | Choice |
+|---|---|
+| Framework | Next.js (App Router, existing project) + Vercel Pro hosting |
+| UI | shadcn/ui (already in project) + **Vercel AI Elements** for chat components |
+| Chat logic | Vercel AI SDK v5 (`useChat`, `streamText`, tools) |
+| LLM | Vercel AI Gateway (default) / user BYOK / OpenRouter OAuth |
+| Auth | Hand-rolled GitHub OAuth, `jose` encrypted httpOnly cookie session |
+| Storage | GitHub REST API (template repo generation, contents, git trees) |
+
+## The two app states
+
+```
+STATE 1 — Onboarding (no repo connected yet)
+  Full-screen centered chat. AI asks profile questions. Works anonymously
+  (no login needed — "AI on us" via AI Gateway).
+  Ends with one button: "Save my workspace" → GitHub OAuth.
+
+STATE 2 — Workspace (repo exists)
+  3-column layout: sidebar | markdown preview | agent chat.
+  Onboarding conversation slides into the right panel (continuity!).
+```
+
+## File map (do them in order)
+
+| File | What it builds |
+|---|---|
+| 01-setup.md | Dependencies, env vars, GitHub OAuth App registration, template repo |
+| 02-auth.md | GitHub OAuth routes + encrypted cookie session |
+| 03-github-api.md | Server helpers: octokit client, repo generate, tree, read, write |
+| 04-route-group-layout.md | `/workspace` route group + state detection (which screen to show) |
+| 05-onboarding-chat.md | State 1: centered chat UI with AI Elements |
+| 06-onboarding-agent.md | The interviewer: system prompt + profile extraction |
+| 07-repo-provisioning.md | Turn profile answers into a personalized ICM repo |
+| 08-workspace-shell.md | State 2: 3-column resizable/collapsible shell |
+| 09-file-tree.md | Left sidebar: live file tree from GitHub |
+| 10-markdown-preview.md | Center: formatted markdown preview |
+| 11-agent-panel.md | Right: agent chat with repo read/write tools |
+| 12-settings.md | Settings modal + user menu (BYOK, model, unpair/logout) |
+| 13-llm-provider.md | Provider resolution: gateway default / BYOK / OpenRouter OAuth |
+| 14-deploy.md | Vercel env, AI Gateway budget cap, final checklist |
+
+## Rules for the coding agent
+
+1. Do the files **in numeric order**. Each file lists its prerequisites.
+2. Each file ends with a **"Done when"** checklist — verify all boxes before moving on.
+3. Never introduce a database, ORM, or auth library. If a step seems to need one, re-read the file — the answer is the GitHub repo or the cookie.
+4. Keep components small. Server Components by default; `'use client'` only where interactivity demands it.

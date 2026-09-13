@@ -90,7 +90,7 @@
     "saveText": "Speichern"
   },
   "legalOverview": {
-    "heading": "Rechtliches",
+    "heading": "Bedingungen",
     "readText": "Lesen",
     "lastUpdatedText": "Zuletzt aktualisiert",
     "items": [
@@ -146,6 +146,11 @@
     "getInvolved": "Mitmachen",
     "playLabel": "Video abspielen",
     "videoTitle": "YouTube-Videoplayer"
+  },
+  "aboutHero": {
+    "heading": "Kostenlose Fortbildungsmaterialien für Lehrkräfte",
+    "subtitle": "Helfen Sie uns, den weltweiten Mangel an qualifizierten Lehrkräften zu bekämpfen und die vorhandenen mit neuester Technik zu stärken.",
+    "seeTheProject": "Zum Projekt"
   },
   "team": {
     "heading": "Team"

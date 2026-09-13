@@ -37,10 +37,10 @@ const HomeHero = ({ className, dict }: HomeHeroProps) => {
       />
       <div className="relative z-10 container pt-12 md:pt-24">
         <div className="flex flex-col items-center gap-5">
-          <h1 className="max-w-[25rem] bg-linear-to-r from-foreground via-foreground/70 to-foreground/80 bg-clip-text py-2 text-center font-heading text-4xl leading-[1.1] font-semibold tracking-tighter text-transparent md:max-w-[43.75rem] md:text-6xl lg:max-w-[56.25rem] lg:text-[5rem]">
+          <h1 className="max-w-[25rem] bg-linear-to-r from-foreground via-foreground/70 to-foreground/80 bg-clip-text py-2 text-center font-heading text-display font-semibold text-transparent md:max-w-[43.75rem] lg:max-w-[56.25rem]">
             {dict.heading}
           </h1>
-          <p className="max-w-[22.5rem] text-center text-base text-muted-foreground md:max-w-[35rem] lg:text-lg">
+          <p className="max-w-[22.5rem] text-center text-lead text-muted-foreground md:max-w-[35rem]">
             {dict.subtitle}
           </p>
           <div className="flex items-center gap-8 pt-6">
@@ -48,7 +48,7 @@ const HomeHero = ({ className, dict }: HomeHeroProps) => {
               asChild
               className="block h-fit w-fit animate-shadow-ping rounded-md px-6 py-3.5 text-center text-lg"
             >
-              <Link href="/resources">{dict.forTeachers}</Link>
+              <Link href="/workspace">{dict.forTeachers}</Link>
             </Button>
             <Button
               asChild

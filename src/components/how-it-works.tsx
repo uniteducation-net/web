@@ -75,7 +75,7 @@ const HowItWorks = ({ className }: HowItWorksProps) => {
   return (
     <section className={cn("py-32", className)}>
       <div className="container">
-        <h2 className="mb-10 text-center font-heading text-3xl font-semibold tracking-tight md:text-5xl">
+        <h2 className="mb-10 text-center font-heading text-title font-semibold">
           How It Works
         </h2>
         <Accordion
@@ -165,7 +165,7 @@ const HowItWorks = ({ className }: HowItWorksProps) => {
               className="col-span-2 flex flex-col gap-7 bg-background p-10 data-[state=inactive]:hidden"
             >
               <div>
-                <h3 className="mb-2 text-2xl font-medium">{step.title}</h3>
+                <h3 className="mb-2 text-heading font-medium">{step.title}</h3>
                 <p className="text-muted-foreground">{step.description}</p>
               </div>
               <IllustrationImage

@@ -26,7 +26,7 @@ interface BreadcrumbNavProps {
   items?: BreadcrumbNavItem[];
   /** Current page label. Omit when `options` is set — the select then marks the current page. */
   current?: string;
-  /** Sibling pages offered as a dropdown, replacing `current` (e.g. all legal docs). */
+  /** Sibling pages offered as a dropdown, replacing `current` (e.g. all terms docs). */
   options?: BreadcrumbNavItem[];
   /** href of the option matching the current page. */
   selectedHref?: string;

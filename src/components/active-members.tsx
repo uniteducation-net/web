@@ -41,12 +41,13 @@ const ActiveMembers = ({
   // The join-CTA card takes one random slot among the members (server-side,
   // once per render — no client JS needed for the shuffle).
   const items: (ContentEntry<TeamFrontmatter> | "cta")[] = [...members];
+  // eslint-disable-next-line react-hooks/purity -- server component prerendered once per build; the random CTA slot is intentional and cannot cause hydration mismatch.
   items.splice(Math.floor(Math.random() * (items.length + 1)), 0, "cta");
 
   return (
     <section className={cn("py-32", className)}>
       <div className="container">
-        <h2 className="mb-10 text-center font-heading text-3xl font-semibold tracking-tight md:text-5xl">
+        <h2 className="mb-10 text-center font-heading text-title font-semibold">
           {dict.heading}
         </h2>
 
@@ -139,7 +140,7 @@ const MemberCard = ({
       </Link>
       <div className="flex flex-1 flex-col justify-between gap-6 p-6">
         {frontmatter.whyUnited ? (
-          <blockquote className="flex-1 text-base leading-snug font-medium lg:text-lg">
+          <blockquote className="flex-1 text-sm font-medium">
             {frontmatter.whyUnited}
           </blockquote>
         ) : (

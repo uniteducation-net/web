@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowUp, Check, Link2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -75,13 +75,13 @@ const ArticleSidebar = ({
   const [toc, setToc] = useState<TocItem[]>([]);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  // window.location is only available after mount — share hrefs start as
-  // "#" during SSR and become real on hydration.
-  const [pageUrl, setPageUrl] = useState("");
-
-  useEffect(() => {
-    setPageUrl(window.location.href);
-  }, []);
+  // window.location is only available on the client — share hrefs render as
+  // "#" during SSR (getServerSnapshot) and become real on hydration.
+  const pageUrl = useSyncExternalStore(
+    () => () => {},
+    () => window.location.href,
+    () => "",
+  );
 
   useEffect(() => {
     const container = document.getElementById(contentId);
@@ -99,7 +99,9 @@ const ArticleSidebar = ({
       }
       return { id: heading.id, text: heading.textContent ?? "" };
     });
-    setToc(items);
+    // Defer to the next frame — synchronous setState in an effect body
+    // causes cascading renders.
+    const frame = requestAnimationFrame(() => setToc(items));
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -110,7 +112,10 @@ const ArticleSidebar = ({
       { root: null, rootMargin: "0px", threshold: 1 },
     );
     headings.forEach((heading) => observer.observe(heading));
-    return () => observer.disconnect();
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
   }, [contentId]);
 
   const shareUrl = () => encodeURIComponent(pageUrl);

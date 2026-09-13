@@ -15,6 +15,7 @@ import {
   Users,
   X,
 } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -47,11 +48,11 @@ interface DropdownItem extends NavLink {
 }
 
 const LINKS_ABOUT: NavLink[] = [
-  { href: "#", icon: Earth },
-  { href: "#", icon: Target },
-  { href: "#", icon: HeartHandshake },
-  { href: "#", icon: Milestone },
-  { href: "#", icon: Users },
+  { href: "#project", icon: Earth },
+  { href: "#mission", icon: Target },
+  { href: "#values", icon: HeartHandshake },
+  { href: "#milestones", icon: Milestone },
+  { href: "#team", icon: Users },
 ];
 
 const LINKS_GET_INVOLVED: NavLink[] = [
@@ -80,8 +81,12 @@ interface HeaderProps {
   dict: HeaderDict;
   /** Localized chrome label for the language switcher, from the dictionary. */
   languageLabel: string;
+  /** Locale-prefixed href for the About page (dropdown items append section anchors), e.g. "/en/about". */
+  aboutHref: string;
   /** Locale-prefixed href for the Updates nav item, e.g. "/en/updates". */
   updatesHref: string;
+  /** Locale-prefixed href for the Membership page ("Become a Member" dropdown item), e.g. "/en/membership". */
+  membershipHref: string;
 }
 
 /** Same width + gutters as the header (`container` + `max-w-7xl`). */
@@ -91,14 +96,28 @@ const mobileNavInner = "container mx-auto max-w-7xl";
 const mobileNavTriggerRow =
   "mx-auto flex w-full max-w-7xl items-center justify-between gap-2 px-4 py-4 hover:no-underline sm:px-6 lg:px-8";
 
-const Header = ({ className, dict, languageLabel, updatesHref }: HeaderProps) => {
+const Header = ({
+  className,
+  dict,
+  languageLabel,
+  aboutHref,
+  updatesHref,
+  membershipHref,
+}: HeaderProps) => {
   const [open, setOpen] = useState(false);
   const dataAbout: DropdownItem[] = LINKS_ABOUT.map((link, i) => ({
     ...link,
+    href: `${aboutHref}${link.href}`,
     ...dict.about.items[i],
   }));
+  // Item order matches dict.getInvolved.items; "Become a Member" (index 2)
+  // links to the membership route.
   const dataGetInvolved: DropdownItem[] = LINKS_GET_INVOLVED.map(
-    (link, i) => ({ ...link, ...dict.getInvolved.items[i] }),
+    (link, i) => ({
+      ...link,
+      href: i === 2 ? membershipHref : link.href,
+      ...dict.getInvolved.items[i],
+    }),
   );
   return (
     <section className={cn("inset-x-0 top-0 z-20 bg-background", className)}>
@@ -164,10 +183,10 @@ const Header = ({ className, dict, languageLabel, updatesHref }: HeaderProps) =>
                 </NavigationMenuContent>
               </NavigationMenuItem>
               <Button variant="ghost" className="h-12 px-4 text-lg" asChild>
-                <a href="/resources">{dict.resources}</a>
+                <Link href="/resources">{dict.resources}</Link>
               </Button>
               <Button variant="ghost" className="h-12 px-4 text-lg" asChild>
-                <a href={updatesHref}>{dict.updates}</a>
+                <Link href={updatesHref}>{dict.updates}</Link>
               </Button>
             </NavigationMenuList>
           </NavigationMenu>
@@ -271,7 +290,7 @@ const Header = ({ className, dict, languageLabel, updatesHref }: HeaderProps) =>
               </AccordionItem>
             </Accordion>
             <div className="border-b border-dashed border-border">
-              <a
+              <Link
                 href="/resources"
                 className={cn(
                   mobileNavInner,
@@ -279,10 +298,10 @@ const Header = ({ className, dict, languageLabel, updatesHref }: HeaderProps) =>
                 )}
               >
                 {dict.resources}
-              </a>
+              </Link>
             </div>
             <div className="border-b border-dashed border-border">
-              <a
+              <Link
                 href={updatesHref}
                 className={cn(
                   mobileNavInner,
@@ -290,7 +309,7 @@ const Header = ({ className, dict, languageLabel, updatesHref }: HeaderProps) =>
                 )}
               >
                 {dict.updates}
-              </a>
+              </Link>
             </div>
 
             <div

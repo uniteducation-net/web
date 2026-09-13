@@ -14,7 +14,7 @@ interface ContentArticleProps {
 }
 
 /** Shared article template for MDX-backed detail pages (updates, events,
- *  legal, team bios). */
+ *  terms, team bios). */
 const ContentArticle = ({
   title,
   description,

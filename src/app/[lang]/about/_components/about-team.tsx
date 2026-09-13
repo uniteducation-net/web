@@ -61,15 +61,17 @@ const collaborators = [
   "Ocean Garcia",
 ];
 
-interface Team17Props {
+interface AboutTeamProps {
   className?: string;
 }
 
-const Team17 = ({ className }: Team17Props) => {
+const AboutTeam = ({ className }: AboutTeamProps) => {
   return (
-    <section className={cn("py-32", className)}>
+    <section id="team" className={cn("py-32", className)}>
       <div className="container">
-        <h1 className="text-4xl font-medium">The Team Behind Our Success</h1>
+        <h2 className="font-heading text-title font-semibold">
+          The Team Behind Our Success
+        </h2>
         <p className="mt-3 max-w-xl text-muted-foreground">
           Our team is a group of talented individuals who are dedicated to
           delivering the best possible results for our clients.
@@ -83,14 +85,14 @@ const Team17 = ({ className }: Team17Props) => {
                 className="aspect-[3/4] object-cover"
               />
               <div>
-                <h2 className="text-sm font-medium">{member.name}</h2>
+                <h3 className="text-sm font-medium">{member.name}</h3>
                 <p className="text-sm text-muted-foreground">{member.role}</p>
               </div>
             </div>
           ))}
         </div>
         <div className="mt-32 grid grid-cols-2 gap-x-6 gap-y-12 text-sm font-medium sm:grid-cols-3">
-          <h2>Alumni</h2>
+          <h3>Alumni</h3>
           <ul className="sm:col-span-2">
             {alumnis.map((alumni, index) => (
               <li key={index}>{alumni}</li>
@@ -98,7 +100,7 @@ const Team17 = ({ className }: Team17Props) => {
           </ul>
         </div>
         <div className="mt-14 grid grid-cols-2 gap-x-6 gap-y-12 text-sm font-medium sm:grid-cols-3">
-          <h2>Collaborators</h2>
+          <h3>Collaborators</h3>
           <ul className="sm:col-span-2">
             {collaborators.map((collaborator, index) => (
               <li key={index}>{collaborator}</li>
@@ -106,18 +108,18 @@ const Team17 = ({ className }: Team17Props) => {
           </ul>
         </div>
         <div className="mt-14 grid grid-cols-3 gap-x-6 gap-y-6 sm:gap-x-12">
-          <h2 className="col-span-3 text-sm font-medium sm:col-span-1">
+          <h3 className="col-span-3 text-sm font-medium sm:col-span-1">
             Culture
-          </h2>
+          </h3>
           <p className="col-span-3 sm:col-span-2 sm:text-lg">
-            Since our founding, we've built a space where creativity thrives,
+            Since our founding, we&rsquo;ve built a space where creativity thrives,
             boundaries expand, and everyone can bring their whole self to work.
             <br />
             <br />
             We champion autonomy, innovation, and genuine connection. We see
             work as an expression of purpose — something that enriches rather
             than drains. And we understand that breakthrough moments emerge from
-            balance: when we're inspired, supported, and passionate about our
+            balance: when we&rsquo;re inspired, supported, and passionate about our
             craft. This is how we operate.
           </p>
         </div>
@@ -126,4 +128,4 @@ const Team17 = ({ className }: Team17Props) => {
   );
 };
 
-export { Team17 };
+export { AboutTeam };

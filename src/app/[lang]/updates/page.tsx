@@ -6,6 +6,7 @@ import { formatDate } from "@/lib/utils";
 import { getDictionary } from "../dictionaries";
 import { Highlights } from "./_components/highlights";
 import { LatestUpdates } from "./_components/latest-updates";
+import { UpdatesNewsletter } from "./_components/updates-newsletter";
 
 export default async function UpdatesPage({
   params,
@@ -41,6 +42,16 @@ export default async function UpdatesPage({
       <Highlights
         heading={dict.updates.highlightsHeading}
         items={highlighted}
+      />
+      <UpdatesNewsletter
+        posts={updates.slice(0, 4).map((entry) => ({
+          id: entry.slug,
+          category: entry.frontmatter.tags?.[0] ?? "",
+          title: entry.frontmatter.title,
+          date: formatDate(entry.frontmatter.date, lang),
+          readTime: `${entry.readingTime} ${dict.updates.minRead}`,
+          href: `/${lang}/updates/${entry.slug}`,
+        }))}
       />
       <LatestUpdates
         heading={dict.updates.latestHeading}

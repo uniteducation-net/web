@@ -90,7 +90,7 @@
     "saveText": "Save"
   },
   "legalOverview": {
-    "heading": "Legal",
+    "heading": "Terms",
     "readText": "Read",
     "lastUpdatedText": "Last updated",
     "items": [
@@ -146,6 +146,11 @@
     "getInvolved": "Get Involved",
     "playLabel": "Play video",
     "videoTitle": "YouTube video player"
+  },
+  "aboutHero": {
+    "heading": "Free training resources for educators",
+    "subtitle": "Help us combat the global lack of qualified teachers and empower the current ones with the latest tech.",
+    "seeTheProject": "See the Project"
   },
   "team": {
     "heading": "Team"

@@ -7,6 +7,8 @@ interface LegalArticleProps {
   description?: string;
   /** "Last updated" line rendered under the title. */
   meta?: ReactNode;
+  /** Breadcrumb rendered under the hero banner. */
+  breadcrumb?: ReactNode;
   children: ReactNode;
   className?: string;
 }
@@ -15,6 +17,7 @@ const LegalArticle = ({
   title,
   description,
   meta,
+  breadcrumb,
   children,
   className,
 }: LegalArticleProps) => {
@@ -29,6 +32,8 @@ const LegalArticle = ({
           {meta && <p className="mt-4 text-sm text-muted-foreground">{meta}</p>}
         </div>
       </div>
+
+      {breadcrumb}
 
       {/* Intro Section */}
       {description && (

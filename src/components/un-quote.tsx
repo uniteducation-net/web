@@ -9,7 +9,7 @@ const UNQuote = ({ className }: UNQuoteProps) => {
     <section className={cn("py-32", className)}>
       <div className="container">
         <div className="flex flex-col items-center gap-6 border-y py-14 text-center md:py-20">
-          <q className="block max-w-4xl font-heading text-2xl font-medium lg:text-3xl">
+          <q className="block max-w-4xl font-heading text-heading font-medium">
             New data collected for the Global Report on Teachers indicates
             that 44 million additional teachers are needed to achieve
             universal primary and secondary education by 2030.

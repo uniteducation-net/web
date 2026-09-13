@@ -23,6 +23,60 @@
   }
 }
 
+/* Semantic type scale — the only places text sizes are set. Each utility
+   bakes in its responsive steps, line-height and tracking, so components
+   never hand-roll size pairs (which drifted before: see faq.tsx losing
+   font-heading). Effect classes (gradients, colors) stay on the element. */
+
+/* Hero H1 treatment — stepped 2.25rem → 3.75rem → 5rem. */
+@utility text-display {
+  font-size: 2.25rem;
+  line-height: 1.1;
+  letter-spacing: -0.05em;
+
+  @media (width >= 48rem) {
+    font-size: 3.75rem;
+  }
+
+  @media (width >= 64rem) {
+    font-size: 5rem;
+  }
+}
+
+/* Section H2s. */
+@utility text-title {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  letter-spacing: -0.025em;
+
+  @media (width >= 48rem) {
+    font-size: 3rem;
+    line-height: 1;
+  }
+}
+
+/* Sub-headings, pull quotes, panel titles. */
+@utility text-heading {
+  font-size: 1.5rem;
+  line-height: 2rem;
+
+  @media (width >= 64rem) {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+  }
+}
+
+/* Lead paragraphs (hero subtitle). */
+@utility text-lead {
+  font-size: 1rem;
+  line-height: 1.5rem;
+
+  @media (width >= 64rem) {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
