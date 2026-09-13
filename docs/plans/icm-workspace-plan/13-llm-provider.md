@@ -8,13 +8,14 @@ ALWAYS uses the gateway (anonymous users have no keys). The workspace agent
 
 ## Steps
 
-1. **`resolveModel(session)`** returns an AI SDK model:
+1. **`resolveModel(session)`** returns an AI SDK 7 model:
    ```
    if session.openrouterKey  → createOpenAI({ baseURL: 'https://openrouter.ai/api/v1', apiKey })('openai/gpt-4o-mini' or user-chosen)
    if session.byokKey        → provider factory by session.byokProvider (@ai-sdk/openai / anthropic / google)
    else                      → gateway('google/gemini-2.5-flash')   // "AI on us"
    ```
-   Install `@ai-sdk/openai @ai-sdk/anthropic @ai-sdk/google` for BYOK.
+   Install `@ai-sdk/openai @ai-sdk/anthropic @ai-sdk/google` for BYOK. Provider
+   packages version independently of `ai@^7` — just take latest of each.
 
 2. **Free-tier guard for the gateway path**:
    - Daily token ceiling (e.g. 200k tokens/day) via a signed counter cookie `fu` (`{ date, tokens }`).

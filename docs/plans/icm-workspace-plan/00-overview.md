@@ -25,7 +25,7 @@ After that, they work in a 3-column IDE-like view:
 |---|---|
 | Framework | Next.js (App Router, existing project) + Vercel Pro hosting |
 | UI | shadcn/ui (already in project) + **Vercel AI Elements** for chat components |
-| Chat logic | Vercel AI SDK v5 (`useChat`, `streamText`, tools) |
+| Chat logic | Vercel AI SDK 7 (`useChat`, `streamText`, tools) — latest major, see https://ai-sdk.dev/docs/introduction |
 | LLM | Vercel AI Gateway (default) / user BYOK / OpenRouter OAuth |
 | Auth | Hand-rolled GitHub OAuth, `jose` encrypted httpOnly cookie session |
 | Storage | GitHub REST API (template repo generation, contents, git trees) |
@@ -57,7 +57,7 @@ STATE 2 — Workspace (repo exists)
 | 08-workspace-shell.md | State 2: 3-column resizable/collapsible shell |
 | 09-file-tree.md | Left sidebar: live file tree from GitHub |
 | 10-markdown-preview.md | Center: formatted markdown preview |
-| 11-agent-panel.md | Right: agent chat with repo read/write tools |
+| 11-agent-panel.md | Right: agent chat with repo read/write tools + "Save this chat" → `chats/` in the repo |
 | 12-settings.md | Settings modal + user menu (BYOK, model, unpair/logout) |
 | 13-llm-provider.md | Provider resolution: gateway default / BYOK / OpenRouter OAuth |
 | 14-deploy.md | Vercel env, AI Gateway budget cap, final checklist |
@@ -67,4 +67,5 @@ STATE 2 — Workspace (repo exists)
 1. Do the files **in numeric order**. Each file lists its prerequisites.
 2. Each file ends with a **"Done when"** checklist — verify all boxes before moving on.
 3. Never introduce a database, ORM, or auth library. If a step seems to need one, re-read the file — the answer is the GitHub repo or the cookie.
-4. Keep components small. Server Components by default; `'use client'` only where interactivity demands it.
+4. All AI code targets **Vercel AI SDK 7**. Several older APIs were renamed in v7 (`stepCountIs` → `isStepCount`, `initialMessages` → `messages`, `api:` option → `transport: new DefaultChatTransport(...)`) — if a snippet anywhere reads like the old API, check https://ai-sdk.dev/docs/migration-guides/migration-guide-7-0 before writing it.
+5. Keep components small. Server Components by default; `'use client'` only where interactivity demands it.

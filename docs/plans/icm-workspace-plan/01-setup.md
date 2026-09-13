@@ -6,10 +6,12 @@ Prerequisites: none. Do this first.
 
 1. **Install dependencies** into the existing Next.js + shadcn project:
    ```bash
-   npm install ai @ai-sdk/react @ai-sdk/gateway jose octokit
+   npm install ai@^7 @ai-sdk/react @ai-sdk/gateway jose octokit   # Vercel AI SDK 7
    npm install react-markdown remark-gfm
-   npm install @assistant-ui/react-markdown   # markdown for chat bubbles (optional but nice)
    ```
+   Do NOT install `@assistant-ui/*` — AI Elements' `response` component
+   (Streamdown-based) already renders markdown inside chat bubbles; assistant-ui
+   is a separate chat library we don't use.
 
 2. **Install AI Elements** (shadcn-registry style, components copy into `components/ai-elements/`):
    ```bash
@@ -55,6 +57,7 @@ Prerequisites: none. Do this first.
        workspace/create/route.ts
        workspace/tree/route.ts
        workspace/file/route.ts
+       workspace/save-chat/route.ts
    lib/
      session.ts
      github.ts

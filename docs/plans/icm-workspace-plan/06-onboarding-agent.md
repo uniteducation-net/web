@@ -8,7 +8,8 @@ tier. Keep it cheap — short system prompt, cheap model, capped output.
 ## Steps
 
 1. **`app/api/chat/route.ts`** (POST):
-   - Body: `{ messages }` from `useChat`.
+   - Body: `{ messages }` from `useChat` — these are `UIMessage`s (parts array).
+     Convert before use: `convertToModelMessages(messages)` from `ai` (AI SDK 7).
    - Call `streamText` with:
      - `model: gateway('google/gemini-2.5-flash')` (or cheapest free-tier-eligible model available in your Gateway — check the dashboard)
      - `system: ONBOARDING_SYSTEM_PROMPT` (step 2)
