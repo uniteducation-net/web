@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Sparkles } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
@@ -55,7 +54,6 @@ function readDraft(): OnboardingUIMessage[] | null {
 }
 
 export function OnboardingScreen({ authenticated }: OnboardingScreenProps) {
-  const router = useRouter();
   const transport = useMemo(
     () => new DefaultChatTransport<OnboardingUIMessage>({ api: "/api/chat" }),
     [],
@@ -66,6 +64,10 @@ export function OnboardingScreen({ authenticated }: OnboardingScreenProps) {
       messages: [OPENING_MESSAGE],
     });
   const [hydrated, setHydrated] = useState(false);
+  // Provisioning state (07): the create call runs template generation +
+  // personalization, so it can take several seconds.
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const busy = status === "submitted" || status === "streaming";
 
@@ -107,7 +109,7 @@ export function OnboardingScreen({ authenticated }: OnboardingScreenProps) {
     sendMessage({ text });
   };
 
-  const saveWorkspace = () => {
+  const saveWorkspace = async () => {
     if (!authenticated) {
       // Mid-onboarding OAuth (04 step 4): hard-nav into the GitHub App flow
       // and come straight back here. The draft conversation survives in
@@ -115,11 +117,51 @@ export function OnboardingScreen({ authenticated }: OnboardingScreenProps) {
       window.location.href = "/api/auth/github?next=/workspace/start";
       return;
     }
-    // TODO(07): POST /api/workspace/create with the extracted `profile`, then
-    // hard-nav to /workspace (the guard finds the repo and renders the shell).
-    // Preview stand-in until provisioning is wired.
-    void profile;
-    router.push("/workspace/demo");
+    if (!profile || creating) return;
+
+    // Provision (07): create + personalize the teacher's repo, then hard-nav
+    // to /workspace — the guard (04) finds the repo and renders the shell.
+    setCreating(true);
+    setCreateError(null);
+    try {
+      const res = await fetch("/api/workspace/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        message?: string;
+        fixUrl?: string;
+      };
+
+      if (res.status === 409 && data.fixUrl) {
+        // The app installation doesn't cover the new repo yet — GitHub's
+        // page grants access in one click, then the teacher retries (the
+        // create call is idempotent).
+        window.location.href = data.fixUrl;
+        return;
+      }
+      if (!res.ok) {
+        setCreateError(
+          data.message ??
+            (data.error === "github_unavailable"
+              ? "GitHub is having trouble right now — please try again in a moment."
+              : data.error === "app_not_installed"
+                ? "GitHub isn't fully connected yet — press the button again to reconnect."
+                : "Something went wrong while creating your workspace — please try again."),
+        );
+        return;
+      }
+
+      window.location.href = "/workspace";
+    } catch {
+      setCreateError(
+        "Couldn't reach the server — check your connection and try again.",
+      );
+    } finally {
+      setCreating(false);
+    }
   };
 
   return (
@@ -186,17 +228,24 @@ export function OnboardingScreen({ authenticated }: OnboardingScreenProps) {
           </PromptInputFooter>
         </PromptInput>
 
+        {createError && (
+          <p className="pt-2 text-center text-xs text-destructive">
+            {createError}
+          </p>
+        )}
         <Button
           size="lg"
           className="mt-3 w-full"
-          disabled={!profileComplete || busy}
+          disabled={!profileComplete || busy || creating}
           onClick={saveWorkspace}
           title={profileComplete ? undefined : "Answer the questions above first"}
         >
           <Sparkles className="size-4" />
-          {authenticated
-            ? "Create my workspace"
-            : "Save my workspace — connect GitHub"}
+          {creating
+            ? "Creating your workspace…"
+            : authenticated
+              ? "Create my workspace"
+              : "Save my workspace — connect GitHub"}
         </Button>
         <p className="mt-2 text-center text-xs text-muted-foreground">
           Creates a private repo in YOUR GitHub account. You own everything.

@@ -1,4 +1,5 @@
-import type { UIMessageChunk } from "ai";
+import { generateText, type UIMessageChunk } from "ai";
+import { gateway } from "@ai-sdk/gateway";
 import { z } from "zod";
 
 /**
@@ -224,4 +225,132 @@ export function createProfileStreamFilter(
       }
     },
   });
+}
+
+// ---------------------------------------------------------------------------
+// Personalization (07 step 3). One cheap LLM pass turns the template copy in
+// the freshly generated repo into the teacher's own workspace: every
+// {{PLACEHOLDER}} filled from the profile, _config/ voice files adapted to
+// the requested tone, setup/questionnaire.md filled with their answers.
+// Any failure falls back to plain token replacement — a teacher's repo must
+// never contain a raw `{{`.
+// ---------------------------------------------------------------------------
+
+const PERSONALIZE_SYSTEM_PROMPT = `You personalize a brand-new teaching workspace (a set of markdown files) for one teacher, using the profile they gave during onboarding.
+
+You receive the teacher profile as JSON, then the workspace files as "--- path ---" sections.
+
+Return ONLY a JSON array of objects [{"path":"…","content":"…"}] — exactly one entry per input file, same paths, same order. No markdown fences, no commentary.
+
+Rules:
+- Replace every {{PLACEHOLDER}} token with a value derived from the profile. Never leave any {{ token in the output.
+- Adapt any files under _config/ that describe voice or tone so they match the teacher's requested tone.
+- Fill setup/questionnaire.md with the teacher's actual answers — it is the permanent record of what they said during onboarding. Where a profile field is null, write "Not shared during onboarding".
+- Do NOT restructure folders, rename files, reorder stages, or change stage numbering. Keep all other structure, headings, and instructions intact.
+- Write in warm, plain language. Never mention "ICM", GitHub, repositories, or templates.`;
+
+const personalizedFilesSchema = z.array(
+  z.object({ path: z.string().min(1), content: z.string() }),
+);
+
+/** Placeholder token → profile field. Unknown tokens are removed, not kept. */
+const PLACEHOLDER_KEYS: Record<string, keyof TeacherProfile> = {
+  TEACHER_NAME: "name",
+  TEACHER: "name",
+  NAME: "name",
+  SUBJECT: "subject",
+  GRADE_LEVEL: "gradeLevel",
+  GRADE: "gradeLevel",
+  GRADES: "gradeLevel",
+  TEACHING_CONTEXT: "teachingContext",
+  CONTEXT: "teachingContext",
+  TONE: "tone",
+  GOALS: "goals",
+  GOAL: "goals",
+};
+
+/** Last-resort guarantee: no `{{…}}` token survives into a teacher's repo. */
+function stripPlaceholders(content: string): string {
+  return content.replace(/\{\{[^{}]*\}\}/g, "");
+}
+
+/** LLM-free fallback: straight token replacement from the profile. */
+function replacePlaceholders(
+  content: string,
+  profile: TeacherProfile,
+): string {
+  return stripPlaceholders(
+    content.replace(/\{\{\s*([A-Za-z0-9_]+)\s*\}\}/g, (_raw, key: string) => {
+      const field = PLACEHOLDER_KEYS[key.toUpperCase()];
+      if (!field) return "";
+      const value = profile[field];
+      if (value) return value;
+      return field === "name" ? "Teacher" : "";
+    }),
+  );
+}
+
+/**
+ * Personalize the template's markdown files for one teacher (07 step 3).
+ * One `generateText` call on the same cheap Gateway model as the interview.
+ * Falls back to simple {{PLACEHOLDER}} replacement when the Gateway key is
+ * missing, the call fails, the output fails schema validation, or the model
+ * returns a different set of paths. Output is guaranteed to contain no `{{`.
+ */
+export async function personalizeWorkspaceFiles(
+  profile: TeacherProfile,
+  files: { path: string; content: string }[],
+): Promise<{ path: string; content: string }[]> {
+  const fallback = () =>
+    files.map((file) => ({
+      path: file.path,
+      content: replacePlaceholders(file.content, profile),
+    }));
+
+  if (files.length === 0) return [];
+  if (!process.env.AI_GATEWAY_API_KEY) return fallback();
+
+  let text: string;
+  try {
+    const result = await generateText({
+      model: gateway("google/gemini-2.5-flash"),
+      system: PERSONALIZE_SYSTEM_PROMPT,
+      prompt: `Teacher profile (JSON):\n${JSON.stringify(profile, null, 2)}\n\nWorkspace files:\n\n${files
+        .map((file) => `--- ${file.path} ---\n${file.content}`)
+        .join("\n\n")}`,
+      maxOutputTokens: 4000,
+    });
+    text = result.text;
+  } catch {
+    return fallback();
+  }
+
+  // Tolerate a ```json fence despite the prompt; take the outermost array.
+  const start = text.indexOf("[");
+  const end = text.lastIndexOf("]");
+  if (start === -1 || end <= start) return fallback();
+
+  let json: unknown;
+  try {
+    json = JSON.parse(text.slice(start, end + 1));
+  } catch {
+    return fallback();
+  }
+  const parsed = personalizedFilesSchema.safeParse(json);
+  if (!parsed.success) return fallback();
+
+  // The model must return exactly the input paths — otherwise its output
+  // can't be trusted not to have restructured the workspace.
+  const byPath = new Map(parsed.data.map((file) => [file.path, file.content]));
+  if (
+    byPath.size !== files.length ||
+    files.some((file) => !byPath.has(file.path))
+  ) {
+    return fallback();
+  }
+
+  return files.map((file) => ({
+    path: file.path,
+    content: stripPlaceholders(byPath.get(file.path)!),
+  }));
 }
