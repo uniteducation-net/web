@@ -63,6 +63,9 @@ interface WorkspaceShellProps {
 }
 
 export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
+  // 10 step 4 — default landing document: the workspace root CONTEXT.md
+  // (ICM Layer 1, "Where do I go?"). Corrected to the first tree entry on
+  // mount if the repo has no root CONTEXT.md.
   const [selectedPath, setSelectedPath] = useState("CONTEXT.md");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [agentOpen, setAgentOpen] = useState(true);
@@ -132,10 +135,36 @@ export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
     }
   }, [sidebarOpen, agentOpen, hydrated]);
 
+  // 10 step 4 — default selection fallback. The tree route is cached 30s
+  // server-side, so this second fetch costs nothing after the sidebar's.
+  // Only corrects the path if the current one isn't in the repo (e.g. a
+  // template without a root CONTEXT.md): never overrides a real selection.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/workspace/tree", { cache: "no-store" });
+        if (!res.ok) return; // the sidebar surfaces the failure already
+        const entries = (await res.json()) as { path: string }[];
+        if (cancelled || entries.length === 0) return;
+        setSelectedPath((current) =>
+          entries.some((e) => e.path === current)
+            ? current
+            : (entries.find((e) => e.path === "CONTEXT.md") ?? entries[0])
+                .path,
+        );
+      } catch {
+        // offline or hiccup — keep the default; the tree shows the error
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Cmd/Ctrl+B toggles the sidebar, Cmd/Ctrl+J toggles the agent panel.
   useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (!(e.metaKey || e.ctrlKey)) return;
+    const onKeyDown = (e: KeyboardEvent) => {      if (!(e.metaKey || e.ctrlKey)) return;
       if (e.key === "b") {
         e.preventDefault();
         setSidebarOpen((v) => !v);
@@ -216,7 +245,11 @@ export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
               <MessageSquare className="size-4" />
             </FloatingButton>
           )}
-          <MarkdownPreview path={selectedPath} repo={repo} />
+          <MarkdownPreview
+            path={selectedPath}
+            repo={repo}
+            refreshKey={treeRefreshKey}
+          />
         </main>
 
         {/* Agent panel: in-flow on lg, fixed overlay below lg */}
