@@ -18,9 +18,9 @@ import {
 } from "@/lib/github";
 import { personalizeWorkspaceFiles, teacherProfileSchema } from "@/lib/onboarding";
 
-// Template copy + one LLM pass + a commit can outrun the default function
-// budget on a cold start.
-export const maxDuration = 60;
+// Template copy + batched LLM personalization + a commit can outrun the
+// default function budget on a cold start (99-known-issues #8; Vercel Pro).
+export const maxDuration = 300;
 
 const COMMIT_MESSAGE = "Personalize workspace from onboarding";
 

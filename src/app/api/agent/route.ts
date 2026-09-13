@@ -34,6 +34,10 @@ import {
 } from "@/lib/agent";
 import type { AgentUIMessage } from "@/components/workspace/agent-chat";
 
+// The multi-step tool loop (up to AGENT_MAX_STEPS read→edit→write rounds)
+// can outrun the default function budget (99-known-issues #8; Vercel Pro).
+export const maxDuration = 300;
+
 export async function POST(req: Request) {
   const session = await getSession();
   if (!session) {
