@@ -105,7 +105,15 @@ export function OnboardingScreen({ authenticated }: OnboardingScreenProps) {
   };
 
   const saveWorkspace = () => {
-    // Preview mode: skip OAuth/provisioning and jump straight to the shell demo.
+    if (!authenticated) {
+      // Mid-onboarding OAuth (04 step 4): hard-nav into the GitHub App flow
+      // and come straight back here. The draft conversation survives in
+      // localStorage and is restored on return.
+      window.location.href = "/api/auth/github?next=/workspace/start";
+      return;
+    }
+    // TODO(07): create the repo via /api/workspace/create, then hard-nav to
+    // /workspace. Preview stand-in until provisioning is wired.
     router.push("/workspace/demo");
   };
 

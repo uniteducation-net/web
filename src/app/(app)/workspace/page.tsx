@@ -1,27 +1,18 @@
-import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/session";
+import { findExistingWorkspace } from "@/lib/github";
+import { WorkspaceShell } from "@/components/workspace/workspace-shell";
 
-export default function WorkspacePage() {
-  // Becomes the guard in 04: no session / no repo → redirect('/workspace/start'),
-  // repo exists → render <WorkspaceShell />. Until then, a static signpost.
-  return (
-    <main className="grid h-full place-items-center p-6">
-      <div className="max-w-sm text-center">
-        <h1 className="font-heading text-title text-secondary">Workspace</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          New here? A short chat builds your personal teaching workspace.
-        </p>
-        <Link
-          href="/workspace/start"
-          className="mt-6 inline-block rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-        >
-          Get started
-        </Link>
-        <p className="mt-4 text-xs text-muted-foreground">
-          <Link href="/workspace/demo" className="underline underline-offset-2">
-            Preview the workspace shell →
-          </Link>
-        </p>
-      </div>
-    </main>
-  );
+// The guard (04 step 2). /workspace is the single canonical entry — it only
+// routes, server-side: no session / no repo → onboarding; repo → the shell.
+// Returning users land straight in the shell without ever loading onboarding
+// code. Thin on purpose: all logic lives in session/github helpers.
+export default async function WorkspacePage() {
+  const session = await getSession();
+  if (!session) redirect("/workspace/start");
+
+  const repo = await findExistingWorkspace(session);
+  if (!repo) redirect("/workspace/start");
+
+  return <WorkspaceShell repo={repo} />;
 }
