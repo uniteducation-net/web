@@ -24,6 +24,9 @@ export type SessionRepo = {
   name: string;
 };
 
+/** BYOK providers supported in Settings (12 step 2); factories land in 13. */
+export type ByokProvider = "openai" | "anthropic" | "google";
+
 export type Session = {
   user: SessionUser;
   userToken: string;
@@ -32,6 +35,13 @@ export type Session = {
   refreshToken: string;
   installationId?: number;
   repo?: SessionRepo;
+  /** AI provider choice (12/13). Presence activates the provider — resolution
+   *  order (openrouterKey → byokKey → gateway free tier) lives in lib/llm.ts.
+   *  Keys live ONLY in this encrypted cookie; never logged, never returned to
+   *  the client beyond the last 4 characters. */
+  byokProvider?: ByokProvider;
+  byokKey?: string;
+  openrouterKey?: string;
 };
 
 export function requireEnv(name: string): string {

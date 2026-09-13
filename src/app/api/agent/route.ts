@@ -96,6 +96,22 @@ export async function POST(req: Request) {
           InferUIMessageChunk<AgentUIMessage>
         >,
       );
+
+      // 12 step 6 — fair-use metering for the gateway free tier. Cookies
+      // can't be set once streaming starts, so the usage travels as a
+      // transient `data-usage` part; the panel posts it to /api/settings,
+      // which updates the `fu` counter cookie. Only gateway sessions count —
+      // BYOK/OpenRouter spend is the user's own. 13 enforces the ceiling.
+      if (!session.openrouterKey && !session.byokKey) {
+        const usage = await result.usage;
+        if (usage.totalTokens) {
+          writer.write({
+            type: "data-usage",
+            data: { totalTokens: usage.totalTokens },
+            transient: true,
+          });
+        }
+      }
     },
   });
 

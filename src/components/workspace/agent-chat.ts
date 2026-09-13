@@ -14,6 +14,14 @@ export interface FilesChangedSignal {
   paths: string[];
 }
 
+/** Payload of the transient `data-usage` part (12 step 6): emitted server-side
+ *  after a gateway (free-tier) response so the panel can report token usage to
+ *  /api/settings — the `fu` counter cookie can't be set mid-stream. Transient —
+ *  never persisted in parts. */
+export interface UsageSignal {
+  totalTokens: number;
+}
+
 /**
  * UI-side view of the agent's toolset (the server-side definitions live in
  * src/lib/agent.ts and must stay server-only — they hold GitHub credentials).
@@ -36,7 +44,7 @@ export type AgentUITools = {
 
 export type AgentUIMessage = UIMessage<
   unknown,
-  { "files-changed": FilesChangedSignal },
+  { "files-changed": FilesChangedSignal; usage: UsageSignal },
   AgentUITools
 >;
 

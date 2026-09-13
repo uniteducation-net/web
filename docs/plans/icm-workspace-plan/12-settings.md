@@ -50,8 +50,12 @@ account-ish lives here or in the 👤 menu. Nowhere else.
 - [ ] Logout returns the app to the anonymous onboarding state
 - [ ] Free-tier usage line updates after agent calls
 
-> **Status (UI-only pass, 2026-09-13):** Modal UI complete
-> (`_components/settings-modal.tsx`) — all three sections render, opens from
-> the sidebar bottom row and the collapsed rail icon. All controls are inert:
-> no `/api/settings` route, no cookie persistence, no OpenRouter flow, and the
-> free-tier usage bar is static (23%).
+> **Status (wired, 2026-09-13):** Modal fully functional — all three sections
+> render and persist via `/api/settings` (cookie updates only). AI provider
+> radio (free / OpenRouter PKCE connect+disconnect / BYOK with masked
+> last-4), repo switcher with AlertDialog confirmation + installation-scoped
+> picker + grant-access deep link, fair-use meter fed by the `fu` counter
+> cookie (the agent route reports usage as a transient `data-usage` part; the
+> panel posts it back — cookies can't be set mid-stream). Remaining for 13:
+> `resolveModel` actually switching providers off the new session fields, and
+> enforcing `FREE_TIER_DAILY_TOKEN_LIMIT` before gateway calls.

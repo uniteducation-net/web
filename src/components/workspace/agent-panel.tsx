@@ -54,6 +54,7 @@ import {
   AGENT_SUGGESTIONS,
   type AgentUIMessage,
   type AgentUITools,
+  type UsageSignal,
 } from "./agent-chat";
 
 interface AgentPanelProps {
@@ -142,6 +143,21 @@ export function AgentPanel({
       onData: (part) => {
         // 11 step 5 — the agent wrote to the repo: refresh tree + preview.
         if (part.type === "data-files-changed") onFilesChangedRef.current?.();
+        // 12 step 6 — report gateway token usage so the fair-use counter (and
+        // the Settings meter) moves. Fire-and-forget: metering must never
+        // break the chat.
+        if (part.type === "data-usage") {
+          // onData types data parts as unknown (InferUIMessageData doesn't
+          // match a custom tools generic) — the server sends UsageSignal.
+          const { totalTokens } = part.data as UsageSignal;
+          if (totalTokens > 0) {
+            void fetch("/api/settings", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ usageTokens: totalTokens }),
+            }).catch(() => {});
+          }
+        }
       },
     });
 

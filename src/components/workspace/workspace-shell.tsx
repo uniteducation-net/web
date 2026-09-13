@@ -6,6 +6,7 @@
 // Plan: docs/plans/icm-workspace-plan/08-workspace-shell.md
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { MessageSquare, PanelLeftOpen } from "lucide-react";
 import type { UIMessage } from "ai";
 import type { SessionRepo, SessionUser } from "@/lib/session";
@@ -19,7 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { AgentPanel } from "./agent-panel";
 import { MarkdownPreview } from "./markdown-preview";
-import { SettingsModal } from "./settings-modal";
+import { OPENROUTER_VERIFIER_KEY, SettingsModal } from "./settings-modal";
 import { WorkspaceSidebar } from "./workspace-sidebar";
 
 const PANELS_KEY = "workspace-panels";
@@ -63,6 +64,7 @@ interface WorkspaceShellProps {
 }
 
 export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
+  const router = useRouter();
   // 10 step 4 — default landing document: the workspace root CONTEXT.md
   // (ICM Layer 1, "Where do I go?"). Corrected to the first tree entry on
   // mount if the repo has no root CONTEXT.md.
@@ -121,6 +123,59 @@ export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
     });
     return () => cancelAnimationFrame(frame);
   }, []);
+
+  // 12 step 2 / 13 step 4 — OpenRouter OAuth PKCE return: the connect bounce
+  // lands back on /workspace?code=…. Exchange the code for a user-controlled
+  // key (client-side, per OpenRouter's flow), persist it into the encrypted
+  // session cookie via /api/settings (12 step 5), then open Settings to show
+  // "Connected ✓". The verifier never leaves sessionStorage.
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get("code");
+    if (!code) return;
+    router.replace("/workspace"); // strip ?code= from the URL right away
+    let verifier: string | null = null;
+    try {
+      verifier = sessionStorage.getItem(OPENROUTER_VERIFIER_KEY);
+      sessionStorage.removeItem(OPENROUTER_VERIFIER_KEY);
+    } catch {
+      return; // storage blocked — the exchange can't complete
+    }
+    if (!verifier) return; // stale or foreign code param — ignore
+    (async () => {
+      try {
+        const res = await fetch("https://openrouter.ai/api/v1/auth/keys", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            code,
+            code_verifier: verifier,
+            code_challenge_method: "S256",
+          }),
+        });
+        if (!res.ok) throw new Error(`openrouter exchange failed: ${res.status}`);
+        const body = (await res.json()) as { key?: string };
+        if (!body.key) throw new Error("openrouter exchange returned no key");
+        const save = await fetch("/api/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ openrouterKey: body.key }),
+        });
+        if (!save.ok) throw new Error(`openrouter save failed: ${save.status}`);
+      } catch {
+        // Fall through: Settings opens either way — on failure the teacher
+        // sees they're not connected and can retry the one-click flow.
+      }
+      setSettingsOpen(true);
+    })();
+  }, [router]);
+
+  // 12 step 3 — the workspace switch already happened server-side (a cookie
+  // update); re-render from the guard down and make tree + preview follow.
+  const handleRepoChanged = () => {
+    setSelectedPath("CONTEXT.md");
+    setTreeRefreshKey((k) => k + 1);
+    router.refresh();
+  };
 
   // Persist panel state (08 step 5) — a teacher who works collapsed stays collapsed.
   useEffect(() => {
@@ -288,6 +343,7 @@ export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
         onOpenChange={setSettingsOpen}
         repo={repo}
         user={user}
+        onRepoChanged={handleRepoChanged}
       />
     </TooltipProvider>
   );
