@@ -14,5 +14,5 @@ export default async function WorkspacePage() {
   const repo = await findExistingWorkspace(session);
   if (!repo) redirect("/workspace/start");
 
-  return <WorkspaceShell repo={repo} />;
+  return <WorkspaceShell repo={repo} user={session.user} />;
 }
