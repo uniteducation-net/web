@@ -1,28 +1,29 @@
 import {
   convertToModelMessages,
+  createUIMessageStream,
   createUIMessageStreamResponse,
   streamText,
   toUIMessageStream,
+  type InferUIMessageChunk,
   type UIMessage,
 } from "ai";
 import { gateway } from "@ai-sdk/gateway";
+import {
+  ONBOARDING_SYSTEM_PROMPT,
+  WRAP_UP_SUFFIX,
+  createProfileStreamFilter,
+} from "@/lib/onboarding";
+import type { OnboardingUIMessage } from "@/app/(app)/workspace/start/_lib/onboarding-chat";
 
-// TODO(06-onboarding-agent): this is the minimal streaming route 05's UI
-// needs. 06 replaces INTERIM_SYSTEM_PROMPT with ONBOARDING_SYSTEM_PROMPT
-// from src/lib/onboarding.ts, parses the ```profile block out of the reply,
-// and appends the `data-profile` UIMessage data part that lights up the
-// save button (05 step 5) — plus the cost guards (06 step 5).
-const INTERIM_SYSTEM_PROMPT = [
-  "You are interviewing an emerging teacher to personalize their teaching workspace.",
-  "Ask short, warm, plain-language questions — at most 2 per message — to learn:",
-  "their name, subject, grade level, teaching context (school type / country),",
-  "preferred tone for materials, and one goal for this year.",
-  "Never mention ICM, repos, templates, or anything technical.",
-].join(" ");
+// Cost guard (06 step 5): past this many messages the interviewer is told to
+// wrap up immediately and emit whatever partial profile it has (nulls for
+// missing fields — 07 tolerates that). Still exactly one model call.
+const MAX_MESSAGES = 24;
 
 export async function POST(req: Request) {
-  // "AI on us" via the AI Gateway free tier — anonymous-friendly, one
-  // credential. Fail with a clear error, never crash, when it is missing.
+  // "AI on us" via the AI Gateway free tier — anonymous-friendly, and this
+  // one key is the only credential this route needs. Fail with a clear
+  // error, never crash, when it is missing.
   if (!process.env.AI_GATEWAY_API_KEY) {
     return Response.json(
       {
@@ -45,14 +46,34 @@ export async function POST(req: Request) {
     );
   }
 
+  const overLong = messages.length > MAX_MESSAGES;
+
   const result = streamText({
     model: gateway("google/gemini-2.5-flash"),
-    system: INTERIM_SYSTEM_PROMPT,
+    system: overLong ? ONBOARDING_SYSTEM_PROMPT + WRAP_UP_SUFFIX : ONBOARDING_SYSTEM_PROMPT,
     maxOutputTokens: 400, // interview replies are short
     messages: await convertToModelMessages(messages),
   });
 
-  return createUIMessageStreamResponse({
-    stream: toUIMessageStream({ stream: result.stream }),
+  const stream = createUIMessageStream<OnboardingUIMessage>({
+    execute({ writer }) {
+      // Strip the ```profile block from the visible text and re-emit it as a
+      // persistent `data-profile` part (id => reconciled into message.parts),
+      // which is what lights up the save button on the client (05 step 5).
+      const filter = createProfileStreamFilter((profile) => {
+        writer.write({
+          type: "data-profile",
+          id: "profile",
+          data: { complete: true, profile },
+        });
+      });
+      writer.merge(
+        toUIMessageStream({ stream: result.stream }).pipeThrough(
+          filter,
+        ) as ReadableStream<InferUIMessageChunk<OnboardingUIMessage>>,
+      );
+    },
   });
+
+  return createUIMessageStreamResponse({ stream });
 }
