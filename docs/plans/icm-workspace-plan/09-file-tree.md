@@ -37,12 +37,14 @@ Bottom (pinned) = settings + user. Structure left, action right — never mix.
 
 - [x] Tree shows the real files of the teacher's repo, nested and sorted
 - [x] Selecting a file updates the center preview
-- [ ] Tree refreshes after agent edits
+- [x] Tree refreshes after agent edits
 - [x] Settings + user rows pinned at bottom in expanded AND icon-rail modes
-- [ ] Logout fully resets the app to anonymous onboarding
-- [ ] Expired-token path re-auths without a dead screen
+- [x] Logout fully resets the app to anonymous onboarding
+- [x] Expired-token path re-auths without a dead screen
 
-> **Status (UI-only pass, 2026-09-13):** Tree renders from mock data
-> (`_lib/mock-workspace.ts`), not GitHub — step 1's `/api/workspace/tree`
-> route and the refreshKey plumbing (step 3) pending 03/11. Logout and the
-> user dropdown exist visually but are inert (no `/api/auth/logout` call).
+> **Status (implemented, 2026-09-13):** `/api/workspace/tree` returns the real
+> repo blob list (30s in-memory cache per workspace); `file-tree.tsx` fetches,
+> nests, and renders it with skeleton/empty/401-redirect states. The shell
+> owns `treeRefreshKey` and hands `onFilesChanged` to the agent panel — 11
+> calls it after repo writes. Logout posts `/api/auth/logout`, clears
+> localStorage, and lands on `/workspace/start`.

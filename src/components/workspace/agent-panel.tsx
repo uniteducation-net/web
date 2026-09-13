@@ -37,6 +37,9 @@ interface AgentPanelProps {
   /** Onboarding conversation carried over on first visit (08 step 6). */
   initialMessages?: UIMessage[];
   onCollapse: () => void;
+  /** 09 step 3: call after repo writes so the sidebar tree re-fetches.
+   *  TODO(11-agent-panel): invoke when repo read/write tools commit. */
+  onFilesChanged?: () => void;
   className?: string;
 }
 

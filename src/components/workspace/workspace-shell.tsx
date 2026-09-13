@@ -69,6 +69,9 @@ export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [animated, setAnimated] = useState(false);
+  // 09 step 3 — refresh signal: the agent panel (11) calls onFilesChanged
+  // after writing files; bumping this key makes the sidebar's tree re-fetch.
+  const [treeRefreshKey, setTreeRefreshKey] = useState(0);
   // Onboarding continuity (08 step 6): null until read post-mount; the agent
   // panel mounts only after hydration so useChat initializes with these.
   const [initialAgentMessages, setInitialAgentMessages] = useState<
@@ -169,6 +172,7 @@ export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
             selectedPath={selectedPath}
             repo={repo}
             user={user}
+            refreshKey={treeRefreshKey}
             onSelect={(path) => {
               setSelectedPath(path);
               if (isMobile()) setSidebarOpen(false);
@@ -231,6 +235,7 @@ export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
             <AgentPanel
               initialMessages={initialAgentMessages}
               onCollapse={() => setAgentOpen(false)}
+              onFilesChanged={() => setTreeRefreshKey((k) => k + 1)}
               className="max-lg:w-full max-lg:shadow-xl"
             />
           ) : (

@@ -1,8 +1,8 @@
 "use client";
 
-// 08/09 — left sidebar: file tree (09, stubbed until the tree API is wired)
-// + pinned bottom zone with Settings and the user menu. In collapsed mode it
-// becomes the slim icon rail; account actions never require expanding it.
+// 08/09 — left sidebar: live file tree from the teacher's repo (09) + pinned
+// bottom zone with Settings and the user menu. In collapsed mode it becomes
+// the slim icon rail; account actions never require expanding it.
 // Plan: docs/plans/icm-workspace-plan/09-file-tree.md
 
 import { ExternalLink, LogOut, PanelLeftOpen, Settings } from "lucide-react";
@@ -17,7 +17,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
@@ -25,6 +24,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { FileTree } from "./file-tree";
 
 interface WorkspaceSidebarProps {
   collapsed: boolean;
@@ -34,6 +34,8 @@ interface WorkspaceSidebarProps {
   onSelect: (path: string) => void;
   onExpand: () => void;
   onOpenSettings: () => void;
+  /** Bump to re-fetch the tree — the shell bumps it on agent edits (09 step 3). */
+  refreshKey: number;
   className?: string;
 }
 
@@ -69,8 +71,11 @@ async function logout(router: ReturnType<typeof useRouter>) {
 
 export function WorkspaceSidebar({
   collapsed,
+  selectedPath,
   repo,
   user,
+  refreshKey,
+  onSelect,
   onExpand,
   onOpenSettings,
   className,
@@ -154,16 +159,11 @@ export function WorkspaceSidebar({
       </div>
 
       <ScrollArea className="flex-1">
-        {/* TODO(09-file-tree): live tree from /api/workspace/tree via
-            components/workspace/file-tree.tsx, with onSelect lifting the
-            selection to the shell. Skeletons stand in until then. */}
-        <div className="flex flex-col gap-2 p-4" aria-hidden>
-          {["w-3/4", "w-1/2", "w-2/3", "w-1/3", "w-1/2", "w-2/3"].map(
-            (width, i) => (
-              <Skeleton key={i} className={cn("h-4", width)} />
-            ),
-          )}
-        </div>
+        <FileTree
+          selectedPath={selectedPath}
+          onSelect={onSelect}
+          refreshKey={refreshKey}
+        />
       </ScrollArea>
 
       <div className="mt-auto border-t border-border">
