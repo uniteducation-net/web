@@ -42,6 +42,10 @@ export type Session = {
   byokProvider?: ByokProvider;
   byokKey?: string;
   openrouterKey?: string;
+  /** Model choice from the Settings picker (13 step 3) — validated against
+   *  the curated list for the active provider in lib/llm.ts; anything else
+   *  falls back to that provider's cheapest default. */
+  model?: string;
 };
 
 export function requireEnv(name: string): string {

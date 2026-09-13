@@ -10,7 +10,10 @@
     "dev:https": "next dev --experimental-https -p 3011"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.53",
     "@ai-sdk/gateway": "^4.0.80",
+    "@ai-sdk/google": "^4.0.69",
+    "@ai-sdk/openai": "^4.0.66",
     "@ai-sdk/react": "^4.0.102",
     "@formatjs/intl-localematcher": "^0.8.13",
     "@imagekit/next": "^2.1.5",

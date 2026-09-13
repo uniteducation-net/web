@@ -59,6 +59,10 @@ interface SettingsData {
   provider: ProviderChoice;
   byokProvider: ByokProvider | null;
   byokKeyLast4: string | null;
+  /** Effective model id + the curated choices for the active provider (13
+   *  step 3) — the list changes when the provider changes. */
+  model: string;
+  modelOptions: string[];
   fairUse: { tokens: number; limit: number };
 }
 
@@ -236,6 +240,12 @@ export function SettingsModal({
     if (!key || busy) return;
     const next = await postSettings({ byokProvider, byokKey: key });
     if (next) setByokKey(""); // never keep the plaintext around
+  }
+
+  /** 13 step 3 — the tiny curated model picker; choice lives in the cookie. */
+  async function selectModel(model: string) {
+    if (!data || model === data.model || busy) return;
+    await postSettings({ model });
   }
 
   async function disconnectOpenrouter() {
@@ -419,6 +429,29 @@ export function SettingsModal({
                 </span>
               </label>
             </RadioGroup>
+            {/* 13 step 3 — model picker: 2–3 curated cheap models for the
+                active provider; the first (cheapest) is the default. */}
+            {data && data.modelOptions.length > 0 && (
+              <div className="flex items-center gap-2 pl-6">
+                <span className="text-xs text-muted-foreground">Model</span>
+                <Select
+                  value={data.model}
+                  onValueChange={(value) => void selectModel(value)}
+                  disabled={busy}
+                >
+                  <SelectTrigger className="w-56" size="sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {data.modelOptions.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        <span className="font-mono text-xs">{option}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             {error && <p className="text-xs text-destructive">{error}</p>}
           </section>
 

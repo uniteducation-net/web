@@ -13,6 +13,11 @@ import {
   getFairUse,
   FREE_TIER_DAILY_TOKEN_LIMIT,
 } from "@/lib/fair-use";
+import {
+  activeProvider,
+  modelOptionsFor,
+  resolveModelId,
+} from "@/lib/llm";
 
 const postSchema = z.union([
   z.object({
@@ -22,6 +27,7 @@ const postSchema = z.union([
   z.object({ clearByok: z.literal(true) }),
   z.object({ openrouterKey: z.string().min(8).max(512) }),
   z.object({ clearOpenrouter: z.literal(true) }),
+  z.object({ model: z.string().min(1).max(200) }),
   z.object({
     repo: z.object({
       owner: z.string().min(1).max(100),
@@ -35,17 +41,16 @@ const postSchema = z.union([
  * The client-safe settings view. `provider` mirrors the resolution order in
  * lib/llm.ts (13): an OpenRouter key wins over a BYOK key, which wins over
  * the gateway free tier. Keys are reduced to their last 4 characters.
+ * `model`/`modelOptions` feed the tiny curated picker (13 step 3).
  */
 async function settingsView(session: Session) {
   const fairUse = await getFairUse();
   return {
-    provider: session.openrouterKey
-      ? ("openrouter" as const)
-      : session.byokKey
-        ? ("byok" as const)
-        : ("gateway" as const),
+    provider: activeProvider(session),
     byokProvider: session.byokKey ? (session.byokProvider ?? null) : null,
     byokKeyLast4: session.byokKey ? session.byokKey.slice(-4) : null,
+    model: resolveModelId(session),
+    modelOptions: modelOptionsFor(session),
     fairUse: { tokens: fairUse.tokens, limit: FREE_TIER_DAILY_TOKEN_LIMIT },
   };
 }
@@ -113,9 +118,22 @@ export async function POST(req: Request) {
     return NextResponse.json(await settingsView({ ...session, repo: match }));
   }
 
+  if ("model" in body) {
+    // 13 step 3 — the picker is curated: only models from the active
+    // provider's tiny list (lib/llm.ts) are accepted.
+    if (!modelOptionsFor(session).includes(body.model)) {
+      return NextResponse.json({ error: "unknown_model" }, { status: 400 });
+    }
+    const next: Session = { ...session, model: body.model };
+    await setSession(next);
+    return NextResponse.json(await settingsView(next));
+  }
+
   // Provider mutations. Saving one key clears the other so the radio choice
   // in Settings maps 1:1 onto what /api/agent uses (13's resolution order).
+  // The model choice is reset too — curated lists differ per provider.
   const next: Session = { ...session };
+  delete next.model;
   if ("byokKey" in body) {
     next.byokProvider = body.byokProvider;
     next.byokKey = body.byokKey;

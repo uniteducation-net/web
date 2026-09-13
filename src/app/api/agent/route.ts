@@ -17,7 +17,16 @@ import {
   type InferUIMessageChunk,
 } from "ai";
 import { getSession } from "@/lib/session";
-import { resolveModel } from "@/lib/llm";
+import {
+  activeProvider,
+  friendlyProviderError,
+  GATEWAY_MAX_OUTPUT_TOKENS,
+  resolveModel,
+} from "@/lib/llm";
+import {
+  FREE_TIER_DAILY_TOKEN_LIMIT,
+  getFairUse,
+} from "@/lib/fair-use";
 import {
   AGENT_MAX_STEPS,
   AGENT_SYSTEM_PROMPT,
@@ -34,11 +43,12 @@ export async function POST(req: Request) {
     // The /workspace guard (04) normally prevents this state entirely.
     return Response.json({ error: "no_workspace" }, { status: 409 });
   }
-  // "AI on us" via the AI Gateway free tier — fail with a clear error, never
-  // crash, when the key is missing.
-  // TODO(13-llm-provider): BYOK / OpenRouter sessions won't need this key —
-  // the guard moves into resolveModel's gateway branch.
-  if (!process.env.AI_GATEWAY_API_KEY) {
+
+  // 13 — provider resolution. BYOK/OpenRouter sessions spend their own keys;
+  // the gateway free tier ("AI on us") is the only path that needs our key
+  // and the fair-use guard.
+  const onGateway = activeProvider(session) === "gateway";
+  if (onGateway && !process.env.AI_GATEWAY_API_KEY) {
     return Response.json(
       {
         error:
@@ -46,6 +56,25 @@ export async function POST(req: Request) {
       },
       { status: 503 },
     );
+  }
+
+  // 13 step 2 — daily free-tier ceiling, checked before the call. A friendly
+  // stream error (not an HTTP error) so the chat panel renders it inline and
+  // the conversation stays intact; Settings ⚙ is the way out.
+  if (onGateway) {
+    const fairUse = await getFairUse();
+    if (fairUse.tokens >= FREE_TIER_DAILY_TOKEN_LIMIT) {
+      const stream = createUIMessageStream<AgentUIMessage>({
+        execute({ writer }) {
+          writer.write({
+            type: "error",
+            errorText:
+              "Free daily limit reached — add your own key in Settings ⚙ to keep going.",
+          });
+        },
+      });
+      return createUIMessageStreamResponse({ stream });
+    }
   }
 
   let messages: AgentUIMessage[];
@@ -63,6 +92,9 @@ export async function POST(req: Request) {
   const { installationId, repo } = session;
 
   const stream = createUIMessageStream<AgentUIMessage>({
+    // 13 step 5 — the same friendly mapping covers errors thrown inside
+    // execute (the merged model stream has its own onError below).
+    onError: friendlyProviderError,
     async execute({ writer }) {
       const tools = createWorkspaceTools({
         installationId,
@@ -89,10 +121,19 @@ export async function POST(req: Request) {
         }),
         tools,
         stopWhen: isStepCount(AGENT_MAX_STEPS),
+        // 13 step 2 — hard output cap on the free tier only; BYOK/OpenRouter
+        // spend is the teacher's own.
+        ...(onGateway ? { maxOutputTokens: GATEWAY_MAX_OUTPUT_TOKENS } : {}),
       });
 
       writer.merge(
-        toUIMessageStream({ stream: result.stream, tools }) as ReadableStream<
+        toUIMessageStream({
+          stream: result.stream,
+          tools,
+          // 13 step 5 — friendly one-liners; provider error bodies never
+          // reach the UI.
+          onError: friendlyProviderError,
+        }) as ReadableStream<
           InferUIMessageChunk<AgentUIMessage>
         >,
       );
@@ -101,8 +142,8 @@ export async function POST(req: Request) {
       // can't be set once streaming starts, so the usage travels as a
       // transient `data-usage` part; the panel posts it to /api/settings,
       // which updates the `fu` counter cookie. Only gateway sessions count —
-      // BYOK/OpenRouter spend is the user's own. 13 enforces the ceiling.
-      if (!session.openrouterKey && !session.byokKey) {
+      // BYOK/OpenRouter spend is the user's own.
+      if (onGateway) {
         const usage = await result.usage;
         if (usage.totalTokens) {
           writer.write({
