@@ -1,6 +1,13 @@
-// TODO(02-auth): Clear the session cookie and redirect to /workspace/start.
+// Logout: clear OUR encrypted session cookie.
+// NOTE: this only clears our cookie. Teachers who want to fully revoke access
+// uninstall / revoke the app in GitHub → Settings → Applications → GitHub Apps
+// (https://github.com/settings/installations). The UI links there (12).
+// Plan: 02-auth.md step 5.
+
 import { NextResponse } from "next/server";
+import { clearSession } from "@/lib/session";
 
 export async function POST() {
-  return NextResponse.json({ error: "Not implemented" }, { status: 501 });
+  await clearSession();
+  return NextResponse.json({ ok: true });
 }
