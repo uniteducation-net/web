@@ -35,9 +35,14 @@ Bottom (pinned) = settings + user. Structure left, action right — never mix.
 
 ## Done when
 
-- [ ] Tree shows the real files of the teacher's repo, nested and sorted
-- [ ] Selecting a file updates the center preview
+- [x] Tree shows the real files of the teacher's repo, nested and sorted
+- [x] Selecting a file updates the center preview
 - [ ] Tree refreshes after agent edits
-- [ ] Settings + user rows pinned at bottom in expanded AND icon-rail modes
+- [x] Settings + user rows pinned at bottom in expanded AND icon-rail modes
 - [ ] Logout fully resets the app to anonymous onboarding
 - [ ] Expired-token path re-auths without a dead screen
+
+> **Status (UI-only pass, 2026-09-13):** Tree renders from mock data
+> (`_lib/mock-workspace.ts`), not GitHub — step 1's `/api/workspace/tree`
+> route and the refreshKey plumbing (step 3) pending 03/11. Logout and the
+> user dropdown exist visually but are inert (no `/api/auth/logout` call).

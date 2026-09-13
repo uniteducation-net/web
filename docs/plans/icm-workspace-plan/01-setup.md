@@ -19,12 +19,18 @@ Prerequisites: none. Do this first.
    ```
    When prompted, install at minimum: `conversation`, `message`, `prompt-input`, `loader`, `suggestion`, `response`.
 
-3. **Create the GitHub OAuth App** (manual, human does this once):
-   - GitHub → Settings → Developer settings → OAuth Apps → New OAuth App
+3. **Create the GitHub App** (manual, human does this once — we use a GitHub
+   App, NOT an OAuth App; fine-grained permissions, see 99 issue 1):
+   - GitHub → Settings → Developer settings → **GitHub Apps** → New GitHub App
    - Homepage URL: `https://<your-domain>`
-   - Authorization callback URL: `https://<your-domain>/api/auth/github/callback`
-   - Also add `https://localhost:3011/api/auth/github/callback` as a second OAuth App for local dev (GitHub allows one callback per app — use two apps, dev + prod).
-   - Requested scope (set in code later): `repo` (needed to create + read + write private repos).
+   - Callback URL: `https://<your-domain>/api/auth/github/callback`
+   - **Post installation → Setup URL**: `https://<your-domain>/api/auth/github/installed` (leave "Redirect on update" unchecked)
+   - Do NOT enable "Request user authorization (OAuth) during installation" — we chain authorize → install ourselves so we keep control of `redirect_uri` and CSRF `state` (02).
+   - Webhook: uncheck "Active" (v1 needs no webhooks).
+   - **Repository permissions**: `Contents: Read and write` (tree/read/write files), `Administration: Read and write` (required to create the repo from the template). `Metadata: Read` is added automatically. Nothing else.
+   - "Where can this GitHub App be installed?" → **Any account**.
+   - After saving: note the **App ID**, generate a **private key** (downloads a `.pem` — base64 it for env), and copy the **Client ID** + generate a **Client secret** (used for the OAuth web flow side of the app).
+   - Create a SECOND GitHub App for local dev (callback + setup URL on `http://localhost:3000`) — dev and prod stay separate apps.
 
 4. **Create the template repo** (manual, human does this once):
    - Create a new repo under the NGO's GitHub org, e.g. `icm-teacher-workspace-template`.
@@ -34,8 +40,11 @@ Prerequisites: none. Do this first.
 
 5. **Set environment variables** (`.env.local` for dev, Vercel dashboard for prod):
    ```
-   GITHUB_CLIENT_ID=...
-   GITHUB_CLIENT_SECRET=...
+   GITHUB_APP_ID=...
+   GITHUB_APP_SLUG=...                        # url-name of the app, for /apps/<slug>/installations/new
+   GITHUB_APP_PRIVATE_KEY=...                 # .pem contents, base64-encoded (single line)
+   GITHUB_CLIENT_ID=...                       # the GitHub App's client id (OAuth web flow)
+   GITHUB_CLIENT_SECRET=...                   # the GitHub App's client secret
    SESSION_SECRET=<32-byte-random-hex>        # openssl rand -hex 32
    AI_GATEWAY_API_KEY=...                     # from Vercel dashboard → AI Gateway
    TEMPLATE_REPO=<ngo-org>/icm-teacher-workspace-template
@@ -51,6 +60,7 @@ Prerequisites: none. Do this first.
      api/
        auth/github/route.ts
        auth/github/callback/route.ts
+       auth/github/installed/route.ts
        auth/logout/route.ts
        chat/route.ts
        agent/route.ts
@@ -71,7 +81,7 @@ Prerequisites: none. Do this first.
 ## Done when
 
 - [ ] `npx ai-elements@latest` components exist under `components/ai-elements/`
-- [ ] All 6 env vars are set in `.env.local`
-- [ ] GitHub OAuth App created (dev + prod), callback URLs noted
+- [ ] All 9 env vars are set in `.env.local`
+- [ ] GitHub App created (dev + prod) with Contents RW + Administration RW, callback + setup URLs noted, private key downloaded
 - [ ] Template repo exists, is marked as "Template repository", contains `{{PLACEHOLDER}}` tokens
 - [ ] Folder skeleton created, `npm run dev` still boots cleanly

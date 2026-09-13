@@ -10,12 +10,12 @@ own GitHub account.
 1. **`app/api/workspace/create/route.ts`** (POST):
    - Require session → 401 if missing.
    - Body: `{ profile: TeacherProfile }` (validate with the zod schema from 06).
-   - Call `findExistingWorkspace` first — if one exists, return it immediately (idempotent; double-clicks and refreshes must never create duplicates).
-   - Call `createWorkspaceFromTemplate(token, 'icm-workspace')`.
+   - Call `findExistingWorkspace(session)` first — if one exists, return it immediately (idempotent; double-clicks and refreshes must never create duplicates).
+   - Call `createWorkspaceFromTemplate(session, 'united-workspace')` (user token) → then the installation-coverage check (03 step 8) before proceeding.
 
-2. **Fetch template contents**: `getTree` + `readFile` on the NEW repo (it
-   already contains a copy of the template). Collect every `.md` file's
-   content.
+2. **Fetch template contents**: `getTree` + `readFile` on the NEW repo with the
+   **installation token** (it already contains a copy of the template).
+   Collect every `.md` file's content.
 
 3. **Personalize in one LLM pass** (`lib/onboarding.ts`):
    - One `generateText` call (Gateway, same cheap model, `maxOutputTokens: 4000`).
@@ -23,10 +23,10 @@ own GitHub account.
    - Instruction: replace every `{{PLACEHOLDER}}` with values derived from the profile; adapt `_config/` voice/tone files to the requested tone; fill `setup/questionnaire.md` with the answers as the record of what the teacher said. Do NOT restructure folders, do NOT rename files, do NOT touch stage numbering.
    - Output format: strict JSON array `[{ "path": "…", "content": "…" }]`. Parse with zod; on parse failure, fall back to simple string replacement of `{{PLACEHOLDER}}` tokens (never leave a raw `{{` in a teacher's repo).
 
-4. **Commit**: `commitMany(token, owner, repo, personalizedFiles, 'Personalize workspace from onboarding')` — ONE commit.
+4. **Commit**: `commitMany(installationId, owner, repo, personalizedFiles, 'Personalize workspace from onboarding')` — ONE commit (installation token; authored by the app bot).
 
 5. **Respond** `{ owner, repo, url }` and the client navigates to
-   `/workspace` (state machine from 04 now shows the shell). Include the
+   `/workspace` (the guard from 04 now finds the repo and shows the shell). Include the
    repo URL so the UI can show "View on GitHub ↗" later.
 
 6. **Failure paths** (all must show a friendly retry, never a stack trace):

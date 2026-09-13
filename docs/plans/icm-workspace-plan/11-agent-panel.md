@@ -71,8 +71,19 @@ hands. Chat on the right, edits land in the repo, UI refreshes.
 - [ ] "Read file X" → agent reads and summarizes correctly
 - [ ] "Rewrite Y in a friendlier tone" → file changes in the repo, preview + tree refresh, commit visible on GitHub
 - [ ] Running a stage: agent follows that stage's `CONTEXT.md` and writes to `output/`
-- [ ] Tool activity visible inline; no raw JSON/base64 ever shown
+- [x] Tool activity visible inline; no raw JSON/base64 ever shown
 - [ ] "Save this chat" writes a readable markdown transcript to `chats/` in the repo; tree refreshes and the file opens in the preview
 - [ ] Two saves within the same minute produce two distinct files (random suffix)
 - [ ] Agent stops after ≤8 tool steps; no infinite loops
-- [ ] Empty-chat suggestions render and work
+- [x] Empty-chat suggestions render and work
+
+> **Status (UI-only pass, 2026-09-13):** Panel renders a static mock
+> conversation with inline tool-activity rows; "New chat" clears to the empty
+> state where the 3 suggestions appear — clicking one submits locally and gets
+> one canned reply after a short delay. "Save this chat" button renders
+> disabled. No `useChat`, no `/api/agent` route, no tools, no files-changed
+> refresh — pending 03/13. AI Elements `Conversation`/`Message`/
+> `PromptInput`/`Suggestion` are installed; `Tool` was removed for lint
+> (re-add with `pnpm dlx shadcn add
+> https://elements.ai-sdk.dev/api/registry/tool.json` when wiring the real
+> stream).

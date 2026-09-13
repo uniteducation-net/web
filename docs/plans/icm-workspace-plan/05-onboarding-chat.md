@@ -1,13 +1,16 @@
-# 05 — Onboarding screen: centered chat UI
+# 05 — Onboarding screen: centered chat UI at `/workspace/start`
 
-Prerequisites: 01 (AI Elements installed), 04 (screen is rendered).
+Prerequisites: 01 (AI Elements installed), 04 (route + guard exist).
 
-The first thing a teacher ever sees. Extremely simple and clean: logo,
-one chat, nothing else.
+The first thing a teacher ever sees, served at `/workspace/start` (04).
+Extremely simple and clean: logo, one chat, nothing else.
 
 ## Steps
 
-1. **`components/onboarding/onboarding-screen.tsx`** (`'use client'`):
+1. **`app/(app)/workspace/start/_components/onboarding-screen.tsx`** (`'use client'`)
+   — co-located under the route (route-specific per project rules); the page
+   itself (`start/page.tsx`) stays a thin Server Component that passes the
+   `authenticated` flag (04 step 3):
    - Layout: full-height flex column, centered, `max-w-2xl mx-auto`.
    - Top: small logo + one-line tagline ("Your personal teaching workspace, built in a 2-minute chat"). Nothing else. No menus, no links.
    - Middle: AI Elements `<Conversation>` + `<Message>` list.
@@ -32,9 +35,10 @@ one chat, nothing else.
    chat" (11, steps 6–7).
 
 4. **The save button**: render a prominent button BELOW the input (or as a
-   sticky suggestion chip) whose label depends on auth:
-   - Logged out → **"Save my workspace — connect GitHub"** → `window.location = '/api/auth/github?next=/workspace'`
-   - Logged in, no repo → **"Create my workspace"** → POST `/api/workspace/create` with the conversation's extracted profile (07), then hard-navigate to `/workspace` (state machine now renders the shell).
+   sticky suggestion chip) whose label depends on auth (the `authenticated`
+   flag from the page):
+   - Logged out → **"Save my workspace — connect GitHub"** → `window.location = '/api/auth/github?next=/workspace/start'` (returns here after the OAuth round-trip, 04 step 4)
+   - Logged in, no repo → **"Create my workspace"** → POST `/api/workspace/create` with the conversation's extracted profile (07), then hard-navigate to `/workspace` (the guard now finds the repo and renders the shell).
    - Only enable it once the interviewer has collected the required profile fields (06 signals this — see step 5).
 
 5. **Readiness signal**: the chat API response includes a UIMessage data part
@@ -54,3 +58,11 @@ one chat, nothing else.
 - [ ] OAuth round-trip returns to the SAME conversation, button now says "Create my workspace"
 - [ ] Button disabled until the `data-profile` part with `complete: true` arrives
 - [ ] Mobile: works at 375px width without horizontal scroll
+
+> **Status (UI-only pass, 2026-09-13):** Screen built at
+> `src/app/(app)/workspace/start/` with a scripted mock interview
+> (`_lib/mock-onboarding.ts`) — no `/api/chat` yet, so streaming stays
+> unchecked. localStorage draft persistence works; the save button enables
+> after the mock profile completes and, in preview mode, navigates to
+> `/workspace/demo` instead of OAuth. `authenticated` is hardcoded `false`
+> in the page until 04 wires the session.

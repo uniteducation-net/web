@@ -1,34 +1,13 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Inter, Nunito, Poppins } from "next/font/google";
 import { notFound } from "next/navigation";
 import { CookieBanner } from "@/components/cookie-banner";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { ImageKitClientProvider } from "@/components/imagekit-provider";
 import { hasLocale, i18n } from "@/i18n-config";
+import { fontVariables } from "@/lib/fonts";
 import { getDictionary } from "./dictionaries";
-import "../globals.css";
-
-const poppins = Poppins({
-  variable: "--font-poppins",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
-const nunito = Nunito({
-  variable: "--font-nunito",
-  subsets: ["latin"],
-});
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import "../../globals.css";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -51,7 +30,7 @@ export default async function RootLayout({
   return (
     <html
       lang={lang}
-      className={`${poppins.variable} ${nunito.variable} ${inter.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${fontVariables} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <ImageKitClientProvider>

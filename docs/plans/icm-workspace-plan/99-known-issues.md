@@ -4,18 +4,27 @@ Companion to plans 00–14. Severity: 🔴 fix before building · 🟠 fix durin
 
 ---
 
-## 🔴 1. GitHub `repo` scope is too broad — trust killer
+## ✅ 1. GitHub `repo` scope is too broad — **DECIDED: GitHub App**
 
-**Problem:** Plan 02 requests OAuth scope `repo` = read/write access to ALL of a
-teacher's repos, public and private. GitHub's consent screen shows this
-prominently. Privacy-conscious teachers (our exact audience) will bounce.
+**Problem (original):** Plan 02 requested OAuth scope `repo` = read/write access
+to ALL of a teacher's repos, public and private. GitHub's consent screen shows
+this prominently. Privacy-conscious teachers (our exact audience) would bounce.
 
-**Fix:** Use a **GitHub App with fine-grained permissions** instead of an OAuth App:
-- Permission: `Contents: read & write`, restricted to **selected repositories only**
-- Consent screen shows "this app can only access repos you choose" — far friendlier
-- Flow changes: user installs the app + creates/selects the workspace repo;
-  we get an installation token instead of a user OAuth token
-- **Affects:** 01 (step 3), 02 (whole flow), 03 (token type — installation tokens expire hourly, add refresh logic)
+**Decision (2026-09-13, folded into plans 00/01/02/03/07/12/14):** GitHub App
+with fine-grained permissions instead of an OAuth App:
+- Permissions: `Contents: read & write` + `Administration: read & write` (Admin
+  is required for template-repo generation into a personal account), nothing else
+- Auth chain: OAuth web flow (user access token, 8h + 6-month refresh token,
+  rotated on refresh) → app installation on the user's personal account
+- Repo creation uses the USER token (installation tokens can't create repos in
+  personal accounts — serverToServer is orgs-only, confirmed in GitHub docs +
+  community); all steady-state repo ops use the INSTALLATION token minted
+  on demand from the app private key (1h TTL, no refresh in the cookie)
+- Residual trust note: install defaults to "All repositories" (needed so the
+  repo we create after install is covered). The consent screen still shows
+  exact per-permission access, tokens are short-lived, and access is revocable
+  per-app — strictly better than `repo` scope. Safety net for "Only select
+  repositories" installers: coverage check + fix link (03 step 8).
 
 ## 🔴 2. Session cookie can exceed the 4KB browser limit
 
@@ -25,7 +34,7 @@ OpenRouter key into ONE encrypted cookie. JWE encryption inflates size
 **silently fails to set** and users get logged out at random.
 
 **Fix:**
-- Keep the session cookie minimal: GitHub token + user login only (~600 bytes encrypted)
+- Keep the session cookie minimal: user info + user token pair + `installationId` only (still well under 1KB encrypted; repo ops use installation tokens minted on demand, never stored)
 - Store BYOK/OpenRouter keys in a SEPARATE cookie (`provider-keys`)
 - Never store chat state, settings, or profile data in cookies
 - **Affects:** 02 (step 1), 12 (step 5), 13 (step 4)
@@ -125,7 +134,7 @@ obligation, potentially a legal problem for EU schools (GDPR).
 
 | # | Issue | Severity | Fix effort |
 |---|---|---|---|
-| 1 | Broad `repo` OAuth scope | 🔴 | Medium (GitHub App rework) |
+| 1 | Broad `repo` OAuth scope | ✅ decided | GitHub App + fine-grained perms (00/01/02/03) |
 | 2 | 4KB cookie overflow | 🔴 | Small (split cookies) |
 | 3 | Anonymous endpoint abuse | 🔴 | Small (WAF config) |
 | 4 | Fragile repo detection | 🟠 | Small |

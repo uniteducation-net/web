@@ -39,8 +39,13 @@ No terminal. Both side panels collapsible.
 
 ## Done when
 
-- [ ] Three columns render; center never disappears
-- [ ] Both panels collapse/expand smoothly, shortcuts work, state persists across reload
-- [ ] Collapsed sidebar still offers settings + user access via the icon rail
-- [ ] Mobile: panels overlay with backdrop; everything usable at 375px
+- [x] Three columns render; center never disappears
+- [x] Both panels collapse/expand smoothly, shortcuts work, state persists across reload
+- [x] Collapsed sidebar still offers settings + user access via the icon rail
+- [x] Mobile: panels overlay with backdrop; everything usable at 375px
 - [ ] First visit after onboarding: previous conversation appears in the agent panel
+
+> **Status (UI-only pass, 2026-09-13):** All shell mechanics done with mock
+> data — `src/app/(app)/workspace/demo/_components/workspace-shell.tsx`. Onboarding
+> continuity (step 6) pending 05; the shell currently receives no `repo` prop
+> (step 1's server wiring pending 02/03).

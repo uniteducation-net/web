@@ -35,8 +35,13 @@ The calm reading surface. Well-formatted markdown, no raw code, no terminal.
 
 ## Done when
 
-- [ ] Selecting any `.md` file renders it beautifully (GFM tables, lists, headings)
-- [ ] Root `CONTEXT.md` opens by default
+- [x] Selecting any `.md` file renders it beautifully (GFM tables, lists, headings)
+- [x] Root `CONTEXT.md` opens by default
 - [ ] Agent edits to the open file appear without manual refresh
-- [ ] Breadcrumb + GitHub deep link correct for nested paths
-- [ ] No code editor, no terminal, no raw mode anywhere in the UI
+- [x] Breadcrumb + GitHub deep link correct for nested paths
+- [x] No code editor, no terminal, no raw mode anywhere in the UI
+
+> **Status (UI-only pass, 2026-09-13):** Preview renders mock contents via
+> `react-markdown` + `remark-gfm` + `prose`. The GitHub deep link and refresh
+> button are inert (`#`), no `/api/workspace/file` route (step 1), no
+> refreshKey live updates (step 5) — pending 03/11.

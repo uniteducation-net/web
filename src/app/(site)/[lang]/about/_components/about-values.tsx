@@ -43,7 +43,7 @@ interface FeatureIconListProps {
   className?: string;
 }
 
-interface AboutValuesProps extends FeatureIconListProps {}
+type AboutValuesProps = FeatureIconListProps;
 type Props = Partial<AboutValuesProps>;
 
 const defaultProps: AboutValuesProps = {
