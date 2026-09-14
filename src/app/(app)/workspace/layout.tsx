@@ -5,6 +5,8 @@ import "../../globals.css";
 export const metadata: Metadata = {
   title: "Workspace — UnitEd",
   description: "Your personal ICM teaching workspace.",
+  // Private authenticated area — never indexable.
+  robots: { index: false, follow: false },
 };
 
 export default function WorkspaceRootLayout({

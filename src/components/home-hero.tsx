@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Button } from "@/components/ui/button";
+import type { Locale } from "@/i18n-config";
 import { cn } from "@/lib/utils";
 
 interface HomeHeroDict {
@@ -20,12 +21,17 @@ interface HomeHeroProps {
   className?: string;
   /** Localized hero copy, from the dictionary. */
   dict: HomeHeroDict;
+  lang: Locale;
 }
 
-const VIDEO_ID = "7BU9iHbUm8M";
+const VIDEO_IDS: Record<Locale, string> = {
+  en: "7BU9iHbUm8M",
+  de: "_6TsJERNjjk",
+};
 
-const HomeHero = ({ className, dict }: HomeHeroProps) => {
+const HomeHero = ({ className, dict, lang }: HomeHeroProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
+  const videoId = VIDEO_IDS[lang] ?? VIDEO_IDS.en;
 
   return (
     <section
@@ -69,7 +75,7 @@ const HomeHero = ({ className, dict }: HomeHeroProps) => {
                 <div className="relative size-full">
                   {isPlaying ? (
                     <iframe
-                      src={`https://www.youtube-nocookie.com/embed/${VIDEO_ID}?autoplay=1&rel=0`}
+                      src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`}
                       title={dict.videoTitle}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                       referrerPolicy="strict-origin-when-cross-origin"
@@ -81,7 +87,7 @@ const HomeHero = ({ className, dict }: HomeHeroProps) => {
                       {/* Facade: only the cover shows until the user clicks play */}
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={`https://i.ytimg.com/vi/${VIDEO_ID}/maxresdefault.jpg`}
+                        src={`https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`}
                         alt=""
                         loading="lazy"
                         className="size-full rounded-t-sm object-cover object-center"

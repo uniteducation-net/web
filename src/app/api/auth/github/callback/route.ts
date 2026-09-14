@@ -6,9 +6,13 @@
 // step 3. IMPORTANT: no repo is created here — that happens in 07.
 
 import { NextRequest, NextResponse } from "next/server";
-import { OAUTH_STATE_COOKIE, requireEnv, setSession } from "@/lib/session";
-
-type OAuthState = { state: string; verifier: string; next: string };
+import {
+  OAUTH_STATE_COOKIE,
+  requireEnv,
+  sanitizeNext,
+  setSession,
+  unsealOAuthState,
+} from "@/lib/session";
 
 type TokenResponse = {
   access_token?: string;
@@ -36,12 +40,9 @@ export async function GET(request: NextRequest) {
 
   const rawState = request.cookies.get(OAUTH_STATE_COOKIE)?.value;
   if (!rawState) return badRequest("Missing oauth_state cookie.");
-  let oauthState: OAuthState;
-  try {
-    oauthState = JSON.parse(rawState) as OAuthState;
-  } catch {
-    return badRequest("Corrupt oauth_state cookie.");
-  }
+  // The cookie is signed (02 step 2) — a forged or expired one never parses.
+  const oauthState = await unsealOAuthState(rawState);
+  if (!oauthState) return badRequest("Corrupt oauth_state cookie.");
   if (oauthState.state !== state) return badRequest("State mismatch.");
 
   let clientId: string;
@@ -127,8 +128,9 @@ export async function GET(request: NextRequest) {
   });
 
   const destination = installationId
-    ? // Already installed → continue where the flow started.
-      new URL(oauthState.next, appUrl)
+    ? // Already installed → continue where the flow started. Re-sanitized
+      // here too (defense in depth) — never redirect off-site.
+      new URL(sanitizeNext(oauthState.next), appUrl)
     : // Not installed → one click on GitHub's install screen (personal
       // account, "All repositories" pre-selected). GitHub then bounces to
       // the app's Setup URL = /api/auth/github/installed.

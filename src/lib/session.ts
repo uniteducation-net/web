@@ -6,7 +6,7 @@
 // Server-only module — never import from client components.
 
 import { cookies } from "next/headers";
-import { EncryptJWT, jwtDecrypt } from "jose";
+import { EncryptJWT, SignJWT, jwtDecrypt, jwtVerify } from "jose";
 
 export const SESSION_COOKIE = "session";
 /** Short-lived cookie carrying { state, verifier, next } through the OAuth bounce. */
@@ -102,6 +102,58 @@ export async function setSession(data: Session): Promise<void> {
 export async function clearSession(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE);
+}
+
+// ---------------------------------------------------------------------------
+// OAuth bounce state. The short-lived `oauth_state` cookie carries
+// { state, verifier, next } through the GitHub authorize redirect. It is
+// SIGNED (HS256, same SESSION_SECRET) so a planted cookie — cookie tossing
+// from a sibling subdomain, say — fails verification instead of passing a
+// forged state/verifier/next into the callback.
+// ---------------------------------------------------------------------------
+
+export type OAuthStatePayload = {
+  state: string;
+  verifier: string;
+  next: string;
+};
+
+const OAUTH_STATE_MAX_AGE_S = 60 * 30; // 30 min — matches the cookie maxAge
+
+/** Only allow same-site paths — never an open redirect. Applied when the
+ *  flow starts AND again in the callback (defense in depth). */
+export function sanitizeNext(next: string | null | undefined): string {
+  return next && next.startsWith("/") && !next.startsWith("//")
+    ? next
+    : "/workspace";
+}
+
+export async function sealOAuthState(data: OAuthStatePayload): Promise<string> {
+  return new SignJWT({ ...data })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime(`${OAUTH_STATE_MAX_AGE_S}s`)
+    .sign(sessionKey());
+}
+
+/** Returns the verified payload, or null if absent/invalid/expired. */
+export async function unsealOAuthState(
+  raw: string,
+): Promise<OAuthStatePayload | null> {
+  try {
+    const { payload } = await jwtVerify(raw, sessionKey());
+    const { state, verifier, next } = payload;
+    if (
+      typeof state !== "string" ||
+      typeof verifier !== "string" ||
+      typeof next !== "string"
+    ) {
+      return null;
+    }
+    return { state, verifier, next };
+  } catch {
+    return null;
+  }
 }
 
 type RefreshResponse = {

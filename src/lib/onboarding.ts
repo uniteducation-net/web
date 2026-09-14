@@ -13,7 +13,9 @@ import { z } from "zod";
 // `.catch(null)` keeps one bad field from sinking an otherwise good profile.
 // ---------------------------------------------------------------------------
 
-const profileField = z.string().min(1).nullable().catch(null);
+// `.max(500)` caps what flows into the committed markdown and the 07
+// provisioning prompt (security review 2026-09-14).
+const profileField = z.string().min(1).max(500).nullable().catch(null);
 
 export const teacherProfileSchema = z.object({
   name: profileField,

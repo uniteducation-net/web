@@ -78,6 +78,12 @@ export async function POST(req: Request) {
     );
   }
 
+  // Cheap insurance against unbounded transcripts (self-DoS only — the file
+  // lands in the teacher's own repo, but keep commits sane).
+  if (messages.length > 500 || JSON.stringify(messages).length > 500_000) {
+    return NextResponse.json({ error: "chat_too_large" }, { status: 413 });
+  }
+
   const now = new Date();
   const transcript = formatTranscript(messages, now);
   if (!transcript.includes("## ")) {

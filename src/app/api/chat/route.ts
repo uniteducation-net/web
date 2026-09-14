@@ -20,6 +20,13 @@ import type { OnboardingUIMessage } from "@/app/(app)/workspace/start/_lib/onboa
 // missing fields — 07 tolerates that). Still exactly one model call.
 const MAX_MESSAGES = 24;
 
+// Abuse guards (security review 2026-09-14): this route is anonymous and
+// bills the NGO's AI Gateway key, and both message count and content are
+// fully client-controlled — so cap them hard, independent of the wrap-up
+// UX above. The Vercel WAF rate limit (14 step 2) is the per-IP layer.
+const HARD_MAX_MESSAGES = 64;
+const MAX_INPUT_CHARS = 64_000; // ≈16k tokens worst case, way past a real interview
+
 export async function POST(req: Request) {
   // "AI on us" via the AI Gateway free tier — anonymous-friendly, and this
   // one key is the only credential this route needs. Fail with a clear
@@ -43,6 +50,19 @@ export async function POST(req: Request) {
     return Response.json(
       { error: "Bad request: expected { messages }." },
       { status: 400 },
+    );
+  }
+
+  if (messages.length > HARD_MAX_MESSAGES) {
+    return Response.json(
+      { error: "Too many messages — start a new conversation." },
+      { status: 400 },
+    );
+  }
+  if (JSON.stringify(messages).length > MAX_INPUT_CHARS) {
+    return Response.json(
+      { error: "Conversation too large." },
+      { status: 413 },
     );
   }
 

@@ -5,18 +5,16 @@
 
 import { randomBytes, createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { OAUTH_STATE_COOKIE, requireEnv } from "@/lib/session";
+import {
+  OAUTH_STATE_COOKIE,
+  requireEnv,
+  sanitizeNext,
+  sealOAuthState,
+} from "@/lib/session";
 const OAUTH_STATE_MAX_AGE = 60 * 30; // 30 min — fresh-account signup + email
 // verification easily exceeds 10 min.
 
 const base64url = (buf: Buffer) => buf.toString("base64url");
-
-function sanitizeNext(next: string | null): string {
-  // Only allow same-site paths — never an open redirect.
-  return next && next.startsWith("/") && !next.startsWith("//")
-    ? next
-    : "/workspace";
-}
 
 export async function GET(request: NextRequest) {
   let clientId: string;
@@ -49,9 +47,11 @@ export async function GET(request: NextRequest) {
   authorizeUrl.searchParams.set("allow_signup", "true");
 
   const response = NextResponse.redirect(authorizeUrl);
+  // Signed (lib/session.ts#sealOAuthState) so a planted cookie can't smuggle
+  // a forged state/verifier/next into the callback.
   response.cookies.set(
     OAUTH_STATE_COOKIE,
-    JSON.stringify({ state, verifier, next }),
+    await sealOAuthState({ state, verifier, next }),
     {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

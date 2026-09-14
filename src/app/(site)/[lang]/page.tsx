@@ -26,7 +26,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
 
   return (
     <>
-      <HomeHero dict={dict.homeHero} />
+      <HomeHero dict={dict.homeHero} lang={lang} />
       <UNQuote />
       <HowItWorks />
       <ActiveMembers

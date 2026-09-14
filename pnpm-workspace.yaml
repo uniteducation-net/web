@@ -1,2 +1,9 @@
 allowBuilds:
   unrs-resolver: true
+
+overrides:
+  # Security: pick up patched transitive deps (pnpm audit 2026-09-14)
+  # linkify-it <=5.0.1: quadratic-complexity DoS (via ansi-to-react)
+  # toml <4.2.0: prototype pollution + uncontrolled recursion (via remark-mdx-frontmatter)
+  linkify-it: ">=5.0.2"
+  toml: ">=4.2.0"

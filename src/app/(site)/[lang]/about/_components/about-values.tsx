@@ -1,18 +1,9 @@
 import {
   ArrowRight,
-  Blocks,
-  ChartLine,
-  Globe,
+  Compass,
+  Handshake,
   Heart,
-  Layers,
-  Lock,
-  Palette,
-  Rocket,
-  Settings,
-  Shield,
-  Sparkles,
-  Workflow,
-  Zap,
+  Scale,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -47,90 +38,29 @@ type AboutValuesProps = FeatureIconListProps;
 type Props = Partial<AboutValuesProps>;
 
 const defaultProps: AboutValuesProps = {
-  heading: "Build faster with production ready features",
-  description:
-    "Every component is built with React, Tailwind CSS, and shadcn/ui. Copy, paste, and customize to match your brand in minutes.",
-  label: "Features",
+  heading: "Our values",
+  description: "These values are at the core of UnitEd’s work:",
+  label: "Values",
   features: [
     {
-      icon: <Zap className="size-5" />,
-      title: "Full Source Code",
+      icon: <Scale className="size-6 shrink-0 lg:size-7" />,
+      title: "Equity & Equal Access",
       description:
-        "Every block ships as plain React you own. No runtime dependency, no SDK lock-in, just copy and customize.",
+        "Where a child is born should never decide the quality of their education — so we keep the teaching knowledge that makes it possible free and open to every educator, everywhere.",
     },
     {
-      icon: <Palette className="size-5" />,
-      title: "Responsive Design",
+      icon: <Compass className="size-6 shrink-0 lg:size-7" />,
+      title: "Empowerment",
       description:
-        "Every block adapts seamlessly from mobile to desktop with Tailwind's mobile-first utility classes.",
+        "We support emerging educators in building confidence and strengthening their teaching skills, at their own pace, through personalized learning paths.",
     },
     {
-      icon: <Shield className="size-5" />,
-      title: "Accessibility & Usability",
+      icon: <Handshake className="size-6 shrink-0 lg:size-7" />,
+      title: "Co-creation",
       description:
-        "Built on Radix UI primitives with proper ARIA attributes, keyboard navigation, and focus management.",
-    },
-    {
-      icon: <Settings className="size-5" />,
-      title: "TypeScript Native",
-      description:
-        "Fully typed props and interfaces so your editor catches issues before they reach production.",
-    },
-    {
-      icon: <Layers className="size-5" />,
-      title: "Customizable",
-      description:
-        "Override any prop, swap icons, adjust spacing — every block is designed to be extended, not locked down.",
-    },
-    {
-      icon: <Rocket className="size-5" />,
-      title: "Production Ready",
-      description:
-        "Battle-tested in real projects. No placeholder hacks, no lorem ipsum — clean code you can ship today.",
-    },
-    {
-      icon: <Blocks className="size-5" />,
-      title: "Registry Compatible",
-      description:
-        "Install blocks directly with the shadcn CLI. Dependencies and registry items are listed in every block's MDX.",
-    },
-    {
-      icon: <Globe className="size-5" />,
-      title: "Framework Agnostic",
-      description:
-        "Plain ESM + React that works with Next.js, Vite, Remix, and Astro without any Shadcnblocks SDK.",
-    },
-    {
-      icon: <ChartLine className="size-5" />,
-      title: "Consistent Spacing",
-      description:
-        "Shared section padding, container widths, and gap scales so blocks stack into cohesive pages.",
-    },
-    {
-      icon: <Sparkles className="size-5" />,
-      title: "Theme Tokens",
-      description:
-        "All colors come from your shadcn/ui theme — foreground, muted, primary, card — no hardcoded values.",
-    },
-    {
-      icon: <Workflow className="size-5" />,
-      title: "Copy Paste Workflow",
-      description:
-        "Browse the explorer, preview with your theme, then copy the code directly into your project.",
-    },
-    {
-      icon: <Lock className="size-5" />,
-      title: "Open Source",
-      description:
-        "MIT-licensed source code you own completely. Fork it, modify it, sell products built with it.",
+        "We build with teachers around the world, not just for them, so local voices and classroom realities shape the learning experience.",
     },
   ],
-  buttons: {
-    primary: {
-      text: "Browse Components",
-      url: "https://www.shadcnblocks.com",
-    },
-  },
 };
 
 const MAX_FEATURES = 3;
@@ -175,8 +105,8 @@ const AboutValues = (props: Props) => {
 
         <div className="mt-10 grid gap-8 sm:grid-cols-2 md:mt-14 lg:grid-cols-3">
           {items.map((item, index) => (
-            <div className="flex gap-2.5" key={index}>
-              {item.icon}
+            <div className="flex gap-4" key={index}>
+              <span className="mt-1 text-primary">{item.icon}</span>
               <div>
                 <h3 className="text-lg font-medium tracking-tight lg:text-2xl">
                   {item.title}
