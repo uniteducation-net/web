@@ -42,9 +42,10 @@ export class GitHubRateLimitError extends Error {
 /**
  * Rate-limit guard: wrap every GitHub call in this. On 403 with
  * X-RateLimit-Remaining: 0, surface a friendly error instead of silently
- * hanging or retry-looping into the ban.
+ * hanging or retry-looping into the ban. Exported for public-github.ts
+ * (adjustments step 1), which turns GitHubRateLimitError into a cached null.
  */
-async function withGitHubGuard<T>(call: () => Promise<T>): Promise<T> {
+export async function withGitHubGuard<T>(call: () => Promise<T>): Promise<T> {
   try {
     return await call();
   } catch (err) {
