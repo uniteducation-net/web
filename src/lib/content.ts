@@ -121,6 +121,44 @@ const estimateReadingTime = (raw: string): number => {
   return Math.max(1, Math.round(words.length / WORDS_PER_MINUTE));
 };
 
+/**
+ * Normalize an ImageKit media reference to the pure path relative to the
+ * urlEndpoint. Full URLs copied from the ImageKit dashboard (origin and/or
+ * endpoint-id prefix) and cache-busting version params like `?updatedAt=`
+ * are stripped, so the rendered URL always points at the latest file version.
+ */
+const pureImageKitPath = (src: string): string => {
+  const clean = src.split(/[?#]/, 1)[0].trim();
+  if (!/^https?:\/\//.test(clean)) return clean;
+
+  const endpoint = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT?.replace(
+    /\/$/,
+    "",
+  );
+  if (endpoint && clean.startsWith(endpoint)) {
+    const p = clean.slice(endpoint.length);
+    return p.startsWith("/") ? p : `/${p}`;
+  }
+  // ik.imagekit.io URLs carry the endpoint id as the first path segment.
+  const { pathname, host } = new URL(clean);
+  return host.endsWith("imagekit.io")
+    ? pathname.replace(/^\/[^/]+(?=\/)/, "")
+    : pathname;
+};
+
+/** Frontmatter keys holding ImageKit references (shared across types). */
+const MEDIA_KEYS = ["image", "hoverImage", "cover"] as const;
+
+const normalizeMediaPaths = <FM>(frontmatter: FM): FM => {
+  const fm = { ...frontmatter } as Record<string, unknown>;
+  for (const key of MEDIA_KEYS) {
+    if (typeof fm[key] === "string") {
+      fm[key] = pureImageKitPath(fm[key]);
+    }
+  }
+  return fm as FM;
+};
+
 /** Directory names = slugs, for all content of a type. Runs at build time. */
 export const getSlugs = cache((type: ContentType): string[] => {
   const dir = path.join(CONTENT_DIR, type);
@@ -169,7 +207,10 @@ export const getContent = cache(
     return {
       slug,
       locale: resolvedLocale,
-      frontmatter: { ...base?.frontmatter, ...mod.frontmatter },
+      frontmatter: normalizeMediaPaths({
+        ...base?.frontmatter,
+        ...mod.frontmatter,
+      }),
       readingTime: estimateReadingTime(
         fs.readFileSync(localeFile(type, slug, resolvedLocale), "utf8"),
       ),

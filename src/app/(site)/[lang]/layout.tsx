@@ -55,7 +55,10 @@ export default async function RootLayout({
             membershipHref={`/${lang}/membership`}
           />
           {children}
-          <Footer />
+          <Footer
+            teamHref={`/${lang}/about#team`}
+            licenceHref={`/${lang}/terms/licence`}
+          />
           <CookieBanner {...dict.cookieBanner} />
         </ImageKitClientProvider>
       </body>

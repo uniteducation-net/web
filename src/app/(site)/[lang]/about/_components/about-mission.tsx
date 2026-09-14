@@ -1,47 +1,48 @@
 "use client";
 
 import { motion, useScroll, useTransform } from "motion/react";
-import { Rocket } from "lucide-react";
+import { Target } from "lucide-react";
 import { useRef } from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { IllustrationImage } from "@/components/illustration-image";
 import { cn } from "@/lib/utils";
 const DATA = [
   {
-    title: "Get Organized",
+    title: "Our Mission",
     description:
-      "Start strong by syncing your calendars and tools like Google Calendar, Trello, and Slack in one place.",
+      "We build a free online platform for emerging educators who teach in classrooms without a formal teaching background or training.",
     image: {
-      src: "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/placeholder-1.svg",
-      alt: "Get Organized",
+      src: "/illustrations/online-learning.svg",
+      alt: "Our Mission",
     },
   },
   {
-    title: "Track Progress",
+    title: "More Than Subject Matter",
     description:
-      "Monitor your performance with real-time dashboards and detailed analytics. Stay ahead with automated reports.",
+      "To deliver quality classes for students, teachers need to be trained in more than just the subject matter. Our platform helps them develop the essential skills to teach well, no matter the age group, school form, or subject.",
     image: {
-      src: "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/placeholder-2.svg",
-      alt: "Track Progress",
+      src: "/illustrations/ideas-flow.svg",
+      alt: "More Than Subject Matter",
     },
     reverse: true,
   },
   {
-    title: "Collaborate Seamlessly",
+    title: "7 Content Areas",
     description:
-      "Empower your team with shared dashboards and instant communication tools. Keep everyone aligned with integrated platforms.",
+      "Teaching & Learning Fundamentals, Teacher Presence & Communication, Classroom Management, Inclusive Training, Context-Responsive Teaching, Ethics & Safeguarding, and Teacher Growth & Wellbeing.",
     image: {
-      src: "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/placeholder-3.svg",
-      alt: "Collaborate Seamlessly",
+      src: "/illustrations/five-year-plan.svg",
+      alt: "7 Content Areas",
     },
   },
   {
-    title: "Integrate Seamlessly",
+    title: "Your Personal Path",
     description:
-      "Integrate seamlessly across multiple platforms to enable smooth, automated task handovers.",
+      "On the platform, AI helps you analyze which skills are most relevant for your use case and build your own personalized learning path — to follow at your own speed and liking.",
     image: {
-      src: "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/placeholder-4.svg",
-      alt: "Integrate Seamlessly",
+      src: "/illustrations/set-preferences.svg",
+      alt: "Your Personal Path",
     },
     reverse: true,
   },
@@ -63,15 +64,15 @@ const AboutMission = () => {
             variant="outline"
             className="w-fit gap-1 bg-card px-3 text-sm font-normal tracking-tight shadow-sm"
           >
-            <Rocket className="size-4" />
-            <span>Accelerate</span>
+            <Target className="size-4" />
+            <span>Our Mission</span>
           </Badge>
           <h2 className="font-heading text-title font-semibold">
-            Accelerate your planning journey
+            Free training for emerging educators
           </h2>
           <p className="max-w-[600px] tracking-[-0.32px] text-muted-foreground">
-            Take control of your workflow step-by-step with smart tools,
-            actionable insights, and seamless collaboration
+            Quality classes need more than subject knowledge — here&rsquo;s how our
+            platform builds the skills to teach, step by step
           </p>
         </div>
       </div>
@@ -116,12 +117,11 @@ const AboutMission = () => {
                     </div>
                     <div className="relative grid grid-cols-[auto_1fr_auto] items-stretch">
                       <DiagonalPattern className="h-full w-6 lg:w-10" />
-                      <img
+                      <IllustrationImage
                         src={item.image.src}
-                        width={400}
-                        height={500}
                         alt={item.image.alt}
-                        className="object-contain dark:invert"
+                        className="aspect-[4/5] w-full max-w-[400px]"
+                        imageClassName="dark:invert"
                       />
                       <DiagonalPattern className="w-6 lg:w-10" />
                     </div>

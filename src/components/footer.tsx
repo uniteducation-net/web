@@ -1,5 +1,8 @@
+import { Heart } from "lucide-react";
+import Link from "next/link";
 import { FaFacebook, FaInstagram, FaLinkedin, FaTwitter } from "react-icons/fa";
 
+import { FeedbackButton } from "@/components/feedback-button";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,8 +34,12 @@ const sections = [
 
 interface FooterProps {
   className?: string;
+  /** Locale-prefixed href for the team section, e.g. "/en/about#team". */
+  teamHref: string;
+  /** Locale-prefixed href for the licence page, e.g. "/en/terms/licence". */
+  licenceHref: string;
 }
-const Footer = ({ className }: FooterProps) => {
+const Footer = ({ className, teamHref, licenceHref }: FooterProps) => {
   return (
     <section className={cn("py-32", className)}>
       <div className="container">
@@ -69,6 +76,17 @@ const Footer = ({ className }: FooterProps) => {
                   </a>
                 </li>
               </ul>
+              <div className="space-y-1 text-sm text-muted-foreground">
+                <p>
+                  <Link href={licenceHref} className="font-medium hover:text-primary">
+                    © UnitEd. All rights reserved.
+                  </Link>
+                </p>
+                <p className="text-xs">
+                  Open source — copy &amp; share with credit. Non-commercial use
+                  only.
+                </p>
+              </div>
             </div>
             {sections.map((section, sectionIdx) => (
               <div key={sectionIdx} className="col-span-2 md:col-span-1">
@@ -102,17 +120,16 @@ const Footer = ({ className }: FooterProps) => {
             </div>
           </div>
           <div className="mt-20 flex flex-col justify-between gap-4 border-t pt-8 text-sm font-medium text-muted-foreground lg:flex-row lg:items-center lg:text-left">
+            <FeedbackButton />
             <p>
-              <span className="mr-1 font-bold text-primary">
-                Shadcnblocks.com
-              </span>
-              © All rights reserved.
-            </p>
-            <p>
-              Made with ❤️ by{" "}
-              <a href="https://x.com/ausrobdev" className="text-primary">
-                @ausrobdev
-              </a>
+              <Link href={teamHref} className="hover:text-primary">
+                Made with{" "}
+                <Heart
+                  aria-label="love"
+                  className="inline size-4 fill-current text-red-500"
+                />{" "}
+                globally.
+              </Link>
             </p>
           </div>
         </footer>

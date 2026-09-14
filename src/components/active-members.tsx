@@ -9,12 +9,14 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { Button } from "@/components/ui/button";
 import type { Locale } from "@/i18n-config";
 import type { ContentEntry, TeamFrontmatter } from "@/lib/content";
 import { cn } from "@/lib/utils";
 
 interface ActiveMembersDict {
   heading: string;
+  seeAll: string;
   cta: {
     title: string;
     text: string;
@@ -47,9 +49,14 @@ const ActiveMembers = ({
   return (
     <section className={cn("py-32", className)}>
       <div className="container">
-        <h2 className="mb-10 text-center font-heading text-title font-semibold">
-          {dict.heading}
-        </h2>
+        <div className="mb-10 flex flex-col items-center gap-6">
+          <h2 className="text-center font-heading text-title font-semibold">
+            {dict.heading}
+          </h2>
+          <Button asChild variant="outline" size="lg">
+            <Link href={`/${locale}/about#team`}>{dict.seeAll}</Link>
+          </Button>
+        </div>
 
         <div className="relative">
           <Carousel
