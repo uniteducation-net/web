@@ -73,6 +73,10 @@ export async function POST(req: Request) {
         ) as ReadableStream<InferUIMessageChunk<OnboardingUIMessage>>,
       );
     },
+    onError: (error) =>
+      error instanceof Error && error.name === "GatewayAuthenticationError"
+        ? "AI Gateway rejected the API key (401). Regenerate AI_GATEWAY_API_KEY in the Vercel dashboard and restart the dev server."
+        : "The assistant hit an unexpected error. Please try again.",
   });
 
   return createUIMessageStreamResponse({ stream });
