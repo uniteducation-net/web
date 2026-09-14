@@ -5,9 +5,12 @@ Prerequisites: 01–13 all verified. Last file.
 ## Steps
 
 1. **Env vars in Vercel** (Project → Settings → Environment Variables):
-   the same 9 from 01 step 5, with `APP_URL=https://<prod-domain>` and the
-   PROD GitHub App's credentials (01 step 3 — dev and prod are separate
-   GitHub Apps; don't forget the prod app's private key).
+   the same required vars from 01 step 5, with `APP_URL=https://<prod-domain>`
+   and the PROD GitHub App's credentials (01 step 3 — dev and prod are separate
+   GitHub Apps; don't forget the prod app's private key). The three
+   repo-provisioning vars are optional (defaults built in); set
+   `RESOURCES_INSTALLATION_ID` only if the 60 req/h anonymous public-read
+   budget ever becomes a problem (99 issue 10).
 
 2. **AI Gateway budget cap** (the NGO safety net):
    - Vercel dashboard → AI Gateway → set a **budget** on the project (e.g. $5/month = the free credit, hard stop).
@@ -26,8 +29,8 @@ Prerequisites: 01–13 all verified. Last file.
 5. **End-to-end teacher rehearsal** (brand-new GitHub account CREATED THROUGH THE FLOW — that's the primary user scenario; fresh browser):
    - [ ] Land → onboarding chat → answer questions → "Save my workspace"
    - [ ] "Create an account" on the authorize screen → signup → email verify → authorize → install app (All repositories, one click) → returned to same conversation → "Create my workspace"
-   - [ ] Private repo named `united-workspace` appears in THEIR account, personalized, one personalization commit
-   - [ ] Workspace shell loads: tree left, root CONTEXT.md center, agent right
+   - [ ] Private repo named `UnitEd-Workspace` appears in THEIR account, seeded with `00-Profile/` + `01-Start Here/`, one seed commit per stage
+   - [ ] Workspace shell loads: tree left, `01-Start Here/Start Here.md` center, agent right
    - [ ] Onboarding conversation visible in agent panel
    - [ ] Ask agent to run a stage → file written, preview refreshes, commit on GitHub (authored by the app bot)
    - [ ] Settings: switch to BYOK with a test key → agent uses it

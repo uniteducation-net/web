@@ -15,7 +15,7 @@ steps, chained by us:
    server-side on demand (1h TTL, no refresh dance in the cookie).
 
 Token split (important):
-- **User token** → repo *creation* (`/generate`) + listing installations.
+- **User token** → repo *creation* (`createForAuthenticatedUser`, 03 step 2) + listing installations.
   Creating a repo in a personal account requires user authentication — an
   installation token can't do it (serverToServer is orgs-only).
 - **Installation token** → everything else (tree, read, write, commit).

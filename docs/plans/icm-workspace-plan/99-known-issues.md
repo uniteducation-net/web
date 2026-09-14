@@ -13,7 +13,9 @@ this prominently. Privacy-conscious teachers (our exact audience) would bounce.
 **Decision (2026-09-13, folded into plans 00/01/02/03/07/12/14):** GitHub App
 with fine-grained permissions instead of an OAuth App:
 - Permissions: `Contents: read & write` + `Administration: read & write` (Admin
-  is required for template-repo generation into a personal account), nothing else
+  was required for template-repo generation into a personal account — template
+  generation is gone since the 2026-09-14 rebuild, so Administration may be
+  droppable; **verify before removing**, see 01 step 3), nothing else
 - Auth chain: OAuth web flow (user access token, 8h + 6-month refresh token,
   rotated on refresh) → app installation on the user's personal account
 - Repo creation uses the USER token (installation tokens can't create repos in
@@ -53,30 +55,36 @@ When the budget dies, free AI dies for ALL teachers until month reset.
   onboarding chat stays anonymous
 - **Affects:** 06 (add step), 13 (step 2), 14 (step 2)
 
-## 🟠 4. Workspace detection by repo name is fragile
+## 🟠 4. Workspace detection by repo name is fragile — **MITIGATED (2026-09-14)**
 
 **Problem:** Plan 03 (`findExistingWorkspace`) matches repos by name prefix
 `icm-workspace`. A teacher who renames their repo gets shown onboarding
 again or a duplicate repo gets created.
 
-**Fix:**
-- Store `{ owner, name }` in the session cookie at creation time (primary lookup)
-- Fallback detection: check repo's `template_repository` metadata / topics
-  (set a topic like `icm-workspace` at creation via the API) — survives renames
+**Status (shipped):**
+- Session `repo` remains the primary lookup (unchanged) — stored in the cookie
+  at creation time, verified with one cheap `GET` per request
+- Fallback prefix scan now matches BOTH the current `UnitEd-Workspace` and the
+  legacy pre-rename `united-workspace` prefixes (plus the description marker),
+  so repos created by earlier deploys are still found
+- The rename-proof topic marker (`template_repository` metadata / topics from
+  the original fix sketch) was NOT implemented — no longer applicable anyway
+  (no template repo); pre-launch, low stakes
 - **Affects:** 03 (step 3), 07 (step 1)
 
-## 🟠 5. One-shot LLM personalization can truncate
+## ✅ 5. One-shot LLM personalization can truncate — **RESOLVED by deletion (2026-09-14)**
 
-**Problem:** Plan 07 personalizes ALL template files in a single 4,000-token
+**Problem (original):** Plan 07 personalizes ALL template files in a single 4,000-token
 `generateText` call. Larger templates silently truncate → half-written files
 committed to a teacher's repo.
 
-**Fix:**
-- Personalize per-file or in small batches (3–5 files per call), each with
-  its own zod validation
-- Per-file fallback to `{{PLACEHOLDER}}` string replacement on parse failure
-- Final sweep: reject the commit if any `{{` token remains anywhere
-- **Affects:** 07 (step 3)
+**Resolution:** the personalization pass was deleted along with the template
+repo (no `{{PLACEHOLDER}}` replacement anywhere). The only remaining
+provisioning LLM call is the Start Here pass
+(`lib/provisioning.ts#generateStartHere`, `maxOutputTokens: 2000`), which
+writes exactly two files, validates the exact path set, and falls back to
+complete deterministic content on every failure mode — truncation can no
+longer commit half-written files.
 
 ## 🟠 6. Chat history is device-locked → **SOLVED by design**
 
@@ -102,18 +110,21 @@ git history to catch a bad rewrite.
 (deep link to the commit). Full approval flow = v2.
 **Affects:** 11 (step 5)
 
-## 🟡 8. Serverless timeouts on long agent runs
+## 🟡 8. Serverless timeouts on long agent runs — **MITIGATED (2026-09-14)**
 
-**Problem:** The 8-step agent loop and provisioning (template generate + LLM
-+ commitMany) ride close to function execution limits. A timeout during
-provisioning could orphan a half-made repo.
+**Problem:** The 8-step agent loop and provisioning ride close to function
+execution limits. A timeout during provisioning could orphan a half-made repo.
 
-**Fix:**
-- Set `export const maxDuration = 300` on `/api/agent` and
+**Status (shipped):**
+- `export const maxDuration = 300` on `/api/agent` and
   `/api/workspace/create` (Vercel Pro allows it)
-- Split provisioning into two client steps: (1) create repo, (2) personalize —
-  each idempotent, each retryable on its own
-- **Affects:** 07 (split route), 11 (step 2)
+- The rebuilt pipeline is much lighter: no template fetch/copy, at most ONE
+  LLM call (Start Here, fair-use-gated), two commits
+- Provisioning is split into idempotent, independently committed stages —
+  the profile commits FIRST, Start Here second — so a mid-flight failure
+  leaves resumable state and a re-POST finishes exactly what's missing (07
+  steps 2–4). No client-side split needed.
+- **Affects:** 07, 11 (step 2)
 
 ## 🟡 9. Privacy: teacher data flows through third-party LLMs
 
@@ -128,6 +139,25 @@ obligation, potentially a legal problem for EU schools (GDPR).
   available; note the choice in Settings
 - **Affects:** 05 (step 6 micro-copy), 13 (step 1 model choice)
 
+## 🟡 10. Unauthenticated public reads share Vercel's IP rate budget
+
+**Problem (added 2026-09-14):** provisioning and the agent read the public
+Resources and icm-architect repos UNAUTHENTICATED — 60 req/h **per IP**, and
+Vercel serverless functions share egress IPs, so one noisy neighbor on the
+same IP can exhaust the budget for everyone on it.
+
+**Mitigations (shipped, `lib/public-github.ts` + `lib/resources.ts`):**
+- Module-level caches: 5 min for trees/files/Resources index, 1 h for the
+  ICM reference — steady-state traffic stays far below the budget
+- 60 s negative caching: a rate-limited/empty read is cached as null so a
+  burn doesn't amplify itself, and a repo being seeded is picked up quickly
+- In-band degradation: every expected miss (404, empty-repo 409, rate limit)
+  returns null — provisioning falls back to deterministic content and the
+  agent proceeds without resources; these repos never fail a request
+- Escape hatch: set `RESOURCES_INSTALLATION_ID` (app installed on the org) to
+  read with an installation token → 5,000 req/h (01 step 5)
+- **Affects:** 07 (step 4), 11 (agent tools), 03 (step 10)
+
 ---
 
 ## Priority summary
@@ -137,9 +167,10 @@ obligation, potentially a legal problem for EU schools (GDPR).
 | 1 | Broad `repo` OAuth scope | ✅ decided | GitHub App + fine-grained perms (00/01/02/03) |
 | 2 | 4KB cookie overflow | 🔴 | Small (split cookies) |
 | 3 | Anonymous endpoint abuse | 🔴 | Small (WAF config) |
-| 4 | Fragile repo detection | 🟠 | Small |
-| 5 | Truncating personalization | 🟠 | Medium |
+| 4 | Fragile repo detection | 🟠 mitigated | Small |
+| 5 | Truncating personalization | ✅ resolved | Deleted with the template repo |
 | 6 | Device-locked history | ✅ solved | Small (save-chat button, 11 steps 6–7) |
 | 7 | No write visibility | 🟡 | Small |
-| 8 | Function timeouts | 🟡 | Small |
+| 8 | Function timeouts | 🟡 mitigated | Small |
 | 9 | LLM data privacy | 🟡 | Copy change |
+| 10 | Public reads share IP rate budget | 🟡 mitigated | Small (caches + degradation + installation escape hatch) |

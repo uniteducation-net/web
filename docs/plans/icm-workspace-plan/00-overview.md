@@ -4,8 +4,10 @@
 
 Emerging teachers land on a clean page, chat with an AI that asks a few profile
 questions, then click ONE button ("Save my workspace") which connects their
-GitHub account and creates a **private repo they own**, pre-filled with a
-personalized ICM workspace (https://github.com/RinDig/Interpretable-Context-Methodology).
+GitHub account and creates a **private repo they own**, seeded with a minimal
+ICM workspace (`00-Profile/` + `01-Start Here/`) that the agent grows one
+numbered micro-step folder at a time (method conventions read live from the
+public https://github.com/RinDig/icm-architect reference, never copied).
 After that, they work in a 3-column IDE-like view:
 
 - **Left:** collapsible sidebar — file tree (live from their repo) + Settings + user menu pinned at the bottom
@@ -17,8 +19,8 @@ After that, they work in a 3-column IDE-like view:
 - **No database. Ever.** The user's GitHub repo is the state. Sessions are an encrypted cookie.
 - **No passwords / no email auth.** GitHub App only (fine-grained permissions: Contents RW + Administration RW), hand-rolled (~4 routes). No Better Auth, no NextAuth.
 - **NGO budget ≈ $0.** LLM calls default to Vercel AI Gateway free tier ("AI on us"), with BYOK + OpenRouter OAuth as user options in Settings.
-- **Users own everything.** The repo is in THEIR GitHub account, private, created from our template.
-- **Fresh GitHub accounts are the norm.** Most teachers won't have one — signup happens inside the auth flow (`allow_signup`), still one button. Their repo is `united-workspace` ("UnitEd Workspace"); "ICM" stays internal. Complexity lives on our side, never theirs.
+- **Users own everything.** The repo is in THEIR GitHub account, private, created empty and seeded by our pipeline (no template repo).
+- **Fresh GitHub accounts are the norm.** Most teachers won't have one — signup happens inside the auth flow (`allow_signup`), still one button. Their repo is `UnitEd-Workspace` ("UnitEd Workspace"); "ICM" stays internal. Complexity lives on our side, never theirs.
 
 ## Stack
 
@@ -29,7 +31,7 @@ After that, they work in a 3-column IDE-like view:
 | Chat logic | Vercel AI SDK 7 (`useChat`, `streamText`, tools) — latest major, see https://ai-sdk.dev/docs/introduction |
 | LLM | Vercel AI Gateway (default) / user BYOK / OpenRouter OAuth |
 | Auth | GitHub App: user access token (8h, refreshable) for identity + repo creation; installation token for repo ops; `jose` encrypted httpOnly cookie session |
-| Storage | GitHub REST API (template repo generation, contents, git trees) |
+| Storage | GitHub REST API (repo creation, contents, git trees; unauthenticated reads of the two public reference repos) |
 
 ## The two app states (two routes)
 
@@ -52,13 +54,13 @@ the shell and never load onboarding code. See 04.
 
 | File | What it builds |
 |---|---|
-| 01-setup.md | Dependencies, env vars, GitHub App registration, template repo |
+| 01-setup.md | Dependencies, env vars, GitHub App registration |
 | 02-auth.md | GitHub App auth routes (authorize → install) + encrypted cookie session |
 | 03-github-api.md | Server helpers: octokit client, repo generate, tree, read, write |
 | 04-route-group-layout.md | `/workspace` route group + guard: redirects to `/workspace/start` or renders the shell |
 | 05-onboarding-chat.md | `/workspace/start`: centered chat UI with AI Elements |
 | 06-onboarding-agent.md | The interviewer: system prompt + profile extraction |
-| 07-repo-provisioning.md | Turn profile answers into a personalized ICM repo |
+| 07-repo-provisioning.md | Create the user's repo and seed `00-Profile/` + `01-Start Here/` (deterministic + one optional LLM pass) |
 | 08-workspace-shell.md | State 2: 3-column resizable/collapsible shell |
 | 09-file-tree.md | Left sidebar: live file tree from GitHub |
 | 10-markdown-preview.md | Center: formatted markdown preview |

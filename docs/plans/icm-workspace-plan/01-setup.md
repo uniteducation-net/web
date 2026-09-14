@@ -27,16 +27,15 @@ Prerequisites: none. Do this first.
    - **Post installation → Setup URL**: `https://<your-domain>/api/auth/github/installed` (leave "Redirect on update" unchecked)
    - Do NOT enable "Request user authorization (OAuth) during installation" — we chain authorize → install ourselves so we keep control of `redirect_uri` and CSRF `state` (02).
    - Webhook: uncheck "Active" (v1 needs no webhooks).
-   - **Repository permissions**: `Contents: Read and write` (tree/read/write files), `Administration: Read and write` (required to create the repo from the template). `Metadata: Read` is added automatically. Nothing else.
+   - **Repository permissions**: `Contents: Read and write` (tree/read/write files), `Administration: Read and write` (was required to create repos from a template — template generation is gone since the 2026-09-14 rebuild, so this permission may no longer be needed; **verify before dropping**). `Metadata: Read` is added automatically. Nothing else.
    - "Where can this GitHub App be installed?" → **Any account**.
    - After saving: note the **App ID**, generate a **private key** (downloads a `.pem` — base64 it for env), and copy the **Client ID** + generate a **Client secret** (used for the OAuth web flow side of the app).
    - Create a SECOND GitHub App for local dev (callback + setup URL on `http://localhost:3000`) — dev and prod stay separate apps.
 
-4. **Create the template repo** (manual, human does this once):
-   - Create a new repo under the NGO's GitHub org, e.g. `icm-teacher-workspace-template`.
-   - Fill it with your teacher-tailored ICM structure (numbered stage folders, `CONTEXT.md` files, `setup/questionnaire.md`, `_config/`). Base it on the ICM conventions, but write the stage contracts for teacher workflows (lesson planning, rubrics, feedback…). Use `{{PLACEHOLDER}}` tokens anywhere personalization will go (e.g. `{{TEACHER_NAME}}`, `{{SUBJECT}}`, `{{GRADE_LEVEL}}`, `{{TONE}}`).
-   - In repo Settings, tick **"Template repository"** — this unlocks the `/generate` API used in 07.
-   - Keep it private-visible: templates can be public; generation into a *private* user repo works from public templates.
+4. **No template repo anymore** (nothing to do here — kept as a step so old references make sense):
+   - The workspace repo is created nearly empty (`auto_init`) and seeded by the provisioning pipeline (07) — there is no NGO-owned template, no `/generate`, no `{{PLACEHOLDER}}` tokens.
+   - `uniteducation-net/Resources` is the seeded public curated-resources repo (`CONTEXT.md` contract, `README.md` human index, `resources/*.md` with wikilinks) — it already exists, no setup needed.
+   - `RinDig/icm-architect` is the public method reference, read live at its latest version (never copied) — no setup needed.
 
 5. **Set environment variables** (`.env.local` for dev, Vercel dashboard for prod):
    ```
@@ -47,8 +46,11 @@ Prerequisites: none. Do this first.
    GITHUB_CLIENT_SECRET=...                   # the GitHub App's client secret
    SESSION_SECRET=<32-byte-random-hex>        # openssl rand -hex 32
    AI_GATEWAY_API_KEY=...                     # from Vercel dashboard → AI Gateway
-   TEMPLATE_REPO=<ngo-org>/icm-teacher-workspace-template
    APP_URL=http://localhost:3000              # https://<domain> in prod
+   # Optional — repo provisioning (defaults built into lib/public-github.ts):
+   RESOURCES_REPO=uniteducation-net/Resources # public curated-resources repo (already seeded)
+   ICM_REFERENCE_REPO=RinDig/icm-architect    # public method reference, read live
+   RESOURCES_INSTALLATION_ID=...              # app installation on the org → 5,000 req/h instead of 60/h/IP for public reads
    ```
 
 6. **Create the folder skeleton**:
@@ -81,7 +83,7 @@ Prerequisites: none. Do this first.
 ## Done when
 
 - [ ] `npx ai-elements@latest` components exist under `components/ai-elements/`
-- [ ] All 9 env vars are set in `.env.local`
-- [ ] GitHub App created (dev + prod) with Contents RW + Administration RW, callback + setup URLs noted, private key downloaded
-- [ ] Template repo exists, is marked as "Template repository", contains `{{PLACEHOLDER}}` tokens
+- [ ] All 8 required env vars are set in `.env.local` (the 3 repo-provisioning vars are optional, defaults built in)
+- [ ] GitHub App created (dev + prod) with Contents RW (+ Administration RW pending the drop-verification above), callback + setup URLs noted, private key downloaded
+- [x] No template repo needed — Resources is seeded and public, icm-architect is read live (both verified reachable unauthenticated)
 - [ ] Folder skeleton created, `npm run dev` still boots cleanly
