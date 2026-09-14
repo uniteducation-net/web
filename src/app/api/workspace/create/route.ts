@@ -1,7 +1,10 @@
-// Provisioning (07): profile answers → a private, personalized
-// `united-workspace` repo in the teacher's own GitHub account.
+// Provisioning (07, rebuilt): profile answers → a private `UnitEd-Workspace`
+// repo in the teacher's own GitHub account, seeded with just 00-Profile/ and
+// 01-Start Here/. No template repo, no placeholder pass — later content is
+// grown by the workspace agent one numbered micro-step folder at a time.
 // Idempotent: double-clicks, refreshes, and retries after a coverage fix
-// always return the existing repo instead of creating a duplicate.
+// always return the existing repo, and each seed stage commits independently
+// so a mid-flight failure leaves resumable state.
 
 import { NextResponse } from "next/server";
 import { RequestError } from "octokit";
@@ -11,29 +14,53 @@ import {
   WORKSPACE_REPO_NAME,
   checkInstallationCoverage,
   commitMany,
-  createWorkspaceFromTemplate,
+  createWorkspaceRepo,
   findExistingWorkspace,
   getTree,
-  readFile,
+  writeFile,
 } from "@/lib/github";
-import { personalizeWorkspaceFiles, teacherProfileSchema } from "@/lib/onboarding";
+import { teacherProfileSchema } from "@/lib/onboarding";
+import {
+  buildProfileFiles,
+  buildStartHereFallback,
+  detectSeedState,
+  generateStartHere,
+} from "@/lib/provisioning";
+import { getResourcesIndex } from "@/lib/resources";
+import { getIcmReference } from "@/lib/public-github";
+import {
+  FREE_TIER_DAILY_TOKEN_LIMIT,
+  addFairUseTokens,
+  getFairUse,
+} from "@/lib/fair-use";
 
-// Template copy + batched LLM personalization + a commit can outrun the
-// default function budget on a cold start (99-known-issues #8; Vercel Pro).
+// Repo creation + public-repo reads + a possible LLM pass + two commits can
+// outrun the default function budget on a cold start (99-known-issues #8;
+// Vercel Pro).
 export const maxDuration = 300;
 
-const COMMIT_MESSAGE = "Personalize workspace from onboarding";
+const PROFILE_COMMIT_MESSAGE = "Add teacher profile from onboarding";
+const START_HERE_COMMIT_MESSAGE = "Add your getting-started guide";
+
+/** Replaces the auto_init default readme — short, warm, teacher-facing. */
+const README_CONTENT = `# My UnitEd Workspace
+
+This is your private teaching workspace — your files, your data, yours to keep.
+Everything here is created with you, and everything is yours to edit.
+`;
 
 function repoUrl(owner: string, repo: string): string {
   return `https://github.com/${owner}/${repo}`;
 }
 
 export async function POST(req: Request) {
+  // 1. Session — the teacher's GitHub account is the user store.
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "not_authenticated" }, { status: 401 });
   }
 
+  // 2. Validate the onboarding profile.
   let profile;
   try {
     const body = (await req.json()) as { profile?: unknown };
@@ -48,15 +75,15 @@ export async function POST(req: Request) {
   }
 
   try {
-    // Idempotency first (07 step 1): never create a duplicate. Note the
-    // existing repo may still be un-personalized if a previous attempt died
-    // after creation (coverage fix, network drop) — that is finished below.
+    // 3. Idempotency first (07 step 1): never create a duplicate. The
+    // existing repo may still be unseeded if a previous attempt died after
+    // creation (coverage fix, network drop) — that is finished below.
     const existing = await findExistingWorkspace(session);
     const target =
-      existing ?? (await createWorkspaceFromTemplate(session, WORKSPACE_REPO_NAME));
+      existing ?? (await createWorkspaceRepo(session, WORKSPACE_REPO_NAME));
 
+    // 4. Auth flow should always set this; without it no repo ops are possible.
     if (!session.installationId) {
-      // Auth flow should always set this; without it no repo ops are possible.
       return NextResponse.json(
         { error: "app_not_installed" },
         { status: 409 },
@@ -64,7 +91,7 @@ export async function POST(req: Request) {
     }
     const installationId = session.installationId;
 
-    // "Only select repositories" installs may not cover the new repo (03
+    // 5. "Only select repositories" installs may not cover the new repo (03
     // step 8): hand the teacher a one-click fix link and let them retry.
     const coverage = await checkInstallationCoverage(
       installationId,
@@ -78,39 +105,100 @@ export async function POST(req: Request) {
       );
     }
 
-    // Template contents (07 step 2): every .md file in the new repo, read
-    // with the installation token.
-    const tree = await getTree(installationId, target.owner, target.name);
-    const mdPaths = tree
-      .map((entry) => entry.path)
-      .filter((path) => path.toLowerCase().endsWith(".md"));
-    const files = await Promise.all(
-      mdPaths.map(async (path) => ({
-        path,
-        content: (await readFile(installationId, target.owner, target.name, path))
-          .content,
-      })),
-    );
+    // 6. Seed state: which of the two stages already landed. Edge: a repo
+    // created outside our flow can be completely empty (no HEAD) — the
+    // git-trees API 409s. Treat that as fully unseeded; the first file is
+    // then written with writeFile, which works with no HEAD and creates the
+    // initial commit that commitMany needs.
+    let treePaths: string[];
+    let needsInitialCommit = false;
+    try {
+      const tree = await getTree(installationId, target.owner, target.name);
+      treePaths = tree.map((entry) => entry.path);
+    } catch (err) {
+      if (!(err instanceof RequestError && err.status === 409)) throw err;
+      treePaths = [];
+      needsInitialCommit = true;
+    }
+    const seed = detectSeedState(treePaths);
 
-    // Skip the LLM pass entirely when nothing needs personalizing (idempotent
-    // re-POSTs after a successful create land here).
-    if (files.some((file) => file.content.includes("{{"))) {
-      const personalized = await personalizeWorkspaceFiles(profile, files);
-      const changed = personalized.filter(
-        (file, i) => file.content !== files[i].content,
-      );
-      if (changed.length > 0) {
-        // ONE bot commit for the whole personalization (07 step 4).
+    // 7. 00-Profile/ — deterministic, committed BEFORE any network/LLM work
+    // so a later failure still leaves resumable state.
+    if (!seed.hasProfile) {
+      const files = buildProfileFiles(profile);
+      if (needsInitialCommit) {
+        const [first, ...rest] = files;
+        await writeFile(
+          installationId,
+          target.owner,
+          target.name,
+          first.path,
+          first.content,
+          PROFILE_COMMIT_MESSAGE,
+        );
+        if (rest.length > 0) {
+          await commitMany(
+            installationId,
+            target.owner,
+            target.name,
+            rest,
+            PROFILE_COMMIT_MESSAGE,
+          );
+        }
+      } else {
         await commitMany(
           installationId,
           target.owner,
           target.name,
-          changed,
-          COMMIT_MESSAGE,
+          files,
+          PROFILE_COMMIT_MESSAGE,
         );
       }
     }
 
+    // 8. 01-Start Here/ — one optional LLM pass behind a fair-use gate, with
+    // a full deterministic fallback. Provisioning is NEVER blocked by fair
+    // use, an unreachable Resources/ICM repo, or an LLM failure — it degrades.
+    if (!seed.hasStartHere) {
+      // 8a-b. Neither read ever throws: [] = empty Resources, null = unreachable.
+      const resourceIndex = await getResourcesIndex();
+      const icm = await getIcmReference();
+      const icmExcerpt = icm ? `${icm.skill}\n\n${icm.core}`.slice(0, 3000) : null;
+
+      // 8c. Fair-use gate: the LLM pass spends the NGO's free tier, so skip
+      // it once the teacher is over today's ceiling (or no key is set).
+      const fu = await getFairUse();
+      let files: { path: string; content: string }[];
+      let usageTokens = 0;
+      if (
+        process.env.AI_GATEWAY_API_KEY &&
+        fu.tokens < FREE_TIER_DAILY_TOKEN_LIMIT
+      ) {
+        ({ files, usageTokens } = await generateStartHere(
+          profile,
+          resourceIndex,
+          icmExcerpt,
+        ));
+      } else {
+        files = buildStartHereFallback(profile, resourceIndex);
+      }
+
+      // 8d. Meter only real LLM spend (fallback returns usageTokens 0).
+      // Legal here — a plain JSON route can still set cookies.
+      if (usageTokens > 0) await addFairUseTokens(usageTokens);
+
+      // 8e. One commit: the two Start Here files + our readme replacing the
+      // auto_init default.
+      await commitMany(
+        installationId,
+        target.owner,
+        target.name,
+        [...files, { path: "README.md", content: README_CONTENT }],
+        START_HERE_COMMIT_MESSAGE,
+      );
+    }
+
+    // 9. Done — client redirects to the workspace.
     return NextResponse.json({
       owner: target.owner,
       repo: target.name,

@@ -19,9 +19,10 @@ import {
   type SessionRepo,
 } from "./session";
 
-/** Suggested repo name. Teacher-facing name is always "UnitEd Workspace" —
+/** Suggested repo name (exact case — findExistingWorkspace's prefix scan is
+ *  case-sensitive). Teacher-facing name is always "UnitEd Workspace" —
  *  "ICM" stays in our internals, never in what we create for them. */
-export const WORKSPACE_REPO_NAME = "united-workspace";
+export const WORKSPACE_REPO_NAME = "UnitEd-Workspace";
 /** Marker that identifies a repo as one of ours when scanning installations. */
 export const WORKSPACE_DESCRIPTION = "My UnitEd Workspace";
 
@@ -110,34 +111,30 @@ export async function getInstallationOctokit(installationId: number) {
 const MAX_NAME_ATTEMPTS = 5;
 
 /**
- * Generate the teacher's private workspace repo from TEMPLATE_REPO using the
- * USER token (creating a repo in a personal account requires user auth).
+ * Create the teacher's private workspace repo with the USER token (creating
+ * a repo in a personal account requires user auth). No template: the repo
+ * starts nearly empty — `auto_init` lands the initial commit (a default
+ * README.md) that commitMany's HEAD requirement needs, and provisioning (07)
+ * seeds 00-Profile/ and 01-Start Here/ itself.
  * On a 422 name collision, retries as `<repoName>-2`, `-3`, …
  * Persists the result into the session's `repo` field — it becomes the
  * primary workspace lookup (99 issue 4).
  */
-export async function createWorkspaceFromTemplate(
+export async function createWorkspaceRepo(
   session: Session,
   repoName: string = WORKSPACE_REPO_NAME,
 ): Promise<SessionRepo> {
   const octokit = await getUserOctokit(session);
-  const [templateOwner, templateRepo] = requireEnv("TEMPLATE_REPO").split("/");
-  if (!templateOwner || !templateRepo) {
-    throw new Error(
-      "TEMPLATE_REPO must be in the form <owner>/<repo>. See docs/plans/icm-workspace-plan/01-setup.md.",
-    );
-  }
 
   for (let attempt = 0; attempt < MAX_NAME_ATTEMPTS; attempt++) {
     const name = attempt === 0 ? repoName : `${repoName}-${attempt + 1}`;
     try {
       const { data } = await withGitHubGuard(() =>
-        octokit.rest.repos.createUsingTemplate({
-          template_owner: templateOwner,
-          template_repo: templateRepo,
+        octokit.rest.repos.createForAuthenticatedUser({
           name,
           private: true,
           description: WORKSPACE_DESCRIPTION,
+          auto_init: true,
         }),
       );
       const repo: SessionRepo = { owner: data.owner.login, name: data.name };
@@ -185,7 +182,7 @@ export async function listAccessibleRepos(
  * Detect a returning user without a database — their GitHub account is the
  * user store. Primary: verify the session's `repo` still exists (one cheap
  * GET). Fallback: scan the installation's repositories for one whose name
- * starts with `united-workspace` AND whose description matches our marker.
+ * starts with our workspace prefix AND whose description matches our marker.
  */
 export async function findExistingWorkspace(
   session: Session,
@@ -209,10 +206,13 @@ export async function findExistingWorkspace(
     }
   }
 
+  // Prefix scan is case-sensitive: match the current name and the legacy
+  // pre-rename one so a repo created by an earlier deploy is still found.
+  const NAME_PREFIXES = [WORKSPACE_REPO_NAME, "united-workspace"];
   const repos = await listAccessibleRepos(session.installationId);
   const match = repos.find(
     (r) =>
-      r.name.startsWith(WORKSPACE_REPO_NAME) &&
+      NAME_PREFIXES.some((prefix) => r.name.startsWith(prefix)) &&
       r.description === WORKSPACE_DESCRIPTION,
   );
   return match ? { owner: match.owner, name: match.name } : null;
@@ -299,9 +299,10 @@ export async function writeFile(
 
 /**
  * Write many files in ONE commit (used by provisioning, 07 — the whole
- * personalization lands as a single commit instead of N noisy ones).
+ * seed lands as a single commit instead of N noisy ones).
  * Git Data API: blobs → tree (based on HEAD) → commit → update ref.
- * A repo from /generate already has an initial commit, so HEAD always exists.
+ * Requires an existing HEAD: repos from createWorkspaceRepo have one via
+ * `auto_init`; the create route handles the empty-repo edge with writeFile.
  */
 export async function commitMany(
   installationId: number,
@@ -383,7 +384,7 @@ export async function commitMany(
 /**
  * Safety net for "Only select repositories" installs (02's install copy tells
  * teachers to keep "All repositories" selected). Call right after
- * createWorkspaceFromTemplate: if the new repo isn't covered, `covered` is
+ * createWorkspaceRepo: if the new repo isn't covered, `covered` is
  * false and `fixUrl` is a deep link that grants access in one click — the
  * caller should respond with it, let the teacher click, then retry.
  */
