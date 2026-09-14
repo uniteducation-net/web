@@ -47,6 +47,7 @@ interface DropdownItem extends NavLink {
   description: string;
 }
 
+/** About-page section anchors; order matches dict.about.items. */
 const LINKS_ABOUT: NavLink[] = [
   { href: "#project", icon: Earth },
   { href: "#mission", icon: Target },

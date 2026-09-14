@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
@@ -63,7 +63,9 @@ export function OnboardingScreen({ authenticated }: OnboardingScreenProps) {
       transport,
       messages: [OPENING_MESSAGE],
     });
-  const [hydrated, setHydrated] = useState(false);
+  // Restore gate: a ref, not state — it only sequences the two effects below
+  // (persist must not run before restore), so it never needs a re-render.
+  const restoredRef = useRef(false);
   // Provisioning state (07): the create call runs template generation +
   // personalization, so it can take several seconds.
   const [creating, setCreating] = useState(false);
@@ -72,22 +74,23 @@ export function OnboardingScreen({ authenticated }: OnboardingScreenProps) {
   const busy = status === "submitted" || status === "streaming";
 
   // Restore the draft conversation after mount (survives the OAuth round-trip).
+  // Declared before the persist effect so it runs first on mount.
   useEffect(() => {
     const draft = readDraft();
     if (draft) setMessages(draft);
-    setHydrated(true);
+    restoredRef.current = true;
   }, [setMessages]);
 
   // Persist the draft on every change (05 step 3). Draft buffer only — the
   // durable copy lives in the repo via "Save this chat" (11).
   useEffect(() => {
-    if (!hydrated) return;
+    if (!restoredRef.current) return;
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
     } catch {
       // Storage full/unavailable — the draft is a convenience, not critical.
     }
-  }, [messages, hydrated]);
+  }, [messages]);
 
   // Readiness signal (05 step 5): the chat API appends a `data-profile` part
   // when the interviewer is done (06 step 4). Latest one wins.
@@ -113,7 +116,9 @@ export function OnboardingScreen({ authenticated }: OnboardingScreenProps) {
     if (!authenticated) {
       // Mid-onboarding OAuth (04 step 4): hard-nav into the GitHub App flow
       // and come straight back here. The draft conversation survives in
-      // localStorage and is restored on return.
+      // localStorage and is restored on return. Must be a full document
+      // navigation — this is an API route that 302s to GitHub, not a page.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.href = "/api/auth/github?next=/workspace/start";
       return;
     }
@@ -154,6 +159,10 @@ export function OnboardingScreen({ authenticated }: OnboardingScreenProps) {
         return;
       }
 
+      // Full reload is deliberate: the teacher was redirected away from
+      // /workspace moments ago, so its payload sits in the client router
+      // cache and router.push could serve the stale pre-provision state.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.href = "/workspace";
     } catch {
       setCreateError(

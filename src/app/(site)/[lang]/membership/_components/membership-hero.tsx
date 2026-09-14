@@ -91,6 +91,10 @@ const MembershipHero = ({
               </div>
             )}
           </div>
+          {/* Placeholder media: the default is a remote SVG, which next/image
+              refuses without dangerouslyAllowSVG. Replace with ImageKit media
+              (and @imagekit/next Image) when real content lands. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={image.src}
             alt={image.alt}

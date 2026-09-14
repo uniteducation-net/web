@@ -68,12 +68,8 @@ const AboutMission = () => {
             <span>Our Mission</span>
           </Badge>
           <h2 className="font-heading text-title font-semibold">
-            Free training for emerging educators
+            Building the skills to teach
           </h2>
-          <p className="max-w-[600px] tracking-[-0.32px] text-muted-foreground">
-            Quality classes need more than subject knowledge — here&rsquo;s how our
-            platform builds the skills to teach, step by step
-          </p>
         </div>
       </div>
 
@@ -120,7 +116,7 @@ const AboutMission = () => {
                       <IllustrationImage
                         src={item.image.src}
                         alt={item.image.alt}
-                        className="aspect-[4/5] w-full max-w-[400px]"
+                        className="aspect-[4/5] w-[400px] max-w-full"
                         imageClassName="dark:invert"
                       />
                       <DiagonalPattern className="w-6 lg:w-10" />

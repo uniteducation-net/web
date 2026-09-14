@@ -1,101 +1,136 @@
+import Link from "next/link";
+import type { ReactNode } from "react";
+
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import type { Locale } from "@/i18n-config";
 import { cn } from "@/lib/utils";
 
-const faqs = {
-  general: [
-    {
-      question: "What is a FAQ and why is it important?",
-      answer:
-        "FAQ stands for Frequently Asked Questions. It is a list that provides answers to common questions people may have about a specific product, service, or topic.",
-    },
-    {
-      question: "Why should I use a FAQ on my website or app?",
-      answer:
-        "Utilizing a FAQ section on your website or app is a practical way to offer instant assistance to your users or customers. Instead of waiting for customer support responses, they can find quick answers to commonly asked questions. ",
-    },
-    {
-      question: "How do I effectively create a FAQ section?",
-      answer:
-        "Creating a FAQ section starts with gathering the most frequent questions you receive from your users or customers. Once you have a list, you need to write clear, detailed, and helpful answers to each question.",
-    },
-    {
-      question:
-        "What are the benefits of having a well-maintained FAQ section?",
-      answer:
-        "There are numerous advantages to maintaining a robust FAQ section. Firstly, it provides immediate answers to common queries, which improves the user experience.",
-    },
-    {
-      question: "How do I effectively create a FAQ section?",
-      answer:
-        "Creating a FAQ section starts with gathering the most frequent questions you receive from your users or customers. Once you have a list, you need to write clear, detailed, and helpful answers to each question.",
-    },
-  ],
-  forEducators: [
-    {
-      question: "How do I change my billing information?",
-      answer:
-        "You can change your billing information by logging into your account and navigating to the billing section.",
-    },
-    {
-      question: "How do I cancel my subscription?",
-      answer:
-        "You can cancel your subscription by logging into your account and navigating to the billing section.",
-    },
-    {
-      question: "What is the refund policy?",
-      answer:
-        "We offer a 30-day refund policy. If you are not satisfied with our product, you can request a refund within 30 days of purchase.",
-    },
-    {
-      question: "How do I update my payment method?",
-      answer:
-        "You can update your payment method by logging into your account and navigating to the billing section.",
-    },
-  ],
-};
+interface FaqItem {
+  question: string;
+  answer: string;
+}
+
+interface FaqCategory {
+  title: string;
+  items: FaqItem[];
+}
+
+interface FaqDict {
+  heading: string;
+  categories: FaqCategory[];
+}
 
 interface FaqProps {
   className?: string;
+  /** Localized FAQ copy, from the dictionary. */
+  dict: FaqDict;
+  lang: Locale;
 }
 
-const Faq = ({ className }: FaqProps) => {
+const LINK_PATTERN = /\[([^\]]+)\]\(([^)]+)\)/g;
+
+const linkClassName = "underline underline-offset-4 hover:text-primary";
+
+/**
+ * Renders `[label](href)` markdown links inside dictionary text.
+ * Root-relative hrefs get the locale prefix; mailto/external stay as-is.
+ */
+const renderInline = (text: string, lang: Locale): ReactNode[] => {
+  const nodes: ReactNode[] = [];
+  let lastIndex = 0;
+  for (const match of text.matchAll(LINK_PATTERN)) {
+    const [raw, label, href] = match;
+    if (match.index > lastIndex) nodes.push(text.slice(lastIndex, match.index));
+    nodes.push(
+      href.startsWith("/") ? (
+        <Link
+          key={match.index}
+          href={`/${lang}${href}`}
+          className={linkClassName}
+        >
+          {label}
+        </Link>
+      ) : (
+        <a key={match.index} href={href} className={linkClassName}>
+          {label}
+        </a>
+      ),
+    );
+    lastIndex = match.index + raw.length;
+  }
+  if (lastIndex < text.length) nodes.push(text.slice(lastIndex));
+  return nodes;
+};
+
+/**
+ * Splits an answer into paragraphs; consecutive lines starting with "- "
+ * become a bullet list.
+ */
+const AnswerBody = ({ answer, lang }: { answer: string; lang: Locale }) => {
+  const blocks: ReactNode[] = [];
+  let bullets: string[] = [];
+
+  const flushBullets = () => {
+    if (bullets.length === 0) return;
+    const items = bullets;
+    bullets = [];
+    blocks.push(
+      <ul key={blocks.length} className="list-disc space-y-1 pl-5">
+        {items.map((item) => (
+          <li key={item}>{renderInline(item, lang)}</li>
+        ))}
+      </ul>,
+    );
+  };
+
+  for (const line of answer.split("\n")) {
+    if (line.startsWith("- ")) {
+      bullets.push(line.slice(2));
+    } else {
+      flushBullets();
+      blocks.push(<p key={blocks.length}>{renderInline(line, lang)}</p>);
+    }
+  }
+  flushBullets();
+
+  return <div className="space-y-2">{blocks}</div>;
+};
+
+const Faq = ({ className, dict, lang }: FaqProps) => {
   return (
-    <section className={cn("py-32", className)}>
+    <section id="faq" className={cn("py-32", className)}>
       <div className="container">
         <h2 className="mb-8 font-heading text-title font-semibold md:mb-11">
-          Frequently asked questions.
+          {dict.heading}
         </h2>
-        <div className="grid gap-4 border-t pt-4 md:grid-cols-3 md:gap-10">
-          <h3 className="text-xl font-medium">General</h3>
-          <Accordion type="multiple" className="md:col-span-2">
-            {faqs.general.map((faq, index) => (
-              <AccordionItem key={index} value={`item-${index}`}>
-                <AccordionTrigger className="text-left">
-                  {faq.question}
-                </AccordionTrigger>
-                <AccordionContent>{faq.answer}</AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </div>
-        <div className="mt-10 grid gap-4 border-t pt-4 md:grid-cols-3 md:gap-10">
-          <h3 className="text-xl font-medium">For educators</h3>
-          <Accordion type="multiple" className="md:col-span-2">
-            {faqs.forEducators.map((faq, index) => (
-              <AccordionItem key={index} value={`item-${index}`}>
-                <AccordionTrigger className="text-left">
-                  {faq.question}
-                </AccordionTrigger>
-                <AccordionContent>{faq.answer}</AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </div>
+        {dict.categories.map((category, categoryIndex) => (
+          <div
+            key={category.title}
+            className={cn(
+              "grid gap-4 border-t pt-4 md:grid-cols-3 md:gap-10",
+              categoryIndex > 0 && "mt-10",
+            )}
+          >
+            <h3 className="text-xl font-medium">{category.title}</h3>
+            <Accordion type="multiple" className="md:col-span-2">
+              {category.items.map((faq, index) => (
+                <AccordionItem key={faq.question} value={`item-${index}`}>
+                  <AccordionTrigger className="text-left">
+                    {faq.question}
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <AnswerBody answer={faq.answer} lang={lang} />
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+        ))}
       </div>
     </section>
   );

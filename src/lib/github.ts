@@ -73,7 +73,7 @@ function isRequestError(err: unknown, ...statuses: number[]): boolean {
  * helper (02 step 1) when needed. The passed session is the caller's copy —
  * `getValidUserToken` re-reads the cookie so it works off the freshest state.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- signature fixed by plan 03; callers (07) pass their session
+// _session: signature fixed by plan 03; callers (07) pass their session
 export async function getUserOctokit(_session: Session): Promise<Octokit> {
   const token = await getValidUserToken();
   if (!token) {

@@ -26,6 +26,14 @@
         {
           "title": "Team",
           "description": "Meet the people behind the project."
+        },
+        {
+          "title": "FAQs",
+          "description": "Answers to common questions."
+        },
+        {
+          "title": "Terms",
+          "description": "Our legal documents and policies."
         }
       ]
     },
@@ -61,6 +69,19 @@
     "existingCustomer": "Existing Customer?",
     "login": "Login",
     "startNow": "Start now"
+  },
+  "footer": {
+    "copyright": "© UnitEd. All rights reserved.",
+    "licenceNote": "Open source — copy & share with credit. Non-commercial use only.",
+    "madeWithPre": "Made with",
+    "madeWithPost": "globally.",
+    "newsletter": {
+      "heading": "Newsletter",
+      "emailPlaceholder": "Email",
+      "submit": "Subscribe",
+      "agreePre": "By submitting, you agree to our",
+      "agreePost": ""
+    }
   },
   "cookieBanner": {
     "title": "Cookie settings",
@@ -140,7 +161,7 @@
     "linkCopied": "Copied!"
   },
   "homeHero": {
-    "heading": "Free training resources for educators",
+    "heading": "Free Training Resources for Educators",
     "subtitle": "Help us combat the global lack of qualified teachers and empower the current ones with the latest tech.",
     "forTeachers": "For Teachers",
     "getInvolved": "Get Involved",
@@ -148,9 +169,23 @@
     "videoTitle": "YouTube video player"
   },
   "aboutHero": {
-    "heading": "Free training resources for educators",
+    "heading": "Free Training Resources for Educators",
     "subtitle": "Help us combat the global lack of qualified teachers and empower the current ones with the latest tech.",
     "seeTheProject": "See the Project"
+  },
+  "aboutMilestones": {
+    "title": "Discover Our Story"
+  },
+  "aboutTeam": {
+    "heading": "The Team Behind UnitEd",
+    "subtitle": "We are a volunteer team from all over the world, united by one mission: free training resources for every educator.",
+    "collaboratorsHeading": "Collaborators",
+    "join": {
+      "heading": "Join",
+      "text1": "We are looking for collaborators and volunteers from all over the world. No matter where you are, who you are or what you do, if you want to join UnitEd's mission ",
+      "linkText": "contact us",
+      "text2": " and soon you will be part of the team!"
+    }
   },
   "team": {
     "heading": "Team"
@@ -162,6 +197,225 @@
       "title": "This Could be You!",
       "text": "You want to support UnitEd?\nWe are happy to hear from you!"
     }
+  },
+  "faq": {
+    "heading": "Frequently asked questions.",
+    "categories": [
+      {
+        "title": "About UnitEd",
+        "items": [
+          {
+            "question": "What is UnitEd?",
+            "answer": "UnitEd is a nonprofit organization building a free online learning platform for emerging educators who teach without formal training in education or a teaching background."
+          },
+          {
+            "question": "Why does UnitEd exist?",
+            "answer": "We believe every classroom deserves a well-prepared teacher. UnitEd works to make practical education knowledge freely accessible, regardless of where an educator lives or whether they can afford formal training."
+          },
+          {
+            "question": "Who is UnitEd for?",
+            "answer": "The platform is designed primarily for emerging educators, including volunteer teachers, community educators, teaching assistants and others who teach without formal pedagogical training."
+          },
+          {
+            "question": "Where does UnitEd work?",
+            "answer": "UnitEd is designed to be accessible worldwide. Our content and platform will continue to develop with the needs of educators in different countries and contexts in mind."
+          },
+          {
+            "question": "Is UnitEd a school or an accredited training provider?",
+            "answer": "No. UnitEd is a learning and support platform. It provides a customized learning path according to each user's needs. Unless explicitly stated otherwise, completing UnitEd content does not constitute an accredited teaching qualification."
+          },
+          {
+            "question": "How can I contact UnitEd?",
+            "answer": "You can contact us at [hello@uniteducation.net](mailto:hello@uniteducation.net). We welcome questions, suggestions, volunteers, partnership proposals and offers of support."
+          }
+        ]
+      },
+      {
+        "title": "The platform",
+        "items": [
+          {
+            "question": "What does the UnitEd platform do?",
+            "answer": "The platform provides customized learning paths and practical resources to help educators develop skills in areas such as:\n- Teaching and learning fundamentals\n- Teacher Presence & Communication\n- Classroom Management\n- Context-Responsive Teaching\n- Ethics & Safeguarding\n- Inclusive and Equitable Education\n- Teacher Growth & Wellbeing"
+          },
+          {
+            "question": "What are customized learning paths?",
+            "answer": "Customized learning paths generate a user-specific curriculum, generating lessons that match the user's learning preferences, their experience, goals and teaching context. The aim is to make learning relevant, practical and manageable, while considering individual needs."
+          },
+          {
+            "question": "Do I need teaching experience to use the platform?",
+            "answer": "No. The platform is intended especially for people who are new to teaching or have not received formal teacher training."
+          },
+          {
+            "question": "Can experienced educators use UnitEd?",
+            "answer": "Yes. Experienced educators may use UnitEd to refresh their knowledge, explore specific topics or support colleagues and new teachers."
+          },
+          {
+            "question": "What kind of content will be available?",
+            "answer": "The platform may include short learning units, practical tools, examples, reflection activities and other open educational resources. The exact content and features will grow as the platform develops."
+          },
+          {
+            "question": "Can I use UnitEd on a mobile phone?",
+            "answer": "We aim to make UnitEd accessible on commonly used devices, including smartphones. Device, browser and offline-access options will depend on the platform version available at launch."
+          },
+          {
+            "question": "Will UnitEd be available in different languages?",
+            "answer": "We aim to support educators worldwide and will explore multilingual content and translation. Available languages will be listed on the platform."
+          },
+          {
+            "question": "Can I suggest a topic or resource?",
+            "answer": "Yes. Send suggestions to [hello@uniteducation.net](mailto:hello@uniteducation.net). Feedback from educators will help us improve the platform and prioritize future content."
+          }
+        ]
+      },
+      {
+        "title": "Access and registration",
+        "items": [
+          {
+            "question": "Is UnitEd free?",
+            "answer": "Yes. UnitEd is intended to provide free access to learning resources without paywalls or unnecessary barriers."
+          },
+          {
+            "question": "Do I need to pay to create an account?",
+            "answer": "No. Creating an account and using the platform will be free, subject to the platform's terms of use."
+          },
+          {
+            "question": "Can I use the platform without registering?",
+            "answer": "Some resources may be publicly available, while customized learning paths may require an account. The exact access model will be explained on the platform."
+          },
+          {
+            "question": "Can I choose my own learning pace?",
+            "answer": "Yes. UnitEd is designed for flexible, self-directed learning. You should be able to learn at a pace that fits your teaching responsibilities."
+          },
+          {
+            "question": "Will I receive a certificate?",
+            "answer": "This platform is not about getting official certificates, it is about making sure the free resources and knowledge are out there. Since in many countries in practice official certificates are not needed to teach and universities are expensive and time consuming, we want to make sure that teachers anyway have free and accessible knowledge to set themselves up for successful teaching."
+          },
+          {
+            "question": "Can I delete my account?",
+            "answer": "Yes. Contact [hello@uniteducation.net](mailto:hello@uniteducation.net) or use the account settings. Your personal data will be handled according to our [Privacy Policy](/terms/privacy) and applicable data-protection requirements."
+          },
+          {
+            "question": "Is my data safe?",
+            "answer": "We aim to collect only the information needed to operate the platform, protect it appropriately and explain clearly how it is used. Please see our [Privacy Policy](/terms/privacy) for specific information about data collection, storage, sharing and deletion."
+          },
+          {
+            "question": "What if I have a technical problem?",
+            "answer": "Please contact us via the feedback form you can find on the bottom left of the page and include a short description of the problem, the device and browser you are using, and—if relevant—a screenshot."
+          }
+        ]
+      },
+      {
+        "title": "Volunteering",
+        "items": [
+          {
+            "question": "How can I volunteer with UnitEd?",
+            "answer": "Contact us! Either send an [e-mail](mailto:hello@uniteducation.net) or [contact us here](/volunteers)."
+          },
+          {
+            "question": "What volunteer roles are available?",
+            "answer": "Depending on our current needs, volunteers may help with:\n- Researching and reviewing educational content.\n- Writing, editing or translating resources.\n- Testing the platform and improving user experience.\n- Technology, design or accessibility.\n- Communications, outreach and community-building.\n- Fundraising, partnerships or organizational development."
+          },
+          {
+            "question": "Do I need teaching experience to volunteer?",
+            "answer": "Not necessarily. We welcome people with relevant skills, lived experience, local knowledge or a commitment to equitable education. Anyone can help!"
+          },
+          {
+            "question": "Can I volunteer remotely?",
+            "answer": "Yes. Our volunteers live all over the world. Working remotely is part of our philosophy."
+          },
+          {
+            "question": "How much time do I need to contribute?",
+            "answer": "It depends on the opportunity. Some roles may involve a one-off task, while others require regular participation. Every hour of work is appreciated and when you start you can tell us your available time, we will find the matching role for you."
+          },
+          {
+            "question": "Is volunteering paid?",
+            "answer": "UnitEd volunteer roles are unpaid. If in the future there will be paid volunteer opportunities we will communicate any reimbursement, stipend or contractual terms in advance."
+          },
+          {
+            "question": "Can young people volunteer?",
+            "answer": "Anyone can help. If you are a minor, we will need your parents' consent to let you volunteer though."
+          },
+          {
+            "question": "Is there a volunteer selection process?",
+            "answer": "Some roles may involve an application. Generally we will get in touch with you once you contact us regarding volunteering and we will have a call to get to know each other. We match volunteers with suitable tasks and provide relevant onboarding. Together we will find the perfect task for you!"
+          },
+          {
+            "question": "Will volunteers receive training?",
+            "answer": "Yes, where required. Volunteers should receive information about their role, expected conduct, safeguarding, privacy and how to raise concerns."
+          },
+          {
+            "question": "Can I volunteer if I live outside Europe?",
+            "answer": "Yes. UnitEd aims to work internationally and welcomes diverse perspectives. Certain roles may have language, time-zone or legal requirements."
+          },
+          {
+            "question": "Can I stop volunteering?",
+            "answer": "Yes. Volunteers can end their involvement by informing the relevant UnitEd contact."
+          },
+          {
+            "question": "How does UnitEd protect learners and volunteers?",
+            "answer": "We are developing safeguarding and responsible-conduct procedures for everyone involved in UnitEd."
+          }
+        ]
+      },
+      {
+        "title": "Membership and community",
+        "items": [
+          {
+            "question": "What does membership mean at UnitEd?",
+            "answer": "Membership connects people who want to support UnitEd's mission and contribute to a community focused on equitable, practical education. Members pay a monthly fee of minimum 5€. They get invited to UnitEd's annual membership meetings and have a vote in important decisions."
+          },
+          {
+            "question": "Who can become a member?",
+            "answer": "Anyone who supports UnitEd's mission can become a member."
+          },
+          {
+            "question": "Is membership free?",
+            "answer": "Members pay 5€ monthly, unless located outside of the EU in which case they can support us as volunteers."
+          },
+          {
+            "question": "What are the benefits of membership?",
+            "answer": "Members may receive access to:\n- Community updates and opportunities.\n- Invitation and a vote at the annual membership meeting."
+          },
+          {
+            "question": "How do I become a member?",
+            "answer": "Complete the [membership form](/membership/join)."
+          },
+          {
+            "question": "Do members have to volunteer?",
+            "answer": "No. Membership and volunteering are separate. Members may support UnitEd financially while volunteers support UnitEd with their work contributions. One person can be volunteer and member at the same time."
+          },
+          {
+            "question": "Can organizations become members or partners?",
+            "answer": "Organizations can explore partnership opportunities by contacting [hello@uniteducation.net](mailto:hello@uniteducation.net). Depending on the partnership, we may collaborate on content, outreach, community, research or educator support."
+          },
+          {
+            "question": "Can I cancel my membership?",
+            "answer": "Yes. You can cancel your membership by sending an e-mail to [hello@uniteducation.net](mailto:hello@uniteducation.net)."
+          }
+        ]
+      },
+      {
+        "title": "Supporting UnitEd",
+        "items": [
+          {
+            "question": "How can I support UnitEd?",
+            "answer": "You can support us by [volunteering](/volunteers), [becoming a member](/membership), partnering with us, sharing your knowledge, or [making a donation](/donate)."
+          },
+          {
+            "question": "Can I donate to UnitEd?",
+            "answer": "Yes. Donations help us develop and maintain free learning resources and improve access for educators worldwide. Donors can get a donation receipt to deduct from their annual tax declaration (check if available for your country). Donations can be made [here](/donate)."
+          },
+          {
+            "question": "How are donations used?",
+            "answer": "Donations may support platform development, educational content, accessibility, translation, community engagement, safeguarding and essential operating costs. We will communicate transparently about how funds are used."
+          },
+          {
+            "question": "Can I support UnitEd without donating?",
+            "answer": "Yes. Sharing your knowledge or our work, giving feedback, contributing skills and connecting us with educators or potential partners are all valuable forms of support."
+          }
+        ]
+      }
+    ]
   },
   "events": {
     "heading": "Events",

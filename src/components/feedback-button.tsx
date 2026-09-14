@@ -1,7 +1,6 @@
 "use client";
 
 import { MessageSquare } from "lucide-react";
-import { useCallback } from "react";
 
 const TALLY_FORM_ID = "OD60EM";
 const TALLY_FORM_URL = `https://tally.so/r/${TALLY_FORM_ID}`;
@@ -55,22 +54,27 @@ const loadEmbedScript = () => {
   return embedScriptPromise;
 };
 
-const FeedbackButton = () => {
-  const openPopup = useCallback(async () => {
-    try {
-      await loadEmbedScript();
-      window.Tally?.openPopup(TALLY_FORM_ID, TALLY_POPUP_OPTIONS);
-    } catch {
-      window.open(TALLY_FORM_URL, "_blank", "noopener");
-    }
-  }, []);
+/**
+ * Lazily loads Tally's embed script on first call, then opens the feedback
+ * popup. Falls back to the full-page form in a new tab if the script fails.
+ * Shared by the footer link and the 404 page's primary button.
+ */
+const openTallyPopup = async () => {
+  try {
+    await loadEmbedScript();
+    window.Tally?.openPopup(TALLY_FORM_ID, TALLY_POPUP_OPTIONS);
+  } catch {
+    window.open(TALLY_FORM_URL, "_blank", "noopener");
+  }
+};
 
+const FeedbackButton = () => {
   return (
     <a
       href={TALLY_POPUP_HASH}
       onClick={(event) => {
         event.preventDefault();
-        void openPopup();
+        void openTallyPopup();
       }}
       className="inline-flex items-center gap-2 hover:text-primary"
     >
@@ -80,4 +84,4 @@ const FeedbackButton = () => {
   );
 };
 
-export { FeedbackButton };
+export { FeedbackButton, openTallyPopup };

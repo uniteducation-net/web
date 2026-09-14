@@ -26,6 +26,14 @@
         {
           "title": "Team",
           "description": "Lernen Sie die Menschen hinter dem Projekt kennen."
+        },
+        {
+          "title": "FAQs",
+          "description": "Antworten auf häufige Fragen."
+        },
+        {
+          "title": "Bedingungen",
+          "description": "Unsere rechtlichen Dokumente und Richtlinien."
         }
       ]
     },
@@ -61,6 +69,19 @@
     "existingCustomer": "Bereits Kunde?",
     "login": "Anmelden",
     "startNow": "Jetzt starten"
+  },
+  "footer": {
+    "copyright": "© UnitEd. Alle Rechte vorbehalten.",
+    "licenceNote": "Open Source — kopieren & teilen mit Namensnennung. Nur nicht-kommerzielle Nutzung.",
+    "madeWithPre": "Gemacht mit",
+    "madeWithPost": "auf der ganzen Welt.",
+    "newsletter": {
+      "heading": "Newsletter",
+      "emailPlaceholder": "E-Mail",
+      "submit": "Abonnieren",
+      "agreePre": "Mit dem Absenden stimmen Sie unserer",
+      "agreePost": " zu."
+    }
   },
   "cookieBanner": {
     "title": "Cookie-Einstellungen",
@@ -152,6 +173,20 @@
     "subtitle": "Helfen Sie uns, den weltweiten Mangel an qualifizierten Lehrkräften zu bekämpfen und die vorhandenen mit neuester Technik zu stärken.",
     "seeTheProject": "Zum Projekt"
   },
+  "aboutMilestones": {
+    "title": "Unsere Geschichte"
+  },
+  "aboutTeam": {
+    "heading": "Das Team hinter UnitEd",
+    "subtitle": "Wir sind ein ehrenamtliches Team aus aller Welt, vereint durch eine Mission: kostenlose Fortbildungsmaterialien für alle Lehrkräfte.",
+    "collaboratorsHeading": "Mitwirkende",
+    "join": {
+      "heading": "Mach mit",
+      "text1": "Wir suchen Mitarbeitende und Freiwillige aus der ganzen Welt. Egal, wo Sie sind, wer Sie sind oder was Sie tun — wenn Sie sich der Mission von UnitEd anschließen möchten, ",
+      "linkText": "kontaktieren Sie uns",
+      "text2": " und werden Sie schon bald Teil des Teams!"
+    }
+  },
   "team": {
     "heading": "Team"
   },
@@ -162,6 +197,225 @@
       "title": "Das könnten Sie sein!",
       "text": "Sie möchten UnitEd unterstützen?\nWir freuen uns, von Ihnen zu hören!"
     }
+  },
+  "faq": {
+    "heading": "Häufig gestellte Fragen.",
+    "categories": [
+      {
+        "title": "Über UnitEd",
+        "items": [
+          {
+            "question": "Was ist UnitEd?",
+            "answer": "UnitEd ist eine gemeinnützige Organisation, die eine kostenlose Online-Lernplattform für angehende Lehrkräfte aufbaut, die ohne formale Ausbildung im Bildungswesen oder ohne Lehrhintergrund unterrichten."
+          },
+          {
+            "question": "Warum existiert UnitEd?",
+            "answer": "Wir glauben, dass jedes Klassenzimmer eine gut vorbereitete Lehrkraft verdient. UnitEd arbeitet daran, praktisches Bildungswissen frei zugänglich zu machen – unabhängig davon, wo eine Lehrkraft lebt oder ob sie sich eine formale Ausbildung leisten kann."
+          },
+          {
+            "question": "Für wen ist UnitEd?",
+            "answer": "Die Plattform richtet sich in erster Linie an angehende Lehrkräfte, darunter ehrenamtliche Lehrkräfte, Community-Educators, Lehrassistenzkräfte und andere, die ohne formale pädagogische Ausbildung unterrichten."
+          },
+          {
+            "question": "Wo ist UnitEd tätig?",
+            "answer": "UnitEd ist darauf ausgelegt, weltweit zugänglich zu sein. Unsere Inhalte und unsere Plattform entwickeln sich kontinuierlich mit Blick auf die Bedürfnisse von Lehrkräften in verschiedenen Ländern und Kontexten weiter."
+          },
+          {
+            "question": "Ist UnitEd eine Schule oder ein akkreditierter Bildungsträger?",
+            "answer": "Nein. UnitEd ist eine Lern- und Unterstützungsplattform. Sie bietet einen individuellen Lernpfad entsprechend den Bedürfnissen jeder Nutzerin und jedes Nutzers. Sofern nicht ausdrücklich anders angegeben, stellt der Abschluss von UnitEd-Inhalten keine akkreditierte Lehrqualifikation dar."
+          },
+          {
+            "question": "Wie kann ich UnitEd kontaktieren?",
+            "answer": "Sie erreichen uns unter [hello@uniteducation.net](mailto:hello@uniteducation.net). Wir freuen uns über Fragen, Anregungen, Freiwillige, Partnerschaftsanfragen und Unterstützungsangebote."
+          }
+        ]
+      },
+      {
+        "title": "Die Plattform",
+        "items": [
+          {
+            "question": "Was macht die UnitEd-Plattform?",
+            "answer": "Die Plattform bietet individuelle Lernpfade und praktische Ressourcen, die Lehrkräften helfen, Kompetenzen in Bereichen wie den folgenden zu entwickeln:\n- Grundlagen von Lehren und Lernen\n- Lehrerpräsenz & Kommunikation\n- Klassenraummanagement\n- Kontextsensitives Unterrichten\n- Ethik & Safeguarding\n- Inklusive und gerechte Bildung\n- Entwicklung & Wohlbefinden von Lehrkräften"
+          },
+          {
+            "question": "Was sind individuelle Lernpfade?",
+            "answer": "Individuelle Lernpfade erstellen ein nutzerspezifisches Curriculum mit Lektionen, die zu den Lernpräferenzen, der Erfahrung, den Zielen und dem Unterrichtskontext der Nutzerinnen und Nutzer passen. Ziel ist es, das Lernen relevant, praktisch und machbar zu gestalten und dabei individuelle Bedürfnisse zu berücksichtigen."
+          },
+          {
+            "question": "Brauche ich Unterrichtserfahrung, um die Plattform zu nutzen?",
+            "answer": "Nein. Die Plattform richtet sich insbesondere an Menschen, die neu im Unterrichten sind oder keine formale Lehrausbildung erhalten haben."
+          },
+          {
+            "question": "Können erfahrene Lehrkräfte UnitEd nutzen?",
+            "answer": "Ja. Erfahrene Lehrkräfte können UnitEd nutzen, um ihr Wissen aufzufrischen, bestimmte Themen zu vertiefen oder Kolleginnen, Kollegen und neue Lehrkräfte zu unterstützen."
+          },
+          {
+            "question": "Welche Inhalte wird es geben?",
+            "answer": "Die Plattform kann kurze Lerneinheiten, praktische Werkzeuge, Beispiele, Reflexionsaufgaben und andere offene Bildungsressourcen umfassen. Die genauen Inhalte und Funktionen wachsen mit der Weiterentwicklung der Plattform."
+          },
+          {
+            "question": "Kann ich UnitEd auf dem Mobiltelefon nutzen?",
+            "answer": "Wir möchten UnitEd auf gängigen Geräten, einschließlich Smartphones, zugänglich machen. Geräte-, Browser- und Offline-Zugangsoptionen hängen von der zum Start verfügbaren Plattformversion ab."
+          },
+          {
+            "question": "Wird UnitEd in verschiedenen Sprachen verfügbar sein?",
+            "answer": "Wir möchten Lehrkräfte weltweit unterstützen und werden mehrsprachige Inhalte und Übersetzungen prüfen. Die verfügbaren Sprachen werden auf der Plattform aufgelistet."
+          },
+          {
+            "question": "Kann ich ein Thema oder eine Ressource vorschlagen?",
+            "answer": "Ja. Senden Sie Vorschläge an [hello@uniteducation.net](mailto:hello@uniteducation.net). Das Feedback von Lehrkräften hilft uns, die Plattform zu verbessern und künftige Inhalte zu priorisieren."
+          }
+        ]
+      },
+      {
+        "title": "Zugang und Registrierung",
+        "items": [
+          {
+            "question": "Ist UnitEd kostenlos?",
+            "answer": "Ja. UnitEd soll kostenlosen Zugang zu Lernressourcen bieten – ohne Paywalls oder unnötige Hürden."
+          },
+          {
+            "question": "Muss ich für die Erstellung eines Kontos bezahlen?",
+            "answer": "Nein. Die Erstellung eines Kontos und die Nutzung der Plattform sind kostenlos, vorbehaltlich der Nutzungsbedingungen der Plattform."
+          },
+          {
+            "question": "Kann ich die Plattform ohne Registrierung nutzen?",
+            "answer": "Einige Ressourcen können öffentlich verfügbar sein, während individuelle Lernpfade ein Konto erfordern können. Das genaue Zugangsmodell wird auf der Plattform erläutert."
+          },
+          {
+            "question": "Kann ich mein eigenes Lerntempo wählen?",
+            "answer": "Ja. UnitEd ist für flexibles, selbstgesteuertes Lernen konzipiert. Sie sollten in einem Tempo lernen können, das zu Ihren Unterrichtsverpflichtungen passt."
+          },
+          {
+            "question": "Erhalte ich ein Zertifikat?",
+            "answer": "Bei dieser Plattform geht es nicht um offizielle Zertifikate, sondern darum, dass kostenlose Ressourcen und Wissen verfügbar sind. Da in vielen Ländern in der Praxis keine offiziellen Zertifikate zum Unterrichten erforderlich sind und Universitäten teuer und zeitaufwändig sind, möchten wir sicherstellen, dass Lehrkräfte dennoch freien Zugang zu Wissen haben, um sich für erfolgreiches Unterrichten aufzustellen."
+          },
+          {
+            "question": "Kann ich mein Konto löschen?",
+            "answer": "Ja. Kontaktieren Sie [hello@uniteducation.net](mailto:hello@uniteducation.net) oder nutzen Sie die Kontoeinstellungen. Ihre personenbezogenen Daten werden gemäß unserer [Datenschutzerklärung](/terms/privacy) und den geltenden Datenschutzbestimmungen behandelt."
+          },
+          {
+            "question": "Sind meine Daten sicher?",
+            "answer": "Wir möchten nur die Informationen erheben, die für den Betrieb der Plattform erforderlich sind, sie angemessen schützen und klar erklären, wie sie verwendet werden. Einzelheiten zu Datenerhebung, -speicherung, -weitergabe und -löschung finden Sie in unserer [Datenschutzerklärung](/terms/privacy)."
+          },
+          {
+            "question": "Was tue ich bei einem technischen Problem?",
+            "answer": "Bitte kontaktieren Sie uns über das Feedback-Formular unten links auf der Seite und fügen Sie eine kurze Beschreibung des Problems, das verwendete Gerät und den Browser sowie – falls relevant – einen Screenshot bei."
+          }
+        ]
+      },
+      {
+        "title": "Ehrenamt",
+        "items": [
+          {
+            "question": "Wie kann ich bei UnitEd mitmachen?",
+            "answer": "Kontaktieren Sie uns! Senden Sie uns entweder eine [E-Mail](mailto:hello@uniteducation.net) oder [kontaktieren Sie uns hier](/volunteers)."
+          },
+          {
+            "question": "Welche Ehrenamtsrollen gibt es?",
+            "answer": "Je nach aktuellem Bedarf können Freiwillige in folgenden Bereichen helfen:\n- Recherche und Prüfung von Bildungsinhalten.\n- Schreiben, Redigieren oder Übersetzen von Ressourcen.\n- Testen der Plattform und Verbesserung der Nutzererfahrung.\n- Technologie, Design oder Barrierefreiheit.\n- Kommunikation, Öffentlichkeitsarbeit und Community-Aufbau.\n- Fundraising, Partnerschaften oder Organisationsentwicklung."
+          },
+          {
+            "question": "Brauche ich Unterrichtserfahrung, um mitzumachen?",
+            "answer": "Nicht unbedingt. Wir begrüßen Menschen mit relevanten Fähigkeiten, gelebter Erfahrung, lokalem Wissen oder einem Engagement für gerechte Bildung. Jede und Jeder kann helfen!"
+          },
+          {
+            "question": "Kann ich remote mitmachen?",
+            "answer": "Ja. Unsere Freiwilligen leben auf der ganzen Welt. Die Remote-Arbeit ist Teil unserer Philosophie."
+          },
+          {
+            "question": "Wie viel Zeit muss ich einbringen?",
+            "answer": "Das hängt von der Aufgabe ab. Manche Rollen umfassen eine einmalige Aufgabe, andere erfordern regelmäßige Beteiligung. Jede Arbeitsstunde wird geschätzt – und wenn Sie anfangen, können Sie uns Ihre verfügbare Zeit mitteilen; wir finden die passende Rolle für Sie."
+          },
+          {
+            "question": "Ist das Ehrenamt bezahlt?",
+            "answer": "Die Ehrenamtsrollen bei UnitEd sind unbezahlt. Sollte es in Zukunft bezahlte Möglichkeiten geben, werden wir etwaige Vergütungen, Aufwandsentschädigungen oder Vertragsbedingungen im Voraus kommunizieren."
+          },
+          {
+            "question": "Können junge Menschen mitmachen?",
+            "answer": "Jede und Jeder kann helfen. Wenn Sie minderjährig sind, benötigen wir jedoch die Einwilligung Ihrer Eltern, damit Sie mitmachen können."
+          },
+          {
+            "question": "Gibt es ein Auswahlverfahren für Freiwillige?",
+            "answer": "Für manche Rollen kann es eine Bewerbung geben. In der Regel melden wir uns bei Ihnen, sobald Sie uns wegen eines Ehrenamts kontaktiert haben, und wir führen ein Gespräch zum Kennenlernen. Wir bringen Freiwillige mit passenden Aufgaben zusammen und sorgen für eine entsprechende Einarbeitung. Gemeinsam finden wir die perfekte Aufgabe für Sie!"
+          },
+          {
+            "question": "Erhalten Freiwillige eine Schulung?",
+            "answer": "Ja, wo erforderlich. Freiwillige erhalten Informationen zu ihrer Rolle, zum erwarteten Verhalten, zu Safeguarding und Datenschutz sowie dazu, wie sie Bedenken melden können."
+          },
+          {
+            "question": "Kann ich mitmachen, wenn ich außerhalb Europas lebe?",
+            "answer": "Ja. UnitEd möchte international arbeiten und begrüßt vielfältige Perspektiven. Bestimmte Rollen können Sprach-, Zeitzonen- oder rechtliche Anforderungen haben."
+          },
+          {
+            "question": "Kann ich das Ehrenamt beenden?",
+            "answer": "Ja. Freiwillige können ihr Engagement beenden, indem sie die zuständige Kontaktperson bei UnitEd informieren."
+          },
+          {
+            "question": "Wie schützt UnitEd Lernende und Freiwillige?",
+            "answer": "Wir entwickeln Safeguarding- und Verhaltensrichtlinien für alle, die bei UnitEd mitwirken."
+          }
+        ]
+      },
+      {
+        "title": "Mitgliedschaft und Community",
+        "items": [
+          {
+            "question": "Was bedeutet Mitgliedschaft bei UnitEd?",
+            "answer": "Die Mitgliedschaft verbindet Menschen, die die Mission von UnitEd unterstützen und zu einer Community für gerechte, praxisnahe Bildung beitragen möchten. Mitglieder zahlen einen monatlichen Beitrag von mindestens 5 €. Sie werden zu den jährlichen Mitgliederversammlungen von UnitEd eingeladen und haben ein Stimmrecht bei wichtigen Entscheidungen."
+          },
+          {
+            "question": "Wer kann Mitglied werden?",
+            "answer": "Alle, die die Mission von UnitEd unterstützen, können Mitglied werden."
+          },
+          {
+            "question": "Ist die Mitgliedschaft kostenlos?",
+            "answer": "Mitglieder zahlen monatlich 5 €, es sei denn, sie leben außerhalb der EU – in diesem Fall können sie uns als Freiwillige unterstützen."
+          },
+          {
+            "question": "Welche Vorteile bietet die Mitgliedschaft?",
+            "answer": "Mitglieder erhalten unter anderem:\n- Community-Updates und Gelegenheiten zur Mitwirkung.\n- Einladung und Stimmrecht bei der jährlichen Mitgliederversammlung."
+          },
+          {
+            "question": "Wie werde ich Mitglied?",
+            "answer": "Füllen Sie das [Mitgliedschaftsformular](/membership/join) aus."
+          },
+          {
+            "question": "Müssen Mitglieder ehrenamtlich mitarbeiten?",
+            "answer": "Nein. Mitgliedschaft und Ehrenamt sind getrennt. Mitglieder können UnitEd finanziell unterstützen, während Freiwillige UnitEd mit ihrem Arbeitseinsatz unterstützen. Eine Person kann gleichzeitig Freiwillige und Mitglied sein."
+          },
+          {
+            "question": "Können Organisationen Mitglied oder Partner werden?",
+            "answer": "Organisationen können Partnerschaftsmöglichkeiten erkunden, indem sie [hello@uniteducation.net](mailto:hello@uniteducation.net) kontaktieren. Je nach Partnerschaft können wir bei Inhalten, Öffentlichkeitsarbeit, Community, Forschung oder der Unterstützung von Lehrkräften zusammenarbeiten."
+          },
+          {
+            "question": "Kann ich meine Mitgliedschaft kündigen?",
+            "answer": "Ja. Sie können Ihre Mitgliedschaft per E-Mail an [hello@uniteducation.net](mailto:hello@uniteducation.net) kündigen."
+          }
+        ]
+      },
+      {
+        "title": "UnitEd unterstützen",
+        "items": [
+          {
+            "question": "Wie kann ich UnitEd unterstützen?",
+            "answer": "Sie können uns unterstützen, indem Sie [ehrenamtlich mitmachen](/volunteers), [Mitglied werden](/membership), Partner werden, Ihr Wissen teilen oder [spenden](/donate)."
+          },
+          {
+            "question": "Kann ich an UnitEd spenden?",
+            "answer": "Ja. Spenden helfen uns, kostenlose Lernressourcen zu entwickeln und zu pflegen und den Zugang für Lehrkräfte weltweit zu verbessern. Spenderinnen und Spender können eine Spendenbescheinigung für ihre jährliche Steuererklärung erhalten (bitte prüfen Sie die Verfügbarkeit für Ihr Land). [Hier können Sie spenden](/donate)."
+          },
+          {
+            "question": "Wie werden Spenden verwendet?",
+            "answer": "Spenden können die Plattformentwicklung, Bildungsinhalte, Barrierefreiheit, Übersetzung, Community-Arbeit, Safeguarding und wesentliche Betriebskosten unterstützen. Wir kommunizieren transparent, wie die Mittel verwendet werden."
+          },
+          {
+            "question": "Kann ich UnitEd auch ohne Spende unterstützen?",
+            "answer": "Ja. Ihr Wissen oder unsere Arbeit zu teilen, Feedback zu geben, Fähigkeiten beizutragen und uns mit Lehrkräften oder potenziellen Partnern zu vernetzen, sind wertvolle Formen der Unterstützung."
+          }
+        ]
+      }
+    ]
   },
   "events": {
     "heading": "Veranstaltungen",

@@ -19,7 +19,7 @@ import { i18n, type Locale } from "@/i18n-config";
  * paths relative to the urlEndpoint, rendered with `@imagekit/next`.
  */
 
-export type ContentType = "updates" | "team" | "terms" | "events";
+export type ContentType = "updates" | "team" | "terms" | "events" | "milestones";
 
 const CONTENT_DIR = path.join(process.cwd(), "src", "content");
 
@@ -82,11 +82,30 @@ export interface EventFrontmatter {
   cover?: string;
 }
 
+export interface MilestoneFrontmatter {
+  /** Free-text slider tab label — a year ("2024"), "Today", anything. */
+  tag: string;
+  /** Eyebrow above the slide title. */
+  tagline: string;
+  title: string;
+  description: string;
+  /** Read-more button label. */
+  buttonText: string;
+  /** Internal target of the read-more button, e.g. "/updates/launch" —
+   *  the locale prefix is added at render time. */
+  href: string;
+  /** ImageKit path relative to the urlEndpoint, e.g. "/illustrations/together.svg" */
+  image: string;
+  order?: number;
+  draft?: boolean;
+}
+
 interface FrontmatterByType {
   updates: UpdateFrontmatter;
   team: TeamFrontmatter;
   terms: LegalFrontmatter;
   events: EventFrontmatter;
+  milestones: MilestoneFrontmatter;
 }
 
 export type Frontmatter<T extends ContentType> = FrontmatterByType[T];

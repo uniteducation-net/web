@@ -58,7 +58,7 @@ const ActiveMembers = ({
           </Button>
         </div>
 
-        <div className="relative">
+        <div>
           <Carousel
             opts={{
               align: "center",
@@ -98,9 +98,6 @@ const ActiveMembers = ({
               <CarouselNext className="static size-10 translate-x-0 translate-y-0 rounded-lg [&>svg]:size-4" />
             </div>
           </Carousel>
-
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-linear-to-r from-background to-transparent lg:w-24" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-linear-to-l from-background to-transparent lg:w-24" />
         </div>
       </div>
     </section>

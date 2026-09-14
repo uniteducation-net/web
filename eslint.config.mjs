@@ -7,6 +7,17 @@ const eslintConfig = defineConfig([
   ...nextTs,
   {
     rules: {
+      // `_`-prefixed names mark intentionally unused bindings (mostly
+      // destructure-to-omit: `const { iat: _iat, ...data } = payload`).
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          destructuredArrayIgnorePattern: "^_",
+          ignoreRestSiblings: true,
+        },
+      ],
       "no-restricted-syntax": [
         "error",
         {

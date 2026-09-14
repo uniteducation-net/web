@@ -10,7 +10,7 @@ const isDev = process.env.NODE_ENV === "development";
 // remaining directives are tight (object/base/form/self-only).
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${isDev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://tally.so${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   // ImageKit = site media, ytimg = hero video poster, githubavatars = session
   // avatars, cloudfront = shadcn block portraits, data/blob = inline assets.
@@ -19,7 +19,8 @@ const contentSecurityPolicy = [
   "font-src 'self' data:",
   `connect-src 'self' https://ik.imagekit.io${isDev ? " ws:" : ""}`,
   "worker-src 'self' blob:",
-  "frame-src 'self' https://www.youtube-nocookie.com",
+  // tally.so = embedded forms (full-page iframes + the lazy feedback popup).
+  "frame-src 'self' https://www.youtube-nocookie.com https://tally.so",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -47,6 +48,11 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
   poweredByHeader: false,
   pageExtensions: ["ts", "tsx", "md", "mdx"],
+  experimental: {
+    // No single root layout exists (route groups + [lang] dynamic segment),
+    // so unmatched URLs are served by src/app/global-not-found.tsx.
+    globalNotFound: true,
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

@@ -56,8 +56,14 @@ export default async function RootLayout({
           />
           {children}
           <Footer
-            teamHref={`/${lang}/about#team`}
-            licenceHref={`/${lang}/terms/licence`}
+            lang={lang}
+            dict={{
+              about: dict.header.about,
+              getInvolved: dict.header.getInvolved,
+              legal: dict.legalOverview.items,
+              tagline: dict.homeHero.subtitle,
+              ...dict.footer,
+            }}
           />
           <CookieBanner {...dict.cookieBanner} />
         </ImageKitClientProvider>

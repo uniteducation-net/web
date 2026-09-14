@@ -34,7 +34,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
         locale={lang}
         dict={dict.activeMembers}
       />
-      <Faq />
+      <Faq dict={dict.faq} lang={lang} />
     </>
   );
 }
