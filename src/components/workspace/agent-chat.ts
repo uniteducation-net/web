@@ -40,6 +40,20 @@ export type AgentUITools = {
     input: { path: string; content: string; message: string };
     output: { path: string; created: boolean } | undefined;
   };
+  searchResources: {
+    input: { query: string };
+    output:
+      | {
+          available: true;
+          results: { title: string; path: string; summary: string | null }[];
+        }
+      | { available: false; reason: "empty" | "unavailable" }
+      | undefined;
+  };
+  readIcmReference: {
+    input: { file: "skill" | "core" | "forms" };
+    output: string | undefined;
+  };
 };
 
 export type AgentUIMessage = UIMessage<

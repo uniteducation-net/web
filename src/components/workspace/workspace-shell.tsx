@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { MessageSquare, PanelLeftOpen } from "lucide-react";
 import type { UIMessage } from "ai";
 import type { SessionRepo, SessionUser } from "@/lib/session";
+import { START_HERE_MAIN } from "@/lib/provisioning";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -194,6 +195,8 @@ export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
   // server-side, so this second fetch costs nothing after the sidebar's.
   // Only corrects the path if the current one isn't in the repo (e.g. a
   // template without a root CONTEXT.md): never overrides a real selection.
+  // Landing-doc preference: the Start Here guide first (a new workspace's
+  // orientation), then the root CONTEXT.md, then the first tree entry.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -202,11 +205,14 @@ export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
         if (!res.ok) return; // the sidebar surfaces the failure already
         const entries = (await res.json()) as { path: string }[];
         if (cancelled || entries.length === 0) return;
-        setSelectedPath((current) =>
-          entries.some((e) => e.path === current)
-            ? current
-            : (entries.find((e) => e.path === "CONTEXT.md") ?? entries[0])
-                .path,
+        setSelectedPath(
+          (current) =>
+            entries.some((e) => e.path === current)
+              ? current
+              : (entries.find((e) => e.path === START_HERE_MAIN) ??
+                  entries.find((e) => e.path === "CONTEXT.md") ??
+                  entries[0]
+                ).path,
         );
       } catch {
         // offline or hiccup — keep the default; the tree shows the error

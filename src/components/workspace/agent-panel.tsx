@@ -99,6 +99,14 @@ function ToolActivityRow({ part }: { part: ToolUIPart<AgentUITools> }) {
       finished = `${created ? "Created" : "Updated"} ${path ?? "file"}`;
       break;
     }
+    case "tool-searchResources":
+      working = "Searching resources…";
+      finished = "Searched the resources library";
+      break;
+    case "tool-readIcmReference":
+      working = "Consulting the method guide…";
+      finished = "Consulted the method guide";
+      break;
     default:
       return null;
   }
