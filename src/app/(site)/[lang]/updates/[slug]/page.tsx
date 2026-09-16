@@ -49,6 +49,7 @@ export default async function UpdatePage({
       title={frontmatter.title}
       date={frontmatter.date}
       readingTime={entry.readingTime}
+      cover={frontmatter.cover}
       author={
         authorEntry
           ? {

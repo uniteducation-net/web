@@ -3,6 +3,7 @@ import { Clock, Home } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { IllustrationImage } from "@/components/illustration-image";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Breadcrumb,
@@ -43,6 +44,9 @@ interface UpdateArticleProps {
   date: string;
   readingTime: number;
   author?: UpdateArticleAuthor;
+  /** Cover shown in a contain box under the header — ImageKit path relative
+   *  to the urlEndpoint. */
+  cover?: string;
   labels: UpdateArticleLabels;
   children: ReactNode;
   className?: string;
@@ -66,6 +70,7 @@ const UpdateArticle = ({
   date,
   readingTime,
   author,
+  cover,
   labels,
   children,
   className,
@@ -135,6 +140,15 @@ const UpdateArticle = ({
             {readingTime} {labels.minRead}
           </span>
         </div>
+        {cover && (
+          <IllustrationImage
+            src={cover}
+            alt={title}
+            priority
+            className="mt-10 h-64 w-full rounded-xl border bg-muted md:h-96"
+            imageClassName="object-contain p-6 md:p-8"
+          />
+        )}
         <Separator className="mt-8 mb-16" />
         <div className="relative grid grid-cols-12 gap-6 lg:grid">
           <div className="col-span-12 lg:col-span-8">

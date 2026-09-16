@@ -43,9 +43,9 @@ const Highlights = ({ heading, items, className }: HighlightsProps) => {
               <CarouselItem key={item.slug}>
                 <Link
                   href={item.href}
-                  className="group flex flex-col items-center justify-between gap-4 rounded-2xl bg-muted py-20 pl-8 md:flex-row md:pl-16"
+                  className="group flex flex-col items-center justify-between gap-8 rounded-2xl bg-muted px-8 py-20 md:flex-row md:px-16"
                 >
-                  <div className="w-full pr-2 md:max-w-xs md:pr-0">
+                  <div className="w-full md:max-w-xs">
                     <h3 className="mb-6 text-xl font-medium sm:text-2xl md:text-5xl">
                       {item.title}
                     </h3>
@@ -57,8 +57,8 @@ const Highlights = ({ heading, items, className }: HighlightsProps) => {
                     <IllustrationImage
                       src={item.image}
                       alt={item.title}
-                      className="h-80 max-h-[560px] w-full max-w-2xl rounded-l-2xl md:h-full"
-                      imageClassName="object-contain transition duration-300 group-hover:scale-105"
+                      className="h-64 w-full max-w-md rounded-xl border bg-background md:h-80"
+                      imageClassName="object-contain p-4 transition duration-300 group-hover:scale-105"
                     />
                   )}
                 </Link>
