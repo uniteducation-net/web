@@ -5,7 +5,7 @@
 // interactive lives behind this client boundary.
 // Plan: docs/plans/icm-workspace-plan/08-workspace-shell.md
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MessageSquare, PanelLeftOpen } from "lucide-react";
 import type { UIMessage } from "ai";
@@ -20,7 +20,12 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { AgentPanel } from "./agent-panel";
-import { MarkdownPreview } from "./markdown-preview";
+import { UnsavedChangesDialog } from "./editor/unsaved-changes-dialog";
+import {
+  WorkspaceEditor,
+  type WorkspaceEditorHandle,
+} from "./editor/workspace-editor";
+import { workspaceFileApi } from "./editor/workspace-file-api";
 import { OPENROUTER_VERIFIER_KEY, SettingsModal } from "./settings-modal";
 import { WorkspaceSidebar } from "./workspace-sidebar";
 
@@ -78,6 +83,12 @@ export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
   // 09 step 3 — refresh signal: the agent panel (11) calls onFilesChanged
   // after writing files; bumping this key makes the sidebar's tree re-fetch.
   const [treeRefreshKey, setTreeRefreshKey] = useState(0);
+  // 15 — file-switch guard: the editor reports dirty through this ref; a
+  // dirty selection click holds the target in pendingPath (sidebar highlight
+  // stays on the dirty file) until the unsaved-changes dialog resolves.
+  const editorRef = useRef<WorkspaceEditorHandle>(null);
+  const [pendingPath, setPendingPath] = useState<string | null>(null);
+  const [switchSaving, setSwitchSaving] = useState(false);
   // Onboarding continuity (08 step 6): null until read post-mount; the agent
   // panel mounts only after hydration so useChat initializes with these.
   const [initialAgentMessages, setInitialAgentMessages] = useState<
@@ -173,9 +184,39 @@ export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
   // 12 step 3 — the workspace switch already happened server-side (a cookie
   // update); re-render from the guard down and make tree + preview follow.
   const handleRepoChanged = () => {
+    setPendingPath(null);
     setSelectedPath("CONTEXT.md");
     setTreeRefreshKey((k) => k + 1);
     router.refresh();
+  };
+
+  // 15 — selection commits immediately when the editor is clean; with
+  // unsaved changes the target waits in pendingPath for the dialog.
+  const commitSelect = (path: string) => {
+    setSelectedPath(path);
+    if (isMobile()) setSidebarOpen(false);
+  };
+  const handleSelect = (path: string) => {
+    if (path !== selectedPath && editorRef.current?.isDirty()) {
+      setPendingPath(path);
+      return;
+    }
+    commitSelect(path);
+  };
+  const handleSwitchSave = async () => {
+    if (!pendingPath) return;
+    setSwitchSaving(true);
+    const saved = (await editorRef.current?.save()) ?? false;
+    setSwitchSaving(false);
+    setPendingPath(null);
+    // Not saved (409/401/network): stay on the dirty file — the editor's
+    // conflict banner or error pill explains why navigation didn't happen.
+    if (saved) commitSelect(pendingPath);
+  };
+  const handleSwitchDiscard = () => {
+    editorRef.current?.discard();
+    if (pendingPath) commitSelect(pendingPath);
+    setPendingPath(null);
   };
 
   // Persist panel state (08 step 5) — a teacher who works collapsed stays collapsed.
@@ -263,10 +304,7 @@ export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
             repo={repo}
             user={user}
             refreshKey={treeRefreshKey}
-            onSelect={(path) => {
-              setSelectedPath(path);
-              if (isMobile()) setSidebarOpen(false);
-            }}
+            onSelect={handleSelect}
             onExpand={() => setSidebarOpen(true)}
             onOpenSettings={() => setSettingsOpen(true)}
             className="max-lg:shadow-xl"
@@ -306,9 +344,11 @@ export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
               <MessageSquare className="size-4" />
             </FloatingButton>
           )}
-          <MarkdownPreview
+          <WorkspaceEditor
+            ref={editorRef}
             path={selectedPath}
             repo={repo}
+            api={workspaceFileApi}
             refreshKey={treeRefreshKey}
           />
         </main>
@@ -350,6 +390,16 @@ export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
         repo={repo}
         user={user}
         onRepoChanged={handleRepoChanged}
+      />
+
+      {/* 15 — dirty file-switch guard (see handleSelect). */}
+      <UnsavedChangesDialog
+        open={pendingPath !== null}
+        targetPath={pendingPath}
+        saving={switchSaving}
+        onSave={() => void handleSwitchSave()}
+        onDiscard={handleSwitchDiscard}
+        onCancel={() => setPendingPath(null)}
       />
     </TooltipProvider>
   );

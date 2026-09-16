@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MessageSquare, PanelLeftOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,8 +10,15 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+// 15 — the demo shares the real editor container + micro-components; only
+// the data adapter is a mock (no GitHub involved).
+import { UnsavedChangesDialog } from "@/components/workspace/editor/unsaved-changes-dialog";
+import {
+  WorkspaceEditor,
+  type WorkspaceEditorHandle,
+} from "@/components/workspace/editor/workspace-editor";
+import { mockFileApi } from "../_lib/mock-file-api";
 import { AgentPanel } from "./agent-panel";
-import { MarkdownPreview } from "./markdown-preview";
 import { SettingsModal } from "./settings-modal";
 import { WorkspaceSidebar } from "./workspace-sidebar";
 
@@ -32,6 +39,35 @@ export function WorkspaceShell({ className }: WorkspaceShellProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [animated, setAnimated] = useState(false);
+  // 15 — file-switch guard, same as the real shell (mock adapter, no repo).
+  const editorRef = useRef<WorkspaceEditorHandle>(null);
+  const [pendingPath, setPendingPath] = useState<string | null>(null);
+  const [switchSaving, setSwitchSaving] = useState(false);
+
+  const commitSelect = (path: string) => {
+    setSelectedPath(path);
+    if (isMobile()) setSidebarOpen(false);
+  };
+  const handleSelect = (path: string) => {
+    if (path !== selectedPath && editorRef.current?.isDirty()) {
+      setPendingPath(path);
+      return;
+    }
+    commitSelect(path);
+  };
+  const handleSwitchSave = async () => {
+    if (!pendingPath) return;
+    setSwitchSaving(true);
+    const saved = (await editorRef.current?.save()) ?? false;
+    setSwitchSaving(false);
+    setPendingPath(null);
+    if (saved) commitSelect(pendingPath);
+  };
+  const handleSwitchDiscard = () => {
+    editorRef.current?.discard();
+    if (pendingPath) commitSelect(pendingPath);
+    setPendingPath(null);
+  };
 
   // Restore persisted panel state after mount (never in render — SSR mismatch).
   // Runs inside a rAF callback so the restored state paints before
@@ -112,10 +148,7 @@ export function WorkspaceShell({ className }: WorkspaceShellProps) {
           <WorkspaceSidebar
             collapsed={!sidebarOpen}
             selectedPath={selectedPath}
-            onSelect={(path) => {
-              setSelectedPath(path);
-              if (isMobile()) setSidebarOpen(false);
-            }}
+            onSelect={handleSelect}
             onExpand={() => setSidebarOpen(true)}
             onOpenSettings={() => setSettingsOpen(true)}
             className="max-lg:shadow-xl"
@@ -155,7 +188,7 @@ export function WorkspaceShell({ className }: WorkspaceShellProps) {
               <MessageSquare className="size-4" />
             </FloatingButton>
           )}
-          <MarkdownPreview path={selectedPath} />
+          <WorkspaceEditor ref={editorRef} path={selectedPath} api={mockFileApi} />
         </main>
 
         {/* Agent panel: in-flow on lg, fixed overlay below lg */}
@@ -178,6 +211,16 @@ export function WorkspaceShell({ className }: WorkspaceShellProps) {
       </div>
 
       <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
+
+      {/* 15 — dirty file-switch guard (see handleSelect). */}
+      <UnsavedChangesDialog
+        open={pendingPath !== null}
+        targetPath={pendingPath}
+        saving={switchSaving}
+        onSave={() => void handleSwitchSave()}
+        onDiscard={handleSwitchDiscard}
+        onCancel={() => setPendingPath(null)}
+      />
     </TooltipProvider>
   );
 }

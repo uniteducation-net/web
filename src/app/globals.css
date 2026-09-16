@@ -280,3 +280,14 @@
     transition-delay: 0ms;
   }
 }
+
+/* 15 — Tiptap Placeholder hint (official docs: the editor root carries
+   .tiptap; an empty first paragraph gets .is-editor-empty and the
+   data-placeholder attribute). */
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--muted-foreground);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
