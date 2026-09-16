@@ -138,7 +138,7 @@ const AboutMilestones = ({
                       alt={title}
                       className="aspect-[1.33] w-full rounded-xl border shadow-md"
                       imageClassName={cn(
-                        "object-cover object-center",
+                        "object-contain object-center",
                         "animate-in duration-900 fade-in",
                       )}
                     />

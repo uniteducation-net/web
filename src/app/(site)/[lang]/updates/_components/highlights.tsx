@@ -58,7 +58,7 @@ const Highlights = ({ heading, items, className }: HighlightsProps) => {
                       src={item.image}
                       alt={item.title}
                       className="h-80 max-h-[560px] w-full max-w-2xl rounded-l-2xl md:h-full"
-                      imageClassName="object-cover transition duration-300 group-hover:scale-105"
+                      imageClassName="object-contain transition duration-300 group-hover:scale-105"
                     />
                   )}
                 </Link>

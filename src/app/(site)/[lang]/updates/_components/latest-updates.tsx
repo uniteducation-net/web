@@ -53,7 +53,7 @@ const LatestUpdates = ({
                   src={post.image}
                   alt={post.title}
                   className="aspect-16/10 rounded-md"
-                  imageClassName="object-cover object-center transition duration-300 group-hover:scale-105"
+                  imageClassName="object-contain object-center transition duration-300 group-hover:scale-105"
                 />
               )}
               <div className="flex flex-col gap-3">
