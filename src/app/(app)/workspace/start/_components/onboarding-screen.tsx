@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Sparkles } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, ArrowRight, LogIn } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import {
@@ -33,8 +34,28 @@ import {
 
 const STORAGE_KEY = "onboarding-chat";
 
+/** Sent when the teacher skips (or cuts short) the interview: every field is
+    nullable per teacherProfileSchema, and provisioning fills the gaps. */
+const EMPTY_PROFILE: OnboardingProfile = {
+  name: null,
+  subject: null,
+  gradeLevel: null,
+  teachingContext: null,
+  tone: null,
+  goals: null,
+};
+
+/** Centered → bottom glide: animates the flex-grow regions around the chat. */
+const layoutMotion =
+  "motion-safe:transition-all motion-safe:duration-700 motion-safe:ease-in-out";
+
+/** Full-document nav into the GitHub OAuth chain; the draft chat survives in
+    localStorage and is restored on return to `next`. */
+const GITHUB_LOGIN_HREF = "/api/auth/github?next=/workspace/start";
+
 interface OnboardingScreenProps {
-  /** From the server page (04). Controls the save-button label. */
+  /** From the server page (04). Decides whether "Go to workspace" starts the
+      GitHub OAuth flow or provisions the repo directly. */
   authenticated: boolean;
 }
 
@@ -72,6 +93,9 @@ export function OnboardingScreen({ authenticated }: OnboardingScreenProps) {
   const [createError, setCreateError] = useState<string | null>(null);
 
   const busy = status === "submitted" || status === "streaming";
+  // Centered until the teacher sends their first message, then the input
+  // glides to the bottom (the seeded opening message doesn't count).
+  const started = messages.some((m) => m.role === "user");
 
   // Restore the draft conversation after mount (survives the OAuth round-trip).
   // Declared before the persist effect so it runs first on mount.
@@ -101,10 +125,8 @@ export function OnboardingScreen({ authenticated }: OnboardingScreenProps) {
     }
     return null;
   }, [messages]);
-  const profileComplete = profileSignal?.complete === true;
-  const profile: OnboardingProfile | null = profileComplete
-    ? profileSignal.profile
-    : null;
+  const profile: OnboardingProfile | null =
+    profileSignal?.complete === true ? profileSignal.profile : null;
 
   const handleSubmit = (message: PromptInputMessage) => {
     const text = message.text.trim();
@@ -112,27 +134,28 @@ export function OnboardingScreen({ authenticated }: OnboardingScreenProps) {
     sendMessage({ text });
   };
 
-  const saveWorkspace = async () => {
+  const goToWorkspace = async () => {
     if (!authenticated) {
       // Mid-onboarding OAuth (04 step 4): hard-nav into the GitHub App flow
       // and come straight back here. The draft conversation survives in
       // localStorage and is restored on return. Must be a full document
       // navigation — this is an API route that 302s to GitHub, not a page.
       // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-      window.location.href = "/api/auth/github?next=/workspace/start";
+      window.location.href = GITHUB_LOGIN_HREF;
       return;
     }
-    if (!profile || creating) return;
+    if (creating) return;
 
     // Provision (07): create + personalize the teacher's repo, then hard-nav
     // to /workspace — the guard (04) finds the repo and renders the shell.
+    // Without a finished interview the workspace is seeded from EMPTY_PROFILE.
     setCreating(true);
     setCreateError(null);
     try {
       const res = await fetch("/api/workspace/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profile }),
+        body: JSON.stringify({ profile: profile ?? EMPTY_PROFILE }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         error?: string;
@@ -175,51 +198,86 @@ export function OnboardingScreen({ authenticated }: OnboardingScreenProps) {
 
   return (
     <main className="mx-auto flex h-full w-full max-w-2xl flex-col px-4">
-      <header className="flex shrink-0 flex-col items-center gap-2 pt-10 pb-4 text-center">
-        <Logo className="h-6 w-auto" />
+      <div className="flex shrink-0 items-center justify-between pt-4">
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/en">
+            <ArrowLeft className="size-4" />
+            Website
+          </Link>
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={goToWorkspace}
+          disabled={busy || creating}
+        >
+          {creating ? "Creating your workspace…" : "Go to workspace"}
+          <ArrowRight className="size-4" />
+        </Button>
+      </div>
+
+      <header className="flex shrink-0 flex-col items-center gap-2 pt-8 pb-4 text-center">
+        <Logo className="[&_.logo-text]:text-2xl" />
         <p className="text-sm text-muted-foreground">
           Your personal teaching workspace, built in a 2-minute chat.
         </p>
       </header>
 
-      <Conversation className="flex-1">
-        <ConversationContent className="gap-4 p-3">
-          {messages.map((message) => (
-            <Message key={message.id} from={message.role}>
-              <MessageContent
-                className={cn(
-                  "font-text",
-                  message.role === "user" &&
-                    "group-[.is-user]:bg-primary group-[.is-user]:text-primary-foreground",
-                )}
-              >
-                {message.parts.map((part, index) =>
-                  part.type === "text" ? (
-                    message.role === "assistant" ? (
-                      <MessageResponse key={index}>
-                        {part.text}
-                      </MessageResponse>
-                    ) : (
-                      <span key={index}>{part.text}</span>
-                    )
-                  ) : null,
-                )}
-              </MessageContent>
-            </Message>
-          ))}
-          {status === "submitted" && (
-            <Message from="assistant">
-              <MessageContent>
-                <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span className="size-2 animate-shadow-ping rounded-full bg-primary" />
-                  Thinking…
-                </span>
-              </MessageContent>
-            </Message>
-          )}
-        </ConversationContent>
-        <ConversationScrollButton />
-      </Conversation>
+      {/* Centered → bottom glide: before the first user message both spacers
+          grow, centering the chat block; afterwards they collapse and the
+          conversation grows to fill, docking the input at the bottom.
+          flex-grow animates, so the input glides; motion-safe keeps it
+          instant for reduced-motion users. */}
+      <div
+        aria-hidden
+        className={cn(layoutMotion, started ? "grow-0" : "grow")}
+      />
+      <div
+        className={cn(
+          layoutMotion,
+          "flex min-h-0 flex-col",
+          started ? "grow" : "grow-0",
+        )}
+      >
+        <Conversation>
+          <ConversationContent className="gap-4 p-3">
+            {messages.map((message) => (
+              <Message key={message.id} from={message.role}>
+                <MessageContent
+                  className={cn(
+                    "font-text",
+                    message.role === "user" &&
+                      "group-[.is-user]:bg-primary group-[.is-user]:text-primary-foreground",
+                  )}
+                >
+                  {message.parts.map((part, index) =>
+                    part.type === "text" ? (
+                      message.role === "assistant" ? (
+                        <MessageResponse key={index}>
+                          {part.text}
+                        </MessageResponse>
+                      ) : (
+                        <span key={index}>{part.text}</span>
+                      )
+                    ) : null,
+                  )}
+                </MessageContent>
+              </Message>
+            ))}
+            {status === "submitted" && (
+              <Message from="assistant">
+                <MessageContent>
+                  <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span className="size-2 animate-shadow-ping rounded-full bg-primary" />
+                    Thinking…
+                  </span>
+                </MessageContent>
+              </Message>
+            )}
+          </ConversationContent>
+          <ConversationScrollButton />
+        </Conversation>
+      </div>
 
       <div className="shrink-0 pt-3 pb-6">
         {status === "error" && (
@@ -242,24 +300,44 @@ export function OnboardingScreen({ authenticated }: OnboardingScreenProps) {
             {createError}
           </p>
         )}
-        <Button
-          size="lg"
-          className="mt-3 w-full"
-          disabled={!profileComplete || busy || creating}
-          onClick={saveWorkspace}
-          title={profileComplete ? undefined : "Answer the questions above first"}
-        >
-          <Sparkles className="size-4" />
-          {creating
-            ? "Creating your workspace…"
-            : authenticated
-              ? "Create my workspace"
-              : "Save my workspace — connect GitHub"}
-        </Button>
+        {!authenticated && (
+          <div className="mt-2 flex justify-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="text-muted-foreground"
+            >
+              {/* Plain <a>, not Link: an API route that 302s to GitHub wants a
+                  full-document navigation. */}
+              <a href={GITHUB_LOGIN_HREF}>
+                <LogIn className="size-4" />
+                Optional: Log in to save progress
+              </a>
+            </Button>
+          </div>
+        )}
         <p className="mt-2 text-center text-xs text-muted-foreground">
-          Creates a private repo in YOUR GitHub account. You own everything.
+          <Link
+            href="/en/terms/terms"
+            className="underline underline-offset-2 transition-colors hover:text-foreground"
+          >
+            Terms of Service
+          </Link>
+          {" · "}
+          <Link
+            href="/en/terms/privacy"
+            className="underline underline-offset-2 transition-colors hover:text-foreground"
+          >
+            Privacy Policy
+          </Link>
         </p>
       </div>
+
+      <div
+        aria-hidden
+        className={cn(layoutMotion, started ? "grow-0" : "grow")}
+      />
     </main>
   );
 }

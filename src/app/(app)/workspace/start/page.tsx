@@ -9,10 +9,11 @@ export const metadata: Metadata = {
   description: "Build your personal teaching workspace in a 2-minute chat.",
 };
 
-// Onboarding (04 step 3). Works anonymously AND logged-in-without-repo —
-// `authenticated` only controls the save-button label. Reverse guard: a
-// session whose workspace repo already exists goes straight to /workspace;
-// onboarding is unreachable once the workspace exists.
+// Onboarding (04 step 3). Works anonymously AND logged-in-without-repo:
+// `authenticated` hides the optional login button and decides whether "Go to
+// workspace" provisions directly or runs the OAuth chain first. Reverse
+// guard: a session whose workspace repo already exists goes straight to
+// /workspace; onboarding is unreachable once the workspace exists.
 export default async function WorkspaceStartPage() {
   const session = await getSession();
   if (session) {

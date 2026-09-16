@@ -3,9 +3,11 @@
 import {
   ExternalLink,
   LogOut,
+  MessageSquareHeart,
   PanelLeftOpen,
   Settings,
 } from "lucide-react";
+import { openTallyPopup } from "@/components/feedback-button";
 import { Logo } from "@/components/logo";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -61,6 +63,9 @@ export function WorkspaceSidebar({
           <div className="mt-auto flex flex-col items-center gap-1">
             <RailButton label="Settings" onClick={onOpenSettings}>
               <Settings className="size-4" />
+            </RailButton>
+            <RailButton label="Feedback" onClick={() => void openTallyPopup()}>
+              <MessageSquareHeart className="size-4" />
             </RailButton>
             <DropdownMenu>
               <Tooltip>
@@ -128,6 +133,15 @@ export function WorkspaceSidebar({
         >
           <Settings className="size-4 text-muted-foreground" />
           Settings
+        </button>
+
+        <button
+          type="button"
+          onClick={() => void openTallyPopup()}
+          className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-text hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        >
+          <MessageSquareHeart className="size-4 text-muted-foreground" />
+          Feedback
         </button>
 
         <DropdownMenu>

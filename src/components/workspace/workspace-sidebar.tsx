@@ -5,9 +5,16 @@
 // the slim icon rail; account actions never require expanding it.
 // Plan: docs/plans/icm-workspace-plan/09-file-tree.md
 
-import { ExternalLink, LogOut, PanelLeftOpen, Settings } from "lucide-react";
+import {
+  ExternalLink,
+  LogOut,
+  MessageSquareHeart,
+  PanelLeftOpen,
+  Settings,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { SessionRepo, SessionUser } from "@/lib/session";
+import { openTallyPopup } from "@/components/feedback-button";
 import { Logo } from "@/components/logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -100,6 +107,9 @@ export function WorkspaceSidebar({
             <RailButton label="Settings" onClick={onOpenSettings}>
               <Settings className="size-4" />
             </RailButton>
+            <RailButton label="Feedback" onClick={() => void openTallyPopup()}>
+              <MessageSquareHeart className="size-4" />
+            </RailButton>
             <DropdownMenu>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -174,6 +184,15 @@ export function WorkspaceSidebar({
         >
           <Settings className="size-4 text-muted-foreground" />
           Settings
+        </button>
+
+        <button
+          type="button"
+          onClick={() => void openTallyPopup()}
+          className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-text hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        >
+          <MessageSquareHeart className="size-4 text-muted-foreground" />
+          Feedback
         </button>
 
         <DropdownMenu>

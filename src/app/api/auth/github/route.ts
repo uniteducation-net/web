@@ -34,9 +34,11 @@ export async function GET(request: NextRequest) {
 
   const authorizeUrl = new URL("https://github.com/login/oauth/authorize");
   authorizeUrl.searchParams.set("client_id", clientId);
+  // new URL (not string concat): a trailing slash on APP_URL must not turn
+  // into "//api/..." — GitHub matches registered callback URLs exactly.
   authorizeUrl.searchParams.set(
     "redirect_uri",
-    `${appUrl}/api/auth/github/callback`,
+    new URL("/api/auth/github/callback", appUrl).toString(),
   );
   authorizeUrl.searchParams.set("state", state);
   authorizeUrl.searchParams.set("code_challenge", challenge);

@@ -91,7 +91,8 @@ const Logo = ({ animateIntro = false, className }: LogoProps) => {
 
   return (
     <Link
-      href={`/${lang}`}
+      // (app) routes (workspace) have no locale segment — fall back to /en.
+      href={lang ? `/${lang}` : "/en"}
       aria-label="Unite Education — home"
       onMouseEnter={expand}
       onMouseLeave={scheduleCollapse}
