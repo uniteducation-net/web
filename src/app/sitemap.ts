@@ -42,5 +42,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
     }
   }
 
+  // Locale-independent app routes (the resources explorer is English-only).
+  entries.push({
+    url: `${siteUrl}/resources`,
+    lastModified: new Date(),
+    changeFrequency: "weekly",
+    priority: 0.7,
+  });
+  entries.push({
+    url: `${siteUrl}/resources/all`,
+    lastModified: new Date(),
+    changeFrequency: "weekly",
+    priority: 0.6,
+  });
+
   return entries;
 }
