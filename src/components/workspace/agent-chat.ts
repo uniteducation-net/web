@@ -50,6 +50,19 @@ export type AgentUITools = {
       | { available: false; reason: "empty" | "unavailable" }
       | undefined;
   };
+  createNextStep: {
+    input: { reflection: string; nextGoal: string };
+    output:
+      | {
+          created: true;
+          stepNumber: number;
+          stepPath: string;
+          title: string;
+          category: string;
+        }
+      | { created: false; reason: "library-unavailable" | "no-unused-resources" }
+      | undefined;
+  };
   readIcmReference: {
     input: { file: "skill" | "core" | "forms" };
     output: string | undefined;
@@ -69,3 +82,8 @@ export const AGENT_SUGGESTIONS = [
   "Make my tone rules warmer",
   "Explain what's in my workspace",
 ];
+
+/** 16 — sent as the user message when the "Open my next step" button fires;
+ *  the system prompt's next-step protocol takes it from here. */
+export const NEXT_STEP_KICKOFF =
+  "I'm ready for my next step — ask me your two quick questions.";

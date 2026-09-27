@@ -100,6 +100,9 @@ export async function POST(req: Request) {
     // execute (the merged model stream has its own onError below).
     onError: friendlyProviderError,
     async execute({ writer }) {
+      // Background evaluations (Jev, inside createNextStep) spend the NGO's
+      // gateway key too — collected here and folded into the data-usage part.
+      let evalTokens = 0;
       const tools = createWorkspaceTools({
         installationId,
         owner: repo.owner,
@@ -112,6 +115,9 @@ export async function POST(req: Request) {
             data: { paths: [path] },
             transient: true,
           });
+        },
+        onUsage: (tokens) => {
+          evalTokens += tokens;
         },
       });
 
@@ -149,10 +155,11 @@ export async function POST(req: Request) {
       // BYOK/OpenRouter spend is the user's own.
       if (onGateway) {
         const usage = await result.usage;
-        if (usage.totalTokens) {
+        const totalTokens = (usage.totalTokens ?? 0) + evalTokens;
+        if (totalTokens > 0) {
           writer.write({
             type: "data-usage",
-            data: { totalTokens: usage.totalTokens },
+            data: { totalTokens },
             transient: true,
           });
         }

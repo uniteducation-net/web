@@ -40,11 +40,11 @@ const STORAGE_KEY = "onboarding-chat";
     nullable per teacherProfileSchema, and provisioning fills the gaps. */
 const EMPTY_PROFILE: OnboardingProfile = {
   name: null,
-  subject: null,
-  gradeLevel: null,
-  teachingContext: null,
-  tone: null,
-  goals: null,
+  ageGroup: null,
+  workedWithChildren: null,
+  background: null,
+  teachingWhatWhere: null,
+  schedule: null,
 };
 
 /** Centered → bottom glide: animates the flex-grow regions around the chat. */

@@ -101,6 +101,9 @@ export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
   const [initialAgentMessages, setInitialAgentMessages] = useState<
     UIMessage[] | undefined
   >(undefined);
+  // 16 — "Open my next step": each bump makes the agent panel save the chat
+  // and kick off the next-step Q&A (see AgentPanel's nextStepNonce effect).
+  const [nextStepNonce, setNextStepNonce] = useState(0);
 
   // Restore persisted panel state + pick up the onboarding draft after mount
   // (never in render — SSR mismatch). Runs inside a rAF callback so the
@@ -300,6 +303,18 @@ export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
     };
   }, []);
 
+  // 16 — the step-file button. A dirty step file is saved first (the new
+  // step builds on what the teacher sees); a failed save aborts quietly —
+  // the editor's conflict UI explains.
+  const handleOpenNextStep = async () => {
+    if (editorRef.current?.isDirty()) {
+      const saved = await editorRef.current.save();
+      if (!saved) return;
+    }
+    setAgentOpen(true);
+    setNextStepNonce((n) => n + 1);
+  };
+
   // Cmd/Ctrl+B toggles the sidebar, Cmd/Ctrl+J toggles the agent panel.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {      if (!(e.metaKey || e.ctrlKey)) return;
@@ -391,6 +406,7 @@ export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
             repo={repo}
             api={workspaceFileApi}
             refreshKey={treeRefreshKey}
+            onOpenNextStep={handleOpenNextStep}
           />
         </main>
 
@@ -409,6 +425,7 @@ export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
           {hydrated ? (
             <AgentPanel
               initialMessages={initialAgentMessages}
+              nextStepNonce={nextStepNonce}
               onCollapse={() => setAgentOpen(false)}
               onFilesChanged={() => setTreeRefreshKey((k) => k + 1)}
               className="max-lg:w-full max-lg:shadow-xl"

@@ -14,6 +14,8 @@ import {
   icmReferenceRepoCoords,
 } from "./public-github";
 import { getResourcesIndex, type ResourceSummary } from "./resources";
+import { evaluateState, pickResource } from "./evaluation";
+import { buildStepFiles } from "./provisioning";
 
 /** Hard cap on tool-call rounds per reply (11 step 2) — read→edit→write
  *  chains without runaway loops. */
@@ -29,7 +31,12 @@ export const AGENT_SYSTEM_PROMPT = `You are the teacher's workspace assistant in
 How the workspace is organized:
 - The workspace starts small on purpose: 00-Profile/ (who the teacher is — read it first whenever you personalize anything) and 01-Start Here/ (their orientation). Everything else is built together with the teacher, one step at a time.
 - When the teacher asks for the next piece of work (a lesson plan, a unit outline, a rubric, …), create exactly ONE numbered step folder for that request, continuing the top-level numbering: "02-Step 1 - <Short Title>/", then "03-Step 2 - <Short Title>/", and so on. Each step folder gets a CONTEXT.md — its contract: inputs, process, output, and the human check before the result is used — plus the single output file it produces. One step per request; never scaffold steps 2-5 in advance.
-- Before generating a step, call searchResources with the teacher's subject or topic. When resources match, cite them by name with [[Title]] wikilinks in the files you write and link to them.
+- The next-step flow (triggered by the "Open my next step" button on a step file, or the teacher asking for their next step):
+  1. Ask "How did the last step go?" — one short message, then wait for the answer.
+  2. Ask "What do you want next?" — one short message, then wait for the answer.
+  3. Then call createNextStep with their two answers. It updates their Profile, evaluates their profile in the background, picks ONE new resource (never one already used in a Step folder), and writes the next numbered step folder.
+  4. Tell them warmly what the new step is and where to find it on the left.
+- Before generating any other step-shaped content, call searchResources with the teacher's subject or topic. When resources match, cite them by name with [[Title]] wikilinks in the files you write and link to them.
 - For a non-trivial step you may call readIcmReference to consult the method guide while structuring the folder and its contract.
 - Conventions to keep: one folder, one job; every folder's contract is explicit in its CONTEXT.md; reference material stays stable while new outputs become new files. Never mention "ICM" to the teacher — call it "your workspace structure", in plain, warm language.
 
@@ -61,6 +68,9 @@ export interface WorkspaceToolContext {
   /** Called after every successful write so the route can notify the client
    *  (11 step 5) that the tree + preview must refresh. */
   onWrite?: (path: string) => void;
+  /** Called with token spend of background evaluations (Jev) so the route
+   *  can fold it into the fair-use metering (12 step 6). */
+  onUsage?: (tokens: number) => void;
 }
 
 // ─── Resource search (final-adjustments step 7) ─────────────────────────
@@ -137,6 +147,7 @@ export function createWorkspaceTools({
   owner,
   repo,
   onWrite,
+  onUsage,
 }: WorkspaceToolContext) {
   return {
     listFiles: tool({
@@ -230,6 +241,128 @@ export function createWorkspaceTools({
         } catch {
           return { available: false as const, reason: "unavailable" as const };
         }
+      },
+    }),
+
+    /**
+     * The next-step flow's write end (16): after the two short questions,
+     * this tool updates the profile's progress log, evaluates the profile
+     * with Jev in the background, picks ONE unused resource, and writes the
+     * next numbered step folder. Degrades in-band — a library or evaluation
+     * failure returns a reason instead of throwing.
+     */
+    createNextStep: tool({
+      description:
+        "Create the teacher's next step folder. Call ONLY after asking the two next-step questions (how the last step went, what they want next) and getting both answers. Picks one resource never used before and writes the step files.",
+      inputSchema: z.object({
+        reflection: z
+          .string()
+          .max(500)
+          .describe("How the last step went, in the teacher's own words."),
+        nextGoal: z
+          .string()
+          .max(500)
+          .describe("What the teacher wants next, in their own words."),
+      }),
+      execute: async ({ reflection, nextGoal }) => {
+        // 1. Profile text (old workspaces may lack it — evaluate anyway).
+        let profileText = "";
+        try {
+          profileText = (
+            await readFile(installationId, owner, repo, "00-Profile/profile.md")
+          ).content;
+        } catch {
+          profileText = "(no profile on file yet)";
+        }
+
+        // 2. Append the progress log — the profile grows with every step.
+        const logEntry = `- Last step: ${reflection}\n- Wants next: ${nextGoal}`;
+        const updatedProfile = profileText.includes("## Progress log")
+          ? `${profileText.trimEnd()}\n${logEntry}\n`
+          : `${profileText.trimEnd()}\n\n## Progress log\n\n${logEntry}\n`;
+        await writeFile(
+          installationId,
+          owner,
+          repo,
+          "00-Profile/profile.md",
+          updatedProfile,
+          "Log progress from the last step",
+        );
+        onWrite?.("00-Profile/profile.md");
+
+        // 3. Scan step folders: used resource paths + done categories (the
+        //    dedupe record lives in each step file's frontmatter).
+        const tree = await getTree(installationId, owner, repo);
+        const stepPaths = tree
+          .map((entry) => entry.path)
+          .filter((path) => /^\d{2}-Step \d+ - .+\/Step \d+\.md$/.test(path));
+        const usedPaths: string[] = [];
+        const doneCategories: string[] = [];
+        for (const path of stepPaths) {
+          try {
+            const head = (await readFile(installationId, owner, repo, path))
+              .content.split("\n")
+              .slice(0, 10)
+              .join("\n");
+            const resourcePath = head.match(/^resource:\s*(.+)$/m)?.[1]?.trim();
+            const category = head.match(/^category:\s*(.+)$/m)?.[1]?.trim();
+            if (resourcePath) usedPaths.push(resourcePath);
+            if (category) doneCategories.push(category);
+          } catch {
+            // unreadable step file — skip it, don't fail the step
+          }
+        }
+
+        // 4. Background classification (Jev) + one unused resource.
+        const evaluation = await evaluateState(
+          `${profileText}\n\nLatest reflection: ${reflection}\nWants next: ${nextGoal}`,
+          doneCategories,
+        );
+        if (evaluation.usageTokens > 0) onUsage?.(evaluation.usageTokens);
+
+        const index = await getResourcesIndex();
+        if (!index || index.length === 0) {
+          return { created: false as const, reason: "library-unavailable" as const };
+        }
+        const resource = pickResource(evaluation, index, usedPaths);
+        if (!resource) {
+          return { created: false as const, reason: "no-unused-resources" as const };
+        }
+
+        // 5. Next numbers: step count + 1; folder number = max top-level + 1.
+        const stepNumber = stepPaths.length + 1;
+        const topNumbers = tree
+          .map((entry) => entry.path.match(/^(\d{2})-/)?.[1])
+          .filter((n): n is string => Boolean(n))
+          .map(Number);
+        const folderNumber =
+          (topNumbers.length > 0 ? Math.max(...topNumbers) : 1) + 1;
+
+        const files = await buildStepFiles({
+          stepNumber,
+          folderNumber,
+          resource,
+          evaluation,
+        });
+        for (const file of files) {
+          await writeFile(
+            installationId,
+            owner,
+            repo,
+            file.path,
+            file.content,
+            `Add step ${stepNumber}: ${resource.title}`,
+          );
+          onWrite?.(file.path);
+        }
+
+        return {
+          created: true as const,
+          stepNumber,
+          stepPath: files[0].path,
+          title: resource.title,
+          category: evaluation.category,
+        };
       },
     }),
 

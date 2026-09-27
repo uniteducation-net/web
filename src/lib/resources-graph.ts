@@ -33,8 +33,13 @@ export interface ResourceDocMeta {
   topFolder: string;
   /** First `# ` heading, else `name`. */
   title: string;
-  /** Frontmatter `type:` (template/guide/rubric/routine), else null. */
+  /** Frontmatter `type:` (native/link/provider/logic), else null. */
   type: string | null;
+  /** Frontmatter `category:` (1.1 … 3.2), else null. */
+  category: string | null;
+  /** Routing/contract file (CONTEXT.md, README.md, CLAUDE.md) or _templates/
+   *  stamp — browsable in the tree and reader, but not a graph node. */
+  routing: boolean;
   /** First body paragraph, inline markdown stripped, ≤240 chars. */
   excerpt: string;
   /** Reader URL: /resources/all/<path> with .md stripped, segments encoded. */
@@ -148,6 +153,10 @@ function parseDoc(path: string, raw: string): ResourceDocMeta {
     topFolder: folder.split("/")[0] || "_root",
     title: scanTitle(body) ?? name,
     type: frontmatter?.match(/^type:\s*(.+)$/m)?.[1]?.trim() ?? null,
+    category: frontmatter?.match(/^category:\s*(.+)$/m)?.[1]?.trim() ?? null,
+    routing:
+      ["context", "readme", "claude"].includes(name.toLowerCase()) ||
+      path.startsWith("_templates/"),
     excerpt: scanExcerpt(body),
     href: readerHref(path),
   };

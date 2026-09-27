@@ -23,10 +23,12 @@ import { teacherProfileSchema } from "@/lib/onboarding";
 import {
   buildProfileFiles,
   buildStartHereFallback,
+  buildStepFiles,
   detectSeedState,
   generateStartHere,
 } from "@/lib/provisioning";
 import { getResourcesIndex } from "@/lib/resources";
+import { evaluateProfile, pickResource } from "@/lib/evaluation";
 import { getIcmReference } from "@/lib/public-github";
 import {
   FREE_TIER_DAILY_TOKEN_LIMIT,
@@ -41,6 +43,7 @@ export const maxDuration = 300;
 
 const PROFILE_COMMIT_MESSAGE = "Add teacher profile from onboarding";
 const START_HERE_COMMIT_MESSAGE = "Add your getting-started guide";
+const STEP1_COMMIT_MESSAGE = "Add your first step";
 
 /** Replaces the auto_init default readme — short, warm, teacher-facing. */
 const README_CONTENT = `# My UnitEd Workspace
@@ -198,7 +201,38 @@ export async function POST(req: Request) {
       );
     }
 
-    // 9. Done — client redirects to the workspace.
+    // 9. 02-Step 1/ — Jev classifies the profile in the background and the
+    // first step lands with the workspace: one resource, one small task.
+    // Never blocks provisioning: unreachable library (null/[]) or a failed
+    // evaluation simply skips or degrades the stage.
+    if (!seed.hasStep1) {
+      const resourceIndex = await getResourcesIndex();
+      if (resourceIndex && resourceIndex.length > 0) {
+        const evaluation = await evaluateProfile(profile);
+        const resource = pickResource(evaluation, resourceIndex);
+        if (resource) {
+          const stepFiles = await buildStepFiles({
+            stepNumber: 1,
+            folderNumber: 2,
+            resource,
+            evaluation,
+          });
+          await commitMany(
+            installationId,
+            target.owner,
+            target.name,
+            stepFiles,
+            STEP1_COMMIT_MESSAGE,
+          );
+          // Meter the (tiny) Jev spend like the Start Here LLM pass.
+          if (evaluation.usageTokens > 0) {
+            await addFairUseTokens(evaluation.usageTokens);
+          }
+        }
+      }
+    }
+
+    // 10. Done — client redirects to the workspace.
     return NextResponse.json({
       owner: target.owner,
       repo: target.name,

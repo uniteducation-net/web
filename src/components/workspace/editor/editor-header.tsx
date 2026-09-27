@@ -5,7 +5,7 @@
 // discard first). Without `githubUrl` (the demo) the GitHub link is hidden.
 // Plan: docs/plans/icm-workspace-plan/15-markdown-editor.md
 
-import { ExternalLink, RotateCcw } from "lucide-react";
+import { ExternalLink, RotateCcw, Sparkles } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -34,7 +34,14 @@ interface EditorHeaderProps {
   onSave(): void;
   onDiscard(): void;
   onRefresh(): void;
+  /** Present only in the real workspace — starts the next-step flow (16).
+   *  Shown exclusively on files inside a numbered Step folder. */
+  onOpenNextStep?: () => void;
 }
+
+/** Step folders are named "02-Step 1 - <Title>/" — a file inside one gets
+ *  the next-step button. */
+const isStepFile = (path: string) => /^\d{2}-Step \d+ - .+\//.test(path);
 
 export function EditorHeader({
   path,
@@ -47,6 +54,7 @@ export function EditorHeader({
   onSave,
   onDiscard,
   onRefresh,
+  onOpenNextStep,
 }: EditorHeaderProps) {
   const segments = path.split("/");
 
@@ -75,6 +83,12 @@ export function EditorHeader({
       </Breadcrumb>
 
       <div className="flex shrink-0 items-center gap-1">
+        {onOpenNextStep && isStepFile(path) && (
+          <Button size="sm" onClick={onOpenNextStep} disabled={dirty}>
+            <Sparkles className="size-3.5" />
+            <span className="hidden sm:inline">Open my next step</span>
+          </Button>
+        )}
         {dirty && (
           <>
             <EditorSaveButton saving={saving} onClick={onSave} />

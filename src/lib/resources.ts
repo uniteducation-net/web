@@ -19,6 +19,13 @@ export interface ResourceSummary {
   path: string;
   title: string;
   summary: string | null;
+  /** Frontmatter `type:` — native | link | provider. */
+  type: string | null;
+  /** Frontmatter `category:` — one of the seven content categories
+   *  (1.1 … 3.2) or null when the file declares none. */
+  category: string | null;
+  /** Frontmatter `url:` — external source for link/provider entries. */
+  url: string | null;
 }
 
 const MAX_RESOURCES = 25;
@@ -30,7 +37,19 @@ let indexCache: { expiresAt: number; value: ResourceSummary[] | null } | null =
   null;
 
 /** Repo docs that describe the bundle itself, not a usable resource. */
-const EXCLUDED_BASENAMES = new Set(["context.md", "readme.md"]);
+const EXCLUDED_BASENAMES = new Set(["context.md", "readme.md", "claude.md"]);
+
+/**
+ * The servable library lives in 20-resources/ (ICM layout): our own markdown
+ * (10_native), third-party links (20_links), and big-provider cards
+ * (30_providers). Logics (10-logics/) inform matching but are never served
+ * as resources; _templates/ are stamps, not content.
+ */
+const RESOURCE_PREFIXES = [
+  "20-resources/10_native/",
+  "20-resources/20_links/",
+  "20-resources/30_providers/",
+];
 
 /**
  * Title + summary from a resource's first lines. Title: the first `# `
@@ -66,15 +85,25 @@ function summarizeResource(path: string, head: string): ResourceSummary {
   }
 
   const bits: string[] = [];
+  let type: string | null = null;
+  let category: string | null = null;
+  let url: string | null = null;
   if (frontmatter) {
-    const subject = frontmatter.match(/^subject:\s*(.+)$/m)?.[1]?.trim();
-    const tags = frontmatter.match(/^tags:\s*(.+)$/m)?.[1]?.trim();
-    if (subject) bits.push(`Subject: ${subject}`);
-    if (tags) bits.push(`Tags: ${tags}`);
+    type = frontmatter.match(/^type:\s*(.+)$/m)?.[1]?.trim() ?? null;
+    category = frontmatter.match(/^category:\s*(.+)$/m)?.[1]?.trim() ?? null;
+    url = frontmatter.match(/^url:\s*(.+)$/m)?.[1]?.trim() ?? null;
+    if (category && category !== "none") bits.push(`Category: ${category}`);
   }
   if (paragraph) bits.push(paragraph);
 
-  return { path, title, summary: bits.length > 0 ? bits.join(" — ") : null };
+  return {
+    path,
+    title,
+    summary: bits.length > 0 ? bits.join(" — ") : null,
+    type,
+    category: category === "none" ? null : category,
+    url,
+  };
 }
 
 /**
@@ -101,7 +130,7 @@ export async function getResourcesIndex(): Promise<ResourceSummary[] | null> {
         const lower = path.toLowerCase();
         const base = lower.split("/").pop() ?? lower;
         return (
-          lower.startsWith("resources/") &&
+          RESOURCE_PREFIXES.some((prefix) => lower.startsWith(prefix)) &&
           lower.endsWith(".md") &&
           !EXCLUDED_BASENAMES.has(base)
         );

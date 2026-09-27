@@ -55,6 +55,11 @@ export function NodePreviewCard({
             {doc.type}
           </Badge>
         )}
+        {doc.category && doc.category !== "none" && (
+          <Badge variant="outline" className="font-normal">
+            {doc.category}
+          </Badge>
+        )}
         {linkCount > 0 && (
           <span className="text-xs text-muted-foreground">
             {linkCount} {linkCount === 1 ? "link" : "links"}

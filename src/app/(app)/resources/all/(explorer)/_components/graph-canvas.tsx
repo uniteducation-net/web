@@ -55,6 +55,11 @@ function readPalette(sortedTopFolders: string[]): Palette {
     (name) => token(name, primary),
   );
   const typeColor: Record<string, string> = {
+    native: primary,
+    link: secondary,
+    provider: charts[0],
+    logic: charts[1],
+    // legacy kinds (pre-ICM repo layout)
     template: primary,
     guide: secondary,
     rubric: charts[0],
@@ -95,18 +100,24 @@ export function GraphCanvas({
 
   // Copy nodes/links into the memo — the engine mutates node objects (x/y)
   // and our props must stay pristine. Spine links are appended here.
+  // Routing files (CONTEXT/README/CLAUDE) stay in the tree and reader but
+  // are not graph nodes — they would flood the canvas with contracts.
   const graphData = useMemo(() => {
-    const nodes: N[] = data.docs.map((doc) => ({
+    const docs = data.docs.filter((doc) => !doc.routing);
+    const nodeIds = new Set(docs.map((doc) => doc.path));
+    const nodes: N[] = docs.map((doc) => ({
       id: doc.path,
       title: doc.title,
       folder: doc.folder,
       topFolder: doc.topFolder,
       type: doc.type,
     }));
-    const links: L[] = data.links.map((link) => ({
-      source: link.source,
-      target: link.target,
-    }));
+    const links: L[] = data.links
+      .filter((link) => nodeIds.has(link.source) && nodeIds.has(link.target))
+      .map((link) => ({
+        source: link.source,
+        target: link.target,
+      }));
     const byFolder = new Map<string, N[]>();
     for (const node of nodes) {
       const group = byFolder.get(node.folder);
@@ -127,7 +138,7 @@ export function GraphCanvas({
 
   const palette = useMemo(() => {
     const topFolders = [
-      ...new Set(data.docs.map((d) => d.topFolder)),
+      ...new Set(data.docs.filter((d) => !d.routing).map((d) => d.topFolder)),
     ].sort();
     return readPalette(topFolders);
   }, [data]);

@@ -7,11 +7,11 @@ import type { UIMessage } from "ai";
  */
 export interface OnboardingProfile {
   name: string | null;
-  subject: string | null;
-  gradeLevel: string | null;
-  teachingContext: string | null;
-  tone: string | null;
-  goals: string | null;
+  ageGroup: string | null;
+  workedWithChildren: string | null;
+  background: string | null;
+  teachingWhatWhere: string | null;
+  schedule: string | null;
 }
 
 /**
@@ -35,7 +35,7 @@ export const OPENING_MESSAGE: OnboardingUIMessage = {
   parts: [
     {
       type: "text",
-      text: "Hi! I'm going to build your personal teaching workspace. Three quick questions — first, what do you teach, and to whom?",
+      text: "Hi! I'm going to build your personal teaching workspace. Six quick questions, one at a time — first: what should I call you?",
     },
   ],
 };

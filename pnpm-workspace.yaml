@@ -1,6 +1,10 @@
 allowBuilds:
   unrs-resolver: true
 
+minimumReleaseAgeExclude:
+  - '@ai-sdk/gateway@4.0.96'
+  - ai@7.0.118
+
 overrides:
   # Security: pick up patched transitive deps (pnpm audit 2026-09-14)
   # linkify-it <=5.0.1: quadratic-complexity DoS (via ansi-to-react)

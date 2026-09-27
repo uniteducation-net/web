@@ -13,6 +13,9 @@ import { gateway } from "@ai-sdk/gateway";
 import { z } from "zod";
 import type { TeacherProfile } from "./onboarding";
 import type { ResourceSummary } from "./resources";
+import { CATEGORY_NAMES, type ProfileEvaluation } from "./evaluation";
+import { fetchProviderExcerpt } from "./fetch-provider";
+import { getPublicFile, resourcesRepoCoords } from "./public-github";
 
 export const PROFILE_DIR = "00-Profile";
 export const START_HERE_DIR = "01-Start Here";
@@ -32,10 +35,12 @@ const NOT_SHARED = "Not shared during onboarding";
 export function detectSeedState(treePaths: string[]): {
   hasProfile: boolean;
   hasStartHere: boolean;
+  hasStep1: boolean;
 } {
   return {
     hasProfile: treePaths.some((path) => path === PROFILE_MAIN),
     hasStartHere: treePaths.some((path) => path.startsWith(`${START_HERE_DIR}/`)),
+    hasStep1: treePaths.some((path) => /^02-Step 1 - .+\//.test(path)),
   };
 }
 
@@ -65,11 +70,11 @@ export function buildProfileFiles(
 This is what you shared when your workspace was set up. Everything your assistant creates for you starts from these answers.
 
 - **Name:** ${show(profile.name)}
-- **Subject:** ${show(profile.subject)}
-- **Grade level:** ${show(profile.gradeLevel)}
-- **Teaching context:** ${show(profile.teachingContext)}
-- **Preferred tone:** ${show(profile.tone)}
-- **Goals for this year:** ${show(profile.goals)}
+- **Age group you'll teach:** ${show(profile.ageGroup)}
+- **Worked with children before:** ${show(profile.workedWithChildren)}
+- **Work or academic background:** ${show(profile.background)}
+- **What and where you'll teach:** ${show(profile.teachingWhatWhere)}
+- **Study schedule and time commitment:** ${show(profile.schedule)}
 
 If any of this changes, just edit this file — your assistant reads it before every new piece of work.
 `;
@@ -111,7 +116,7 @@ ${resourceIndex.map(resourceBullet).join("\n")}
 `
       : `## Resources on the way
 
-Curated teaching resources are on the way — when they arrive, the assistant will suggest the ones that fit your subject and grade level.
+Curated teaching resources are on the way — when they arrive, the assistant will suggest the ones that fit your classroom and your answers.
 `;
 
   const main = `# Welcome, ${name}!
@@ -126,7 +131,7 @@ This is your personal teaching workspace — a private home for your materials, 
 
 ## Your next step
 
-You don't need to set anything up. Whenever you're ready, just ask the assistant for your next step — it will appear here as a new numbered folder (like \`02-Step 1 - ...\`), each folder doing one clear job and building on the last. Ask for one step at a time, and only when you need it.
+Your first step is already waiting — open \`02-Step 1\` in the file list on the left. It's one resource picked for your answers, with one small thing to try. When you're ready for more, open any step file and press **Open my next step** — the assistant will ask two quick questions and bring you the next one.
 
 ${resourcesSection}`;
 
@@ -165,8 +170,8 @@ No markdown fences, no commentary.
 - Open with a warm welcome addressed to the teacher by name (fall back to "Teacher").
 - Explain in plain language what this workspace is: a private home for their teaching materials that grows one step at a time.
 - Explain the chat panel on the right: the same assistant from onboarding; it can read these files and write new ones.
-- Explain the progressive path: whenever they ask the assistant for their next step, it appears as a new numbered folder (02-Step 1 - …), one clear job per folder. They never need to set anything up in advance.
-- If teaching resources are listed in the input, pick the at most 5 most relevant to THIS teacher (subject, grade level, goals) and add a "Resources picked for you" section citing each with a [[Title]] wikilink. If none are listed, add a short note that curated teaching resources are on the way.
+- Explain the progressive path: their first step already waits in the 02-Step 1 folder (one resource picked for their answers, one small task). Whenever they open a step file and press the "Open my next step" button, the assistant asks two short questions and adds the next numbered step folder. They never need to set anything up in advance.
+- If teaching resources are listed in the input, pick the at most 5 most relevant to THIS teacher (age group, background, what and where they teach, schedule) and add a "Resources picked for you" section citing each with a [[Title]] wikilink. If none are listed, add a short note that curated teaching resources are on the way.
 
 "CONTEXT.md" must be a short stage contract for the folder: input = 00-Profile/ (who this workspace serves); output = the teacher knows their next move.
 
@@ -253,4 +258,128 @@ export async function generateStartHere(
     })),
     usageTokens,
   };
+}
+
+// ─── NN-Step N (deterministic, no LLM — Jev already decided the category) ──
+
+/** Folder-safe short title from a resource title. */
+function stepTitle(title: string): string {
+  const clean = title.replace(/[/\\?%*:|"<>]/g, "").replace(/\s+/g, " ").trim();
+  return clean.length > 48 ? `${clean.slice(0, 48).trimEnd()}…` : clean;
+}
+
+/** Teacher-facing reason line, from how the category was chosen. */
+function whyLine(evaluation: ProfileEvaluation): string {
+  const name = CATEGORY_NAMES[evaluation.category];
+  switch (evaluation.source) {
+    case "jev":
+      return `Based on your answers, ${name} is the best next step for you.`;
+    case "jev-duplicate-avoided":
+      return `You've already covered the closest match — so next up is ${name}.`;
+    default:
+      return `A strong step for every teacher: ${name}.`;
+  }
+}
+
+/** Strip YAML frontmatter so an embedded native resource reads clean. */
+function stripFrontmatter(content: string): string {
+  return content.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, "").trim();
+}
+
+const MAX_NATIVE_EMBED_CHARS = 4000;
+
+/**
+ * The "Your resource" section: native resources embed their full body (they
+ * are ours and short); links get their summary + URL; providers get a live
+ * excerpt fetched at step creation, degrading to the card description +
+ * link when the page can't be used (PDF or unreachable — the provider
+ * contract's documented path). Source is always attributed.
+ */
+async function resourceSection(resource: ResourceSummary): Promise<string> {
+  if (resource.type === "native") {
+    const { owner, repo } = resourcesRepoCoords();
+    const content = await getPublicFile(owner, repo, resource.path);
+    if (content) {
+      const body = stripFrontmatter(content).slice(0, MAX_NATIVE_EMBED_CHARS);
+      return `${body}\n\n*From the UnitEd resource library — [[${resource.title}]].*`;
+    }
+    // Unreachable library → degrade to the summary card.
+    return `${resource.summary ?? resource.title}\n\n*From the UnitEd resource library — [[${resource.title}]].*`;
+  }
+
+  if (resource.type === "provider" && resource.url) {
+    const excerpt = await fetchProviderExcerpt(resource.url);
+    if (excerpt.text) {
+      return `From [${resource.title}](${resource.url}), this part is for you:\n\n> ${excerpt.text.split("\n").join("\n> ")}\n\n*Source: ${resource.url}*`;
+    }
+    const note = excerpt.isPdf
+      ? "It's a PDF — open it, read the named section, and come back."
+      : "Open it online and come back — the link is the step.";
+    return `${resource.summary ?? resource.title}\n\nOpen it here: ${resource.url}\n\n*${note}*`;
+  }
+
+  // link (or provider without url): summary + URL.
+  const parts = [resource.summary ?? resource.title];
+  if (resource.url) parts.push(`Open it here: ${resource.url}`);
+  return parts.join("\n\n");
+}
+
+/**
+ * One step folder: a CONTEXT.md contract plus the step file. Deterministic —
+ * Jev picked the category, the library provided the resource, and a step
+ * must ALWAYS land exactly as promised. The step file's frontmatter
+ * (`category:` + `resource:`) is the dedupe record the next-step flow reads.
+ */
+export async function buildStepFiles(input: {
+  stepNumber: number;
+  folderNumber: number;
+  resource: ResourceSummary;
+  evaluation: ProfileEvaluation;
+}): Promise<{ path: string; content: string }[]> {
+  const { stepNumber, folderNumber, resource, evaluation } = input;
+  const title = stepTitle(resource.title);
+  const folder = `${String(folderNumber).padStart(2, "0")}-Step ${stepNumber} - ${title}`;
+
+  const task =
+    resource.type === "native"
+      ? "Work through the resource above, then pick ONE idea to try in your next lesson."
+      : "Open the resource, read it once, and pick ONE idea to try in your next lesson.";
+
+  const step = `---
+category: ${evaluation.category}
+resource: ${resource.path}
+---
+
+# Step ${stepNumber} — ${resource.title}
+
+**Why this step:** ${whyLine(evaluation)}
+
+## Your resource
+
+${await resourceSection(resource)}
+
+## Try this
+
+${task} One idea, tried once, is a finished step.
+
+---
+
+*When you've tried it, press **Open my next step** above — I'll ask two quick questions and bring you the next one.*
+`;
+
+  const context = `# ${folder} — step contract
+
+**Input:** 00-Profile/ (who this workspace serves) + the UnitEd resource library.
+
+**What this folder is:** one step — one resource, one small task.
+
+**Output:** the teacher tried one idea from the resource.
+
+**Done when:** the teacher pressed "Open my next step" or edited this folder.
+`;
+
+  return [
+    { path: `${folder}/Step ${stepNumber}.md`, content: step },
+    { path: `${folder}/CONTEXT.md`, content: context },
+  ];
 }

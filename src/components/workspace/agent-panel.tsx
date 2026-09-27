@@ -52,6 +52,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   AGENT_SUGGESTIONS,
+  NEXT_STEP_KICKOFF,
   type AgentUIMessage,
   type AgentUITools,
   type UsageSignal,
@@ -60,6 +61,9 @@ import {
 interface AgentPanelProps {
   /** Onboarding conversation carried over on first visit (08 step 6). */
   initialMessages?: UIMessage[];
+  /** 12 — bumping this nonce (the editor's "Open my next step" button) makes
+   *  the panel save the current chat, then send the next-step kickoff. */
+  nextStepNonce?: number;
   onCollapse: () => void;
   /** 09 step 3 / 11 step 5: called after the agent writes files (and after a
    *  chat is saved) so the sidebar tree and the preview re-fetch. */
@@ -103,6 +107,10 @@ function ToolActivityRow({ part }: { part: ToolUIPart<AgentUITools> }) {
       working = "Searching resources…";
       finished = "Searched the resources library";
       break;
+    case "tool-createNextStep":
+      working = "Preparing your next step…";
+      finished = "Your next step is ready";
+      break;
     case "tool-readIcmReference":
       working = "Consulting the method guide…";
       finished = "Consulted the method guide";
@@ -129,6 +137,7 @@ function ToolActivityRow({ part }: { part: ToolUIPart<AgentUITools> }) {
 
 export function AgentPanel({
   initialMessages,
+  nextStepNonce,
   onCollapse,
   onFilesChanged,
   className,
@@ -208,6 +217,19 @@ export function AgentPanel({
       setSaveStatus("failed");
     }
   };
+
+  // 16 — the editor's "Open my next step" button bumped the nonce: persist
+  // the chat (best-effort), then start the two-question next-step flow.
+  // A busy chat skips the kickoff — the button stays clickable.
+  const lastNextStepNonceRef = useRef(0);
+  useEffect(() => {
+    if (!nextStepNonce || nextStepNonce === lastNextStepNonceRef.current)
+      return;
+    lastNextStepNonceRef.current = nextStepNonce;
+    void saveChat();
+    if (!busy) sendMessage({ text: NEXT_STEP_KICKOFF });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the nonce is the trigger; saveChat/sendMessage read this render's fresh state
+  }, [nextStepNonce]);
 
   return (
     <div

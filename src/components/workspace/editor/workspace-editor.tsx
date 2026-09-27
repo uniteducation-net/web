@@ -56,6 +56,8 @@ interface WorkspaceEditorProps {
   repo?: SessionRepo;
   /** Bump = the agent (11) wrote files. */
   refreshKey?: number;
+  /** Real workspace only — starts the next-step flow from a step file (16). */
+  onOpenNextStep?: () => void;
   ref?: React.Ref<WorkspaceEditorHandle>;
   className?: string;
 }
@@ -65,6 +67,7 @@ export function WorkspaceEditor({
   api,
   repo,
   refreshKey = 0,
+  onOpenNextStep,
   ref,
   className,
 }: WorkspaceEditorProps) {
@@ -274,6 +277,7 @@ export function WorkspaceEditor({
         onSave={() => void saveRef.current()}
         onDiscard={discard}
         onRefresh={refresh}
+        onOpenNextStep={onOpenNextStep}
       />
 
       {!isMarkdown ? (
