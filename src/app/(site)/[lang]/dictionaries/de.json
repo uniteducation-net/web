@@ -428,5 +428,84 @@
     "past": "Vergangen",
     "details": "Details",
     "register": "Anmelden"
+  },
+  "getInvolvedPage": {
+    "metaTitle": "Mitmachen",
+    "heading": "Mitmachen",
+    "subtitle": "Ob Zeit, Wissen oder Unterstützung — bei UnitEd gibt es einen Platz für Sie."
+  },
+  "membershipPage": {
+    "metaTitle": "Mitglied werden",
+    "heading": "Mitglied werden",
+    "description": [
+      "Keine Zeit fürs Ehrenamt, aber Sie mögen unsere Mission? Werden Sie Mitglied bei UnitEd e.V.",
+      "So unterstützen Sie uns mit einem kleinen monatlichen Mitgliedsbeitrag und erhalten ein Stimmrecht in den Mitgliederversammlungen des Vereins."
+    ],
+    "imageAlt": "Illustration des UnitEd-Teams",
+    "primaryText": "Jetzt beitreten",
+    "pricing": {
+      "label": "Bereits ab",
+      "price": "5 €",
+      "unit": "/Monat",
+      "description": "Ein kleiner monatlicher Beitrag, der unsere Mission unterstützt — und Ihnen ein Stimmrecht in den Mitgliederversammlungen gibt."
+    },
+    "join": {
+      "metaTitle": "Mitgliedsantrag",
+      "breadcrumbCurrent": "Beitreten"
+    }
+  },
+  "volunteerPage": {
+    "metaTitle": "Ehrenamtlich mitmachen",
+    "heading": "Ehrenamtlich mitmachen",
+    "description": [
+      "Egal welchen Hintergrund Sie haben, Sie können uns unterstützen. Melden Sie sich einfach – wir freuen uns von Ihnen zu hören! Da dies eine ehrenamtliche Tätigkeit ist, können wir Sie nicht bezahlen, aber Sie bekommen die Chance, von Anfang an Teil von UnitEd und Teil einer wachsenden Bewegung zu sein!",
+      "Solange Sie ein paar Stunden pro Woche erübrigen können, machen Sie mit."
+    ],
+    "imageAlt": "Illustration von zusammenarbeitenden Menschen",
+    "primaryText": "Jetzt mitmachen",
+    "join": {
+      "metaTitle": "Bewerbung Ehrenamt",
+      "breadcrumbCurrent": "Mitmachen"
+    }
+  },
+  "partnerPage": {
+    "metaTitle": "Partner werden",
+    "heading": "Partner werden",
+    "description": [
+      "UnitEd lebt von Zusammenarbeit. Ob NGO, Schulnetzwerk oder Unternehmen, das echte Wirkung erzielen möchte — als Partner helfen Sie mit, kostenlose, hochwertige Lernmaterialien zu den Lehrkräften zu bringen, die sie am dringendsten brauchen.",
+      "Erzählen Sie uns, was Sie tun, und lassen Sie uns gemeinsam herausfinden, was wir aufbauen können."
+    ],
+    "imageAlt": "Illustration einer Partnerschaftsvereinbarung",
+    "primaryText": "Kontakt aufnehmen"
+  },
+  "donatePage": {
+    "metaTitle": "Spenden",
+    "heading": "Förderer werden",
+    "description": [
+      "Als gemeinnütziger Verein sind wir auf Spenden angewiesen, um UnitEd aufzubauen. Bitte erwägen Sie, unsere GoFundMe-Kampagne zu unterstützen."
+    ],
+    "imageAlt": "Illustration von fallenden Münzen",
+    "primaryText": "Auf GoFundMe unterstützen",
+    "secondaryText": "Banküberweisung",
+    "bankDetails": {
+      "sectionHeading": "Per Banküberweisung spenden",
+      "accountHolder": "Kontoinhaber",
+      "iban": "IBAN",
+      "bic": "BIC",
+      "bankName": "Bank",
+      "comingSoon": "Demnächst verfügbar",
+      "copyLabel": "Kopieren",
+      "copiedLabel": "Kopiert"
+    }
+  },
+  "shareKnowledgePage": {
+    "metaTitle": "Wissen teilen",
+    "heading": "Wissen teilen",
+    "description": [
+      "Sie sind Lehrkraft und möchten Ihre Geschichte, Ihre Erfahrung oder Ihr Wissen mit uns teilen? Melden Sie sich - wir können es kaum erwarten, mit Ihnen zu sprechen. Egal, woher Sie kommen oder wie lange Sie schon unterrichten oder sich zur Lehrkraft ausbilden lassen."
+    ],
+    "imageAlt": "Illustration eines Gruppenprojekts",
+    "primaryText": "Kontaktieren Sie uns",
+    "secondaryText": "Alle Ressourcen ansehen"
   }
 }
