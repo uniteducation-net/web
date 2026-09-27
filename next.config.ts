@@ -1,4 +1,5 @@
 import createMDX from "@next/mdx";
+import { withBotId } from "botid/next/config";
 import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV === "development";
@@ -10,14 +11,17 @@ const isDev = process.env.NODE_ENV === "development";
 // remaining directives are tight (object/base/form/self-only).
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://tally.so${isDev ? " 'unsafe-eval'" : ""}`,
+  // va.vercel-scripts.com is dev-only: Vercel Analytics' debug script + event
+  // beacon. Production loads same-origin (/_vercel/insights/*) — covered by
+  // 'self' — and consent-gated via beforeSend (see consent-analytics.tsx).
+  `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://tally.so${isDev ? " 'unsafe-eval' https://va.vercel-scripts.com" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  // ImageKit = site media, ytimg = hero video poster, githubavatars = session
-  // avatars, cloudfront = shadcn block portraits, data/blob = inline assets.
-  "img-src 'self' data: blob: https://ik.imagekit.io https://i.ytimg.com https://avatars.githubusercontent.com https://deifkwefumgah.cloudfront.net",
+  // ImageKit = site media, ytimg = hero video poster (consent-gated),
+  // githubavatars = session avatars, data/blob = inline assets.
+  "img-src 'self' data: blob: https://ik.imagekit.io https://i.ytimg.com https://avatars.githubusercontent.com",
   "media-src 'self' blob: https://ik.imagekit.io",
   "font-src 'self' data:",
-  `connect-src 'self' https://ik.imagekit.io${isDev ? " ws:" : ""}`,
+  `connect-src 'self' https://ik.imagekit.io${isDev ? " ws: https://va.vercel-scripts.com" : ""}`,
   "worker-src 'self' blob:",
   // tally.so = embedded forms (full-page iframes + the lazy feedback popup).
   "frame-src 'self' https://www.youtube-nocookie.com https://tally.so",
@@ -80,4 +84,7 @@ const withMDX = createMDX({
   },
 });
 
-export default withMDX(nextConfig);
+// withBotId (outermost) adds same-origin proxy rewrites for the Vercel BotID
+// challenge so ad-blockers can't break it. Those rewrites keep the challenge
+// under 'self', so the CSP above needs no BotID exceptions.
+export default withBotId(withMDX(nextConfig));

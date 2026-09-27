@@ -146,7 +146,9 @@ const UpdateArticle = ({
             alt={title}
             priority
             className="mt-10 h-64 w-full rounded-xl border bg-muted md:h-96"
-            imageClassName="object-contain p-6 md:p-8"
+            imageClassName={
+              cover.endsWith(".svg") ? "object-contain p-6 md:p-8" : "object-cover"
+            }
           />
         )}
         <Separator className="mt-8 mb-16" />

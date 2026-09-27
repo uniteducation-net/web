@@ -6,6 +6,7 @@ import {
   getResourceDocument,
   linkifyResourceWikilinks,
 } from "@/lib/resources-graph";
+import { siteUrl } from "@/lib/site";
 import { MarkdownView } from "./_components/markdown-view";
 
 // Full-document reader for one repo file, served from the same shared
@@ -34,7 +35,11 @@ export async function generateMetadata({
 }: PageProps<"/resources/all/[...path]">): Promise<Metadata> {
   const doc = await load(params);
   if (!doc || doc.status !== "ready") return {}; // layout default
-  return { title: doc.meta.title, description: doc.meta.excerpt };
+  return {
+    title: doc.meta.title,
+    description: doc.meta.excerpt,
+    alternates: { canonical: `${siteUrl}${doc.meta.href}` },
+  };
 }
 
 export default async function ResourceDocPage({
@@ -71,8 +76,37 @@ export default async function ResourceDocPage({
   const focusParam = encodeURIComponent(doc.meta.path);
   const crumbs = doc.meta.folder ? doc.meta.folder.split("/") : [];
 
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Resources",
+        item: `${siteUrl}/resources`,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "All resources",
+        item: `${siteUrl}/resources/all`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: doc.meta.title,
+        item: `${siteUrl}${doc.meta.href}`,
+      },
+    ],
+  };
+
   return (
     <div className="container max-w-3xl py-10">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
+      />
       <Link
         href={`/resources/all?focus=${focusParam}`}
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"

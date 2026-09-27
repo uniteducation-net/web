@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { BreadcrumbNav } from "@/components/breadcrumb-nav";
 import { hasLocale } from "@/i18n-config";
+import { localeAlternates } from "@/lib/site";
 import { getDictionary } from "../dictionaries";
 import { GetInvolvedBento } from "./_components/get-involved-bento";
 
@@ -11,7 +12,11 @@ export async function generateMetadata({
 }: PageProps<"/[lang]/get-involved">): Promise<Metadata> {
   const { lang } = await params;
   const dict = await getDictionary(hasLocale(lang) ? lang : "en");
-  return { title: dict.getInvolvedPage.metaTitle };
+  return {
+    title: dict.getInvolvedPage.metaTitle,
+    description: dict.getInvolvedPage.metaDescription,
+    alternates: localeAlternates(lang, "/get-involved"),
+  };
 }
 
 export default async function GetInvolvedPage({

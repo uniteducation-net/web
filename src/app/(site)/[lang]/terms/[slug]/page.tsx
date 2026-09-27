@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { BreadcrumbNav } from "@/components/breadcrumb-nav";
 import { hasLocale } from "@/i18n-config";
 import { getContent, getSlugs } from "@/lib/content";
+import { localeAlternates } from "@/lib/site";
 import { formatDate } from "@/lib/utils";
 import { getDictionary } from "../../dictionaries";
 import { LegalArticle } from "../_components/legal-article";
@@ -25,10 +26,11 @@ const load = async (params: Promise<{ lang: string; slug: string }>) => {
 export async function generateMetadata({
   params,
 }: PageProps<"/[lang]/terms/[slug]">): Promise<Metadata> {
-  const { entry } = await load(params);
+  const { lang, entry } = await load(params);
   return {
     title: entry.frontmatter.title,
     description: entry.frontmatter.description,
+    alternates: localeAlternates(lang, `/terms/${entry.slug}`),
   };
 }
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { ImageKitClientProvider } from "@/components/imagekit-provider";
+import { siteUrl } from "@/lib/site";
 
 import { ResourcesLanding } from "./_components/resources-landing";
 
@@ -9,6 +10,7 @@ import { ResourcesLanding } from "./_components/resources-landing";
 export const metadata: Metadata = {
   description:
     "Personalized advice for new teachers, the open UnitEd resource graph, and a blank template to start from.",
+  alternates: { canonical: `${siteUrl}/resources` },
 };
 
 // The resources root layout has no ImageKit provider (unlike the site tree),

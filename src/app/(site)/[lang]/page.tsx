@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { ActiveMembers } from "@/components/active-members";
@@ -7,7 +8,17 @@ import { HowItWorks } from "@/components/how-it-works";
 import { UNQuote } from "@/components/un-quote";
 import { hasLocale } from "@/i18n-config";
 import { getAllContent } from "@/lib/content";
+import { localeAlternates } from "@/lib/site";
 import { getDictionary } from "./dictionaries";
+
+// Title/description stay inherited from the layout default (the home hero
+// copy) — this page only pins the canonical + hreflang cluster for /{lang}.
+export async function generateMetadata({
+  params,
+}: PageProps<"/[lang]">): Promise<Metadata> {
+  const { lang } = await params;
+  return { alternates: localeAlternates(lang, "") };
+}
 
 export default async function Home({ params }: PageProps<"/[lang]">) {
   const { lang } = await params;

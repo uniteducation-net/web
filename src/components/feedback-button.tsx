@@ -58,6 +58,12 @@ const loadEmbedScript = () => {
  * Lazily loads Tally's embed script on first call, then opens the feedback
  * popup. Falls back to the full-page form in a new tab if the script fails.
  * Shared by the footer link and the 404 page's primary button.
+ *
+ * Consent: deliberately user-initiated, NOT gated on the "external" consent
+ * category — nothing loads until the visitor clicks the button, and that
+ * click is a deliberate request for this third-party service (covered in
+ * the privacy policy's Tally section). Every other third-party embed must
+ * gate on the category instead (see src/lib/consent.ts).
  */
 const openTallyPopup = async () => {
   try {

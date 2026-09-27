@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { ConsentAnalytics } from "@/components/consent-analytics";
 import { ImageKitClientProvider } from "@/components/imagekit-provider";
 import { NotFoundView } from "@/components/not-found-view";
 import { fontVariables } from "@/lib/fonts";
@@ -8,6 +9,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "404 — Page Not Found",
   description: "The page you are looking for does not exist.",
+  robots: { index: false, follow: false },
 };
 
 /**
@@ -22,6 +24,7 @@ export default function GlobalNotFound() {
         <ImageKitClientProvider>
           <NotFoundView homeHref="/" lang="en" />
         </ImageKitClientProvider>
+        <ConsentAnalytics />
       </body>
     </html>
   );

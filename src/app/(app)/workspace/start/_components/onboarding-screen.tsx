@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, LogIn } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, LogIn, LogOut, X } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import {
@@ -96,6 +96,8 @@ export function OnboardingScreen({ authenticated, user }: OnboardingScreenProps)
   // personalization, so it can take several seconds.
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  // Inline two-step logout confirm — the icon swaps to "Sure? ✓ ✗" in place.
+  const [confirmLogout, setConfirmLogout] = useState(false);
 
   const busy = status === "submitted" || status === "streaming";
   // Centered until the teacher sends their first message, then the input
@@ -137,6 +139,23 @@ export function OnboardingScreen({ authenticated, user }: OnboardingScreenProps)
     const text = message.text.trim();
     if (!text || busy) return;
     sendMessage({ text });
+  };
+
+  // Same contract as settings-modal logout: drop the session cookie, wipe
+  // local drafts, reload so the page re-renders unauthenticated.
+  const logout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      // offline — clear locally anyway
+    }
+    try {
+      localStorage.clear();
+    } catch {
+      // storage unavailable — nothing to clear
+    }
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+    window.location.href = "/workspace/start";
   };
 
   const goToWorkspace = async () => {
@@ -319,6 +338,39 @@ export function OnboardingScreen({ authenticated, user }: OnboardingScreenProps)
                 @{user.login}
               </span>
             </span>
+            {confirmLogout ? (
+              <span className="flex items-center gap-0.5">
+                <span className="text-xs">Sure?</span>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label="Confirm log out"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => void logout()}
+                >
+                  <Check />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label="Cancel log out"
+                  className="text-muted-foreground"
+                  onClick={() => setConfirmLogout(false)}
+                >
+                  <X />
+                </Button>
+              </span>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                aria-label="Log out"
+                className="text-muted-foreground"
+                onClick={() => setConfirmLogout(true)}
+              >
+                <LogOut />
+              </Button>
+            )}
           </div>
         ) : (
           <div className="mt-2 flex justify-center">

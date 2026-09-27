@@ -10,6 +10,7 @@
 
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { isBotRequest } from "@/lib/botid";
 
 const postSchema = z.object({
   email: z.email().max(320),
@@ -18,6 +19,12 @@ const postSchema = z.object({
 });
 
 export async function POST(req: Request) {
+  // BotID first (no-op in local dev): reject bots before any parsing or
+  // upstream spend. The honeypot below stays as a silent second layer.
+  if (await isBotRequest()) {
+    return NextResponse.json({ error: "access_denied" }, { status: 403 });
+  }
+
   let body: z.infer<typeof postSchema>;
   try {
     body = postSchema.parse(await req.json());

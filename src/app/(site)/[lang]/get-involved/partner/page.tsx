@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { hasLocale } from "@/i18n-config";
+import { localeAlternates } from "@/lib/site";
 import { getDictionary } from "../../dictionaries";
 import { PartnerHero } from "./_components/partner-hero";
 
@@ -10,7 +11,11 @@ export async function generateMetadata({
 }: PageProps<"/[lang]/get-involved/partner">): Promise<Metadata> {
   const { lang } = await params;
   const dict = await getDictionary(hasLocale(lang) ? lang : "en");
-  return { title: dict.partnerPage.metaTitle };
+  return {
+    title: dict.partnerPage.metaTitle,
+    description: dict.partnerPage.metaDescription,
+    alternates: localeAlternates(lang, "/get-involved/partner"),
+  };
 }
 
 export default async function PartnerPage({

@@ -5,15 +5,18 @@
 // workspace's file-tree.tsx — same buildTree (folders-first natural sort)
 // and row visuals — with three deltas: folders are zoom targets (row click
 // toggles expansion AND focuses the graph cluster), selection syncs from
-// graph clicks (ancestors auto-expand + row scrolls into view), and only
-// depth-0 folders start open (the repo grows to ~2k files). A sticky filter
+// graph clicks (ancestors auto-expand + row scrolls into view), and all
+// folders start closed (the repo grows to ~2k files) with a collapse-all
+// button to reset expansion. A sticky filter
 // row on top prunes the tree by case-insensitive label substring; while a
 // filter is active, surviving folders render open and manual expansion state
 // is left untouched for when the filter clears.
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronRight, FileText, Folder, Search, X } from "lucide-react";
+import Link from "next/link";
+import { ChevronRight, FileText, Folder, ListCollapse, Search, X } from "lucide-react";
 import type { ResourceDocMeta } from "@/lib/resources-graph";
+import { Button } from "@/components/ui/button";
 import {
   InputGroup,
   InputGroupAddon,
@@ -27,6 +30,9 @@ interface TreeNode {
   path: string;
   children: TreeNode[];
   isFolder: boolean;
+  /** Reader URL (files only) — rows render as real anchors so crawlers can
+   *  follow them. */
+  href?: string;
   /** Recursive markdown-file count, for folder badges. */
   fileCount: number;
 }
@@ -62,6 +68,7 @@ function buildTree(docs: ResourceDocMeta[]): TreeNode[] {
         node.children.push(child);
       }
       if (isFolder) child.fileCount++;
+      else child.href = doc.href;
       node = child;
     });
   }
@@ -131,11 +138,9 @@ export function FileTreePanel({
     () => (q === "" ? tree : filterTree(tree, q)),
     [tree, q],
   );
-  // Open folders by path; depth-0 folders start open. Keyed by path, so
-  // expansion survives a rebuilt tree.
-  const [openPaths, setOpenPaths] = useState<Set<string>>(
-    () => new Set(docs.filter((d) => d.folder !== "" && !d.folder.includes("/")).map((d) => d.folder)),
-  );
+  // Open folders by path; all folders start closed — the reader opens what
+  // they need. Keyed by path, so expansion survives a rebuilt tree.
+  const [openPaths, setOpenPaths] = useState<Set<string>>(() => new Set());
 
   // Graph → tree sync: a new selection opens its ancestors. Adjusted during
   // render (the documented derived-state pattern) rather than in an effect.
@@ -191,8 +196,8 @@ export function FileTreePanel({
     <div ref={panelRef} className={cn("flex flex-col gap-0.5 px-2 py-2", className)}>
       {/* Sticky so the filter stays put while the tree scrolls; the negative
           margin lets its background span the panel's full width. */}
-      <div className="sticky top-0 z-10 -mx-2 bg-background/95 px-2 pb-1 backdrop-blur">
-        <InputGroup>
+      <div className="sticky top-0 z-10 -mx-2 flex items-center gap-1.5 bg-background/95 px-2 pb-1 backdrop-blur">
+        <InputGroup className="flex-1">
           <InputGroupAddon>
             <Search />
           </InputGroupAddon>
@@ -217,6 +222,15 @@ export function FileTreePanel({
             </InputGroupAddon>
           )}
         </InputGroup>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Collapse all folders"
+          disabled={openPaths.size === 0}
+          onClick={() => setOpenPaths(new Set())}
+        >
+          <ListCollapse className="size-4" />
+        </Button>
       </div>
       {visibleTree.map((node) => (
         <TreeRow
@@ -310,11 +324,25 @@ function TreeRow({
 
   const selected = node.path === selectedPath;
 
+  // A real anchor, not a button: crawlers (and ctrl/cmd/middle-click users)
+  // get the reader URL. Plain left-clicks preview in place instead of
+  // navigating — the full page is one click away via the preview card.
   return (
-    <button
-      type="button"
+    <Link
+      href={node.href ?? `/resources/all/${node.path.replace(/\.md$/i, "")}`}
       data-path={node.path}
-      onClick={() => onFileSelect(node.path)}
+      onClick={(event) => {
+        if (
+          event.button !== 0 ||
+          event.metaKey ||
+          event.ctrlKey ||
+          event.shiftKey ||
+          event.altKey
+        )
+          return;
+        event.preventDefault();
+        onFileSelect(node.path);
+      }}
       className={cn(
         "flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-sm font-text transition-colors",
         selected
@@ -325,6 +353,6 @@ function TreeRow({
     >
       <FileText className="size-4 shrink-0 opacity-70" />
       <span className="truncate">{node.name.replace(/\.md$/i, "")}</span>
-    </button>
+    </Link>
   );
 }

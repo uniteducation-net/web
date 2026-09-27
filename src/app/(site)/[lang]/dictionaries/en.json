@@ -1,7 +1,11 @@
 {
   "common": {
     "language": "Language",
-    "home": "Home"
+    "home": "Home",
+    "externalContentGate": {
+      "text": "This form is provided by Tally. Loading it shares data (e.g. your IP address) with the third-party provider.",
+      "button": "Load form"
+    }
   },
   "header": {
     "about": {
@@ -75,6 +79,7 @@
     "licenceNote": "Open source — copy & share with credit. Non-commercial use only.",
     "madeWithPre": "Made with",
     "madeWithPost": "globally.",
+    "cookieSettings": "Cookie settings",
     "newsletter": {
       "heading": "Newsletter",
       "emailPlaceholder": "Email",
@@ -88,22 +93,23 @@
   "cookieBanner": {
     "title": "Cookie settings",
     "description": "Accept all or expand to choose categories.",
+    "privacyLinkText": "Privacy Policy",
     "categories": [
       {
         "id": "essential",
         "label": "Essential",
-        "description": "Required for the site to function.",
+        "description": "Required for the site to function (sign-in, security, your consent choices).",
         "required": true
       },
       {
         "id": "analytics",
         "label": "Analytics",
-        "description": "Helps us understand how visitors use the site."
+        "description": "Anonymous usage statistics via Vercel Analytics (no cookies)."
       },
       {
-        "id": "marketing",
-        "label": "Marketing",
-        "description": "Used for relevant promotions and campaign measurement."
+        "id": "external",
+        "label": "External content",
+        "description": "Third-party content such as YouTube videos and embedded forms (Tally)."
       }
     ],
     "rejectText": "Reject",
@@ -113,6 +119,8 @@
     "saveText": "Save"
   },
   "legalOverview": {
+    "metaTitle": "Terms",
+    "metaDescription": "UnitEd's legal documents and policies: impressum, privacy policy, terms of service, open licensing, and community guidelines.",
     "heading": "Terms",
     "readText": "Read",
     "lastUpdatedText": "Last updated",
@@ -127,7 +135,7 @@
         "id": "privacy",
         "title": "Privacy Policy",
         "description": "How we collect, use, and protect your data.",
-        "lastUpdated": "10.09.2026"
+        "lastUpdated": "27.09.2026"
       },
       {
         "id": "terms",
@@ -150,6 +158,8 @@
     ]
   },
   "updates": {
+    "metaTitle": "Updates",
+    "metaDescription": "News, recaps, and notes from the UnitEd team — teaching materials, project progress, and community stories.",
     "heading": "Updates",
     "readMore": "Read more",
     "highlightsHeading": "Highlights",
@@ -180,9 +190,13 @@
     "forTeachers": "For Teachers",
     "getInvolved": "Get Involved",
     "playLabel": "Play video",
-    "videoTitle": "YouTube video player"
+    "videoTitle": "YouTube video player",
+    "videoConsentText": "Load a video from YouTube (Google)? The thumbnail and player only load with your consent.",
+    "videoConsentButton": "Load video"
   },
   "aboutHero": {
+    "metaTitle": "About",
+    "metaDescription": "What UnitEd is building and why it matters: free training resources for every educator, wherever they teach.",
     "heading": "Free Training Resources for Educators",
     "subtitle": "Help us combat the global lack of qualified teachers and empower the current ones with the latest tech.",
     "seeTheProject": "See the Project"
@@ -202,6 +216,8 @@
     }
   },
   "team": {
+    "metaTitle": "Team",
+    "metaDescription": "Meet the volunteer team from all over the world behind UnitEd — united by one mission: free training resources for every educator.",
     "heading": "Team",
     "member": {
       "whyUnited": "Why UnitEd?",
@@ -437,6 +453,8 @@
     ]
   },
   "events": {
+    "metaTitle": "Events",
+    "metaDescription": "Upcoming and past UnitEd events — meetups, workshops, and community moments.",
     "heading": "Events",
     "upcoming": "Upcoming",
     "past": "Past",
@@ -445,11 +463,13 @@
   },
   "getInvolvedPage": {
     "metaTitle": "Get Involved",
+    "metaDescription": "Whether you give your time, your expertise or your support — there is a place for you at UnitEd.",
     "heading": "Get Involved",
     "subtitle": "Whether you give your time, your expertise or your support — there is a place for you at UnitEd."
   },
   "membershipPage": {
     "metaTitle": "Become a Member",
+    "metaDescription": "Support UnitEd with a small monthly membership fee and get a vote in the membership meetings of the organization.",
     "heading": "Become a Member",
     "description": [
       "No time to volunteer but you like our mission? Become a member of UnitEd e.V.",
@@ -465,11 +485,13 @@
     },
     "join": {
       "metaTitle": "Membership Application",
+      "metaDescription": "Apply to become a member of UnitEd e.V.",
       "breadcrumbCurrent": "Join"
     }
   },
   "volunteerPage": {
     "metaTitle": "Become a Volunteer",
+    "metaDescription": "Support UnitEd as a volunteer — no matter your background, a couple of hours a week makes a difference.",
     "heading": "Become a Volunteer",
     "description": [
       "No matter your background, you can support us. Just get in touch – we are happy to hear from you! Since this is a volunteer position, we cannot pay you but by volunteering you get the chance to be the part of UnitEd from the beginning and be part of a growing movement!",
@@ -479,11 +501,13 @@
     "primaryText": "Join Now",
     "join": {
       "metaTitle": "Volunteer Application",
+      "metaDescription": "Apply to volunteer with UnitEd.",
       "breadcrumbCurrent": "Join"
     }
   },
   "partnerPage": {
     "metaTitle": "Become a Partner",
+    "metaDescription": "Partner with UnitEd to bring free, high-quality training resources to the educators who need them most.",
     "heading": "Become a Partner",
     "description": [
       "UnitEd is built on collaboration. Whether you are an NGO, a school network, or a company that wants to create real impact — as a partner you help bring free, high-quality training resources to the educators who need them most.",
@@ -494,6 +518,7 @@
   },
   "donatePage": {
     "metaTitle": "Donate",
+    "metaDescription": "Support free training resources for educators — donate to UnitEd via GoFundMe or bank transfer.",
     "heading": "Become a Sponsor",
     "description": [
       "As a non-profit organization we are reliant on donations to build UnitEd. Please consider supporting our GoFundMe campaign."
@@ -514,6 +539,7 @@
   },
   "shareKnowledgePage": {
     "metaTitle": "Share Your Knowledge",
+    "metaDescription": "Share your teaching story, experience, or knowledge with UnitEd — help build free resources for educators worldwide.",
     "heading": "Share Your Knowledge",
     "description": [
       "You are a teacher and want to share your story, your experience or your knowledge with us? Please get in touch - we can't wait to talk to you. No matter where you are from or how long you have been teaching, or training to teach."

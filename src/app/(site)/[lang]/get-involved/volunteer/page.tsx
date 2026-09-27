@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { hasLocale } from "@/i18n-config";
+import { localeAlternates } from "@/lib/site";
 import { getDictionary } from "../../dictionaries";
 import { VolunteerHero } from "./_components/volunteer-hero";
 
@@ -10,7 +11,11 @@ export async function generateMetadata({
 }: PageProps<"/[lang]/get-involved/volunteer">): Promise<Metadata> {
   const { lang } = await params;
   const dict = await getDictionary(hasLocale(lang) ? lang : "en");
-  return { title: dict.volunteerPage.metaTitle };
+  return {
+    title: dict.volunteerPage.metaTitle,
+    description: dict.volunteerPage.metaDescription,
+    alternates: localeAlternates(lang, "/get-involved/volunteer"),
+  };
 }
 
 export default async function VolunteerPage({

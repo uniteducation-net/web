@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { MessageSquare, PanelLeftOpen } from "lucide-react";
 import type { UIMessage } from "ai";
 import type { SessionRepo, SessionUser } from "@/lib/session";
-import { START_HERE_MAIN } from "@/lib/provisioning";
+import { START_HERE_MAIN } from "@/lib/workspace-paths";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,

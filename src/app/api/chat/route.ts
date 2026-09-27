@@ -14,6 +14,7 @@ import {
   createProfileStreamFilter,
 } from "@/lib/onboarding";
 import type { OnboardingUIMessage } from "@/app/(app)/workspace/start/_lib/onboarding-chat";
+import { isBotRequest } from "@/lib/botid";
 
 // Cost guard (06 step 5): past this many messages the interviewer is told to
 // wrap up immediately and emit whatever partial profile it has (nulls for
@@ -28,6 +29,12 @@ const HARD_MAX_MESSAGES = 64;
 const MAX_INPUT_CHARS = 64_000; // ≈16k tokens worst case, way past a real interview
 
 export async function POST(req: Request) {
+  // BotID (no-op in local dev): anonymous + bills the NGO's gateway key, so
+  // reject bots before any parsing or model spend.
+  if (await isBotRequest()) {
+    return Response.json({ error: "access_denied" }, { status: 403 });
+  }
+
   // "AI on us" via the AI Gateway free tier — anonymous-friendly, and this
   // one key is the only credential this route needs. Fail with a clear
   // error, never crash, when it is missing.

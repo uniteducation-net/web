@@ -3,6 +3,7 @@ import Link from "next/link";
 import { FaInstagram, FaLinkedin, FaYoutube } from "react-icons/fa";
 
 import { FeedbackButton } from "@/components/feedback-button";
+import { CookieSettingsButton } from "@/components/cookie-settings-button";
 import { Logo } from "@/components/logo";
 import { NewsletterForm } from "@/components/newsletter-form";
 import type { Locale } from "@/i18n-config";
@@ -57,6 +58,7 @@ interface FooterDict {
   licenceNote: string;
   madeWithPre: string;
   madeWithPost: string;
+  cookieSettings: string;
   newsletter: {
     heading: string;
     emailPlaceholder: string;
@@ -172,7 +174,10 @@ const Footer = ({ className, lang, dict }: FooterProps) => {
             </div>
           </div>
           <div className="mt-20 flex flex-col justify-between gap-4 border-t pt-8 text-sm font-medium text-muted-foreground lg:flex-row lg:items-center lg:text-left">
-            <FeedbackButton />
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+              <FeedbackButton />
+              <CookieSettingsButton label={dict.cookieSettings} />
+            </div>
             <p>
               <Link href={`${prefix}/about#team`} className="hover:text-primary">
                 {dict.madeWithPre}{" "}

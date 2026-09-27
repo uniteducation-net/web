@@ -1,7 +1,11 @@
 {
   "common": {
     "language": "Sprache",
-    "home": "Startseite"
+    "home": "Startseite",
+    "externalContentGate": {
+      "text": "Dieses Formular wird von Tally bereitgestellt. Beim Laden werden Daten (z. B. Ihre IP-Adresse) an den Drittanbieter übertragen.",
+      "button": "Formular laden"
+    }
   },
   "header": {
     "about": {
@@ -75,6 +79,7 @@
     "licenceNote": "Open Source — kopieren & teilen mit Namensnennung. Nur nicht-kommerzielle Nutzung.",
     "madeWithPre": "Gemacht mit",
     "madeWithPost": "auf der ganzen Welt.",
+    "cookieSettings": "Cookie-Einstellungen",
     "newsletter": {
       "heading": "Newsletter",
       "emailPlaceholder": "E-Mail",
@@ -88,22 +93,23 @@
   "cookieBanner": {
     "title": "Cookie-Einstellungen",
     "description": "Alle akzeptieren oder Kategorien individuell auswählen.",
+    "privacyLinkText": "Datenschutzerklärung",
     "categories": [
       {
         "id": "essential",
         "label": "Essenziell",
-        "description": "Erforderlich, damit die Website funktioniert.",
+        "description": "Erforderlich für den Betrieb (Anmeldung, Sicherheit, Ihre Auswahl).",
         "required": true
       },
       {
         "id": "analytics",
         "label": "Analyse",
-        "description": "Hilft uns zu verstehen, wie Besucher die Website nutzen."
+        "description": "Anonyme Nutzungsstatistik über Vercel Analytics (ohne Cookies)."
       },
       {
-        "id": "marketing",
-        "label": "Marketing",
-        "description": "Wird für relevante Werbung und Kampagnenmessung verwendet."
+        "id": "external",
+        "label": "Externe Inhalte",
+        "description": "Inhalte von Drittanbietern wie YouTube-Videos und eingebettete Formulare (Tally)."
       }
     ],
     "rejectText": "Ablehnen",
@@ -113,6 +119,8 @@
     "saveText": "Speichern"
   },
   "legalOverview": {
+    "metaTitle": "Bedingungen",
+    "metaDescription": "Die rechtlichen Dokumente und Richtlinien von UnitEd: Impressum, Datenschutzerklärung, Nutzungsbedingungen, offene Lizenzen und Community-Richtlinien.",
     "heading": "Bedingungen",
     "readText": "Lesen",
     "lastUpdatedText": "Zuletzt aktualisiert",
@@ -127,7 +135,7 @@
         "id": "privacy",
         "title": "Datenschutzerklärung",
         "description": "Wie wir Ihre Daten erheben, verwenden und schützen.",
-        "lastUpdated": "10.09.2026"
+        "lastUpdated": "27.09.2026"
       },
       {
         "id": "terms",
@@ -150,6 +158,8 @@
     ]
   },
   "updates": {
+    "metaTitle": "Aktuelles",
+    "metaDescription": "Neuigkeiten, Rückblicke und Notizen vom UnitEd-Team — Unterrichtsmaterialien, Projektfortschritt und Geschichten aus der Community.",
     "heading": "Aktuelles",
     "readMore": "Weiterlesen",
     "highlightsHeading": "Highlights",
@@ -180,9 +190,13 @@
     "forTeachers": "Für Lehrkräfte",
     "getInvolved": "Mitmachen",
     "playLabel": "Video abspielen",
-    "videoTitle": "YouTube-Videoplayer"
+    "videoTitle": "YouTube-Videoplayer",
+    "videoConsentText": "Ein Video von YouTube (Google) laden? Vorschaubild und Player werden nur mit Ihrer Einwilligung geladen.",
+    "videoConsentButton": "Video laden"
   },
   "aboutHero": {
+    "metaTitle": "Über uns",
+    "metaDescription": "Was UnitEd aufbaut und warum es wichtig ist: kostenlose Fortbildungsmaterialien für alle Lehrkräfte, wo immer sie unterrichten.",
     "heading": "Kostenlose Fortbildungsmaterialien für Lehrkräfte",
     "subtitle": "Helfen Sie uns, den weltweiten Mangel an qualifizierten Lehrkräften zu bekämpfen und die vorhandenen mit neuester Technik zu stärken.",
     "seeTheProject": "Zum Projekt"
@@ -202,6 +216,8 @@
     }
   },
   "team": {
+    "metaTitle": "Team",
+    "metaDescription": "Lernen Sie das ehrenamtliche Team aus aller Welt hinter UnitEd kennen — vereint durch eine Mission: kostenlose Fortbildungsmaterialien für alle Lehrkräfte.",
     "heading": "Team",
     "member": {
       "whyUnited": "Warum UnitEd?",
@@ -437,6 +453,8 @@
     ]
   },
   "events": {
+    "metaTitle": "Veranstaltungen",
+    "metaDescription": "Bevorstehende und vergangene UnitEd-Veranstaltungen — Meetups, Workshops und Community-Momente.",
     "heading": "Veranstaltungen",
     "upcoming": "Bevorstehend",
     "past": "Vergangen",
@@ -445,11 +463,13 @@
   },
   "getInvolvedPage": {
     "metaTitle": "Mitmachen",
+    "metaDescription": "Ob Zeit, Wissen oder Unterstützung — bei UnitEd gibt es einen Platz für Sie.",
     "heading": "Mitmachen",
     "subtitle": "Ob Zeit, Wissen oder Unterstützung — bei UnitEd gibt es einen Platz für Sie."
   },
   "membershipPage": {
     "metaTitle": "Mitglied werden",
+    "metaDescription": "Unterstützen Sie UnitEd mit einem kleinen monatlichen Mitgliedsbeitrag und erhalten Sie ein Stimmrecht in den Mitgliederversammlungen.",
     "heading": "Mitglied werden",
     "description": [
       "Keine Zeit fürs Ehrenamt, aber Sie mögen unsere Mission? Werden Sie Mitglied bei UnitEd e.V.",
@@ -465,11 +485,13 @@
     },
     "join": {
       "metaTitle": "Mitgliedsantrag",
+      "metaDescription": "Bewerben Sie sich als Mitglied bei UnitEd e.V.",
       "breadcrumbCurrent": "Beitreten"
     }
   },
   "volunteerPage": {
     "metaTitle": "Ehrenamtlich mitmachen",
+    "metaDescription": "Unterstützen Sie UnitEd ehrenamtlich — egal welchen Hintergrund Sie haben, schon ein paar Stunden pro Woche machen einen Unterschied.",
     "heading": "Ehrenamtlich mitmachen",
     "description": [
       "Egal welchen Hintergrund Sie haben, Sie können uns unterstützen. Melden Sie sich einfach – wir freuen uns von Ihnen zu hören! Da dies eine ehrenamtliche Tätigkeit ist, können wir Sie nicht bezahlen, aber Sie bekommen die Chance, von Anfang an Teil von UnitEd und Teil einer wachsenden Bewegung zu sein!",
@@ -479,11 +501,13 @@
     "primaryText": "Jetzt mitmachen",
     "join": {
       "metaTitle": "Bewerbung Ehrenamt",
+      "metaDescription": "Bewerben Sie sich als Freiwillige oder Freiwilliger bei UnitEd.",
       "breadcrumbCurrent": "Mitmachen"
     }
   },
   "partnerPage": {
     "metaTitle": "Partner werden",
+    "metaDescription": "Werden Sie UnitEd-Partner und helfen Sie mit, kostenlose, hochwertige Lernmaterialien zu den Lehrkräften zu bringen, die sie am dringendsten brauchen.",
     "heading": "Partner werden",
     "description": [
       "UnitEd lebt von Zusammenarbeit. Ob NGO, Schulnetzwerk oder Unternehmen, das echte Wirkung erzielen möchte — als Partner helfen Sie mit, kostenlose, hochwertige Lernmaterialien zu den Lehrkräften zu bringen, die sie am dringendsten brauchen.",
@@ -494,6 +518,7 @@
   },
   "donatePage": {
     "metaTitle": "Spenden",
+    "metaDescription": "Unterstützen Sie kostenlose Fortbildungsmaterialien für Lehrkräfte — spenden Sie an UnitEd per GoFundMe oder Banküberweisung.",
     "heading": "Förderer werden",
     "description": [
       "Als gemeinnütziger Verein sind wir auf Spenden angewiesen, um UnitEd aufzubauen. Bitte erwägen Sie, unsere GoFundMe-Kampagne zu unterstützen."
@@ -514,6 +539,7 @@
   },
   "shareKnowledgePage": {
     "metaTitle": "Wissen teilen",
+    "metaDescription": "Teilen Sie Ihre Unterrichtsgeschichte, Erfahrung oder Ihr Wissen mit UnitEd — helfen Sie mit, kostenlose Materialien für Lehrkräfte weltweit aufzubauen.",
     "heading": "Wissen teilen",
     "description": [
       "Sie sind Lehrkraft und möchten Ihre Geschichte, Ihre Erfahrung oder Ihr Wissen mit uns teilen? Melden Sie sich - wir können es kaum erwarten, mit Ihnen zu sprechen. Egal, woher Sie kommen oder wie lange Sie schon unterrichten oder sich zur Lehrkraft ausbilden lassen."

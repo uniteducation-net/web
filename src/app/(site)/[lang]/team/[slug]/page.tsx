@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { hasLocale } from "@/i18n-config";
 import { getContent, getSlugs } from "@/lib/content";
+import { localeAlternates } from "@/lib/site";
 import { getDictionary } from "../../dictionaries";
 import { TeamMemberProfile } from "../_components/team-member-profile";
 
@@ -25,12 +26,13 @@ const load = async (params: Promise<{ lang: string; slug: string }>) => {
 export async function generateMetadata({
   params,
 }: PageProps<"/[lang]/team/[slug]">): Promise<Metadata> {
-  const { entry } = await load(params);
+  const { lang, entry } = await load(params);
   const { frontmatter } = entry;
   const endpoint = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
   return {
     title: frontmatter.name,
     description: frontmatter.role,
+    alternates: localeAlternates(lang, `/team/${entry.slug}`),
     openGraph:
       endpoint && frontmatter.image
         ? { images: [`${endpoint.replace(/\/$/, "")}${frontmatter.image}`] }

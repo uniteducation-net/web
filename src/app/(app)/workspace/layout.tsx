@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ConsentAnalytics } from "@/components/consent-analytics";
 import { fontVariables } from "@/lib/fonts";
 import "../../globals.css";
 
@@ -18,6 +19,7 @@ export default function WorkspaceRootLayout({
     <html lang="en" className={`${fontVariables} h-full antialiased`}>
       <body className="h-dvh overflow-hidden bg-background text-foreground">
         {children}
+        <ConsentAnalytics />
       </body>
     </html>
   );

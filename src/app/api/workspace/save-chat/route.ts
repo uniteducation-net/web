@@ -10,6 +10,7 @@ import { RequestError } from "octokit";
 import type { UIMessage } from "ai";
 import { getSession } from "@/lib/session";
 import { GitHubRateLimitError, writeFile } from "@/lib/github";
+import { isBotRequest } from "@/lib/botid";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -64,6 +65,13 @@ export async function POST(req: Request) {
     // The /workspace guard (04) normally prevents this state entirely.
     return NextResponse.json({ error: "no_workspace" }, { status: 409 });
   }
+
+  // BotID after auth (no-op in local dev): unauthenticated traffic never
+  // triggers a check.
+  if (await isBotRequest()) {
+    return NextResponse.json({ error: "access_denied" }, { status: 403 });
+  }
+
   const { installationId, repo } = session;
 
   let messages: UIMessage[];

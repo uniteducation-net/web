@@ -1,12 +1,26 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { hasLocale } from "@/i18n-config";
 import { getAllContent } from "@/lib/content";
+import { localeAlternates } from "@/lib/site";
 import { formatDate } from "@/lib/utils";
 import { getDictionary } from "../dictionaries";
 import { Highlights } from "./_components/highlights";
 import { LatestUpdates } from "./_components/latest-updates";
 import { UpdatesNewsletter } from "./_components/updates-newsletter";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[lang]/updates">): Promise<Metadata> {
+  const { lang } = await params;
+  const dict = await getDictionary(hasLocale(lang) ? lang : "en");
+  return {
+    title: dict.updates.metaTitle,
+    description: dict.updates.metaDescription,
+    alternates: localeAlternates(lang, "/updates"),
+  };
+}
 
 export default async function UpdatesPage({
   params,

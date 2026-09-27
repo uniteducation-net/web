@@ -6,6 +6,7 @@ import { ContentArticle } from "@/components/content/content-article";
 import { Button } from "@/components/ui/button";
 import { hasLocale } from "@/i18n-config";
 import { getContent, getSlugs } from "@/lib/content";
+import { localeAlternates, siteUrl } from "@/lib/site";
 import { formatDate } from "@/lib/utils";
 import { getDictionary } from "../../dictionaries";
 
@@ -26,10 +27,11 @@ const load = async (params: Promise<{ lang: string; slug: string }>) => {
 export async function generateMetadata({
   params,
 }: PageProps<"/[lang]/events/[slug]">): Promise<Metadata> {
-  const { entry } = await load(params);
+  const { lang, entry } = await load(params);
   return {
     title: entry.frontmatter.title,
     description: entry.frontmatter.description,
+    alternates: localeAlternates(lang, `/events/${entry.slug}`),
   };
 }
 
@@ -40,8 +42,31 @@ export default async function EventPage({
   const { frontmatter, Content } = entry;
   const dict = await getDictionary(lang);
 
+  const eventLd = {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: frontmatter.title,
+    description: frontmatter.description,
+    startDate: frontmatter.startDate,
+    ...(frontmatter.endDate ? { endDate: frontmatter.endDate } : {}),
+    ...(frontmatter.location
+      ? {
+          location: {
+            "@type": "Place",
+            name: frontmatter.location,
+          },
+        }
+      : {}),
+    url: `${siteUrl}/${lang}/events/${entry.slug}`,
+  };
+
   return (
-    <ContentArticle
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(eventLd) }}
+      />
+      <ContentArticle
       title={frontmatter.title}
       description={frontmatter.description}
       tags={frontmatter.tags}
@@ -77,5 +102,6 @@ export default async function EventPage({
         </Button>
       )}
     </ContentArticle>
+    </>
   );
 }

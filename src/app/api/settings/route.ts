@@ -18,6 +18,7 @@ import {
   modelOptionsFor,
   resolveModelId,
 } from "@/lib/llm";
+import { isBotRequest } from "@/lib/botid";
 
 const postSchema = z.union([
   z.object({
@@ -67,6 +68,12 @@ export async function POST(req: Request) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "not_authenticated" }, { status: 401 });
+  }
+
+  // BotID after auth (no-op in local dev): unauthenticated traffic never
+  // triggers a check.
+  if (await isBotRequest()) {
+    return NextResponse.json({ error: "access_denied" }, { status: 403 });
   }
 
   let body: z.infer<typeof postSchema>;

@@ -1,9 +1,23 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { TeamCard } from "@/components/content/team-card";
 import { hasLocale } from "@/i18n-config";
 import { getAllContent } from "@/lib/content";
+import { localeAlternates } from "@/lib/site";
 import { getDictionary } from "../dictionaries";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[lang]/team">): Promise<Metadata> {
+  const { lang } = await params;
+  const dict = await getDictionary(hasLocale(lang) ? lang : "en");
+  return {
+    title: dict.team.metaTitle,
+    description: dict.team.metaDescription,
+    alternates: localeAlternates(lang, "/team"),
+  };
+}
 
 export default async function TeamPage({
   params,

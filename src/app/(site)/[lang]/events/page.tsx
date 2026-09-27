@@ -1,9 +1,23 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { EventCard } from "@/components/content/event-card";
 import { hasLocale } from "@/i18n-config";
 import { getAllContent, type EventFrontmatter } from "@/lib/content";
+import { localeAlternates } from "@/lib/site";
 import { getDictionary } from "../dictionaries";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[lang]/events">): Promise<Metadata> {
+  const { lang } = await params;
+  const dict = await getDictionary(hasLocale(lang) ? lang : "en");
+  return {
+    title: dict.events.metaTitle,
+    description: dict.events.metaDescription,
+    alternates: localeAlternates(lang, "/events"),
+  };
+}
 
 export default async function EventsPage({
   params,

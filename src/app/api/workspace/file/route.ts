@@ -7,6 +7,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { RequestError } from "octokit";
 import { getSession } from "@/lib/session";
 import { GitHubRateLimitError, readFile, writeFile } from "@/lib/github";
+import { isBotRequest } from "@/lib/botid";
 
 /**
  * Repo-relative path guard. The client only ever sends paths from the tree
@@ -77,6 +78,13 @@ export async function PUT(request: NextRequest) {
   if (!session.installationId || !session.repo) {
     return NextResponse.json({ error: "no_workspace" }, { status: 409 });
   }
+
+  // BotID after auth (no-op in local dev): unauthenticated traffic never
+  // triggers a check.
+  if (await isBotRequest()) {
+    return NextResponse.json({ error: "access_denied" }, { status: 403 });
+  }
+
   const { installationId, repo } = session;
 
   let body: {

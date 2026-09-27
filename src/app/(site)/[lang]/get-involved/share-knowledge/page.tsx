@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { hasLocale } from "@/i18n-config";
+import { localeAlternates } from "@/lib/site";
 import { getDictionary } from "../../dictionaries";
 import { ShareKnowledgeHero } from "./_components/share-knowledge-hero";
 
@@ -10,7 +11,11 @@ export async function generateMetadata({
 }: PageProps<"/[lang]/get-involved/share-knowledge">): Promise<Metadata> {
   const { lang } = await params;
   const dict = await getDictionary(hasLocale(lang) ? lang : "en");
-  return { title: dict.shareKnowledgePage.metaTitle };
+  return {
+    title: dict.shareKnowledgePage.metaTitle,
+    description: dict.shareKnowledgePage.metaDescription,
+    alternates: localeAlternates(lang, "/get-involved/share-knowledge"),
+  };
 }
 
 export default async function ShareKnowledgePage({

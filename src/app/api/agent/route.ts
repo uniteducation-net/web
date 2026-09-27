@@ -33,6 +33,7 @@ import {
   createWorkspaceTools,
 } from "@/lib/agent";
 import type { AgentUIMessage } from "@/components/workspace/agent-chat";
+import { isBotRequest } from "@/lib/botid";
 
 // The multi-step tool loop (up to AGENT_MAX_STEPS read→edit→write rounds)
 // can outrun the default function budget (99-known-issues #8; Vercel Pro).
@@ -46,6 +47,12 @@ export async function POST(req: Request) {
   if (!session.installationId || !session.repo) {
     // The /workspace guard (04) normally prevents this state entirely.
     return Response.json({ error: "no_workspace" }, { status: 409 });
+  }
+
+  // BotID after auth (no-op in local dev): unauthenticated traffic never
+  // triggers a check.
+  if (await isBotRequest()) {
+    return Response.json({ error: "access_denied" }, { status: 403 });
   }
 
   // 13 — provider resolution. BYOK/OpenRouter sessions spend their own keys;

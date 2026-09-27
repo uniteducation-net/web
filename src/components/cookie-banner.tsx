@@ -1,9 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import {
+  acceptAll,
+  rejectAll,
+  setConsent,
+  useConsent,
+} from "@/lib/consent";
 import { cn } from "@/lib/utils";
 
 interface CookieCategory {
@@ -16,77 +23,65 @@ interface CookieCategory {
 interface CookieBannerProps {
   title: string;
   description: string;
+  /** Label of the privacy-policy link rendered under the description. */
+  privacyLinkText: string;
   categories: CookieCategory[];
   rejectText: string;
   customizeText: string;
   hideText: string;
   acceptText: string;
   saveText: string;
-  defaultVisible?: boolean;
-  defaultEnabled?: Record<string, boolean>;
+  /** Localized privacy-policy route, passed by the layout (not the dict). */
+  privacyHref: string;
   className?: string;
 }
 
-type Props = Partial<CookieBannerProps>;
-
-const defaultCategories: CookieCategory[] = [
-  {
-    id: "essential",
-    label: "Essential",
-    description: "Required for the site to function.",
-    required: true,
-  },
-  {
-    id: "analytics",
-    label: "Analytics",
-    description: "Helps us understand how visitors use the site.",
-  },
-  {
-    id: "marketing",
-    label: "Marketing",
-    description: "Used for relevant promotions and campaign measurement.",
-  },
-];
-
-const defaultProps: CookieBannerProps = {
-  title: "Cookie settings",
-  description: "Accept all or expand to choose categories.",
-  categories: defaultCategories,
-  rejectText: "Reject",
-  customizeText: "Customize",
-  hideText: "Hide",
-  acceptText: "Accept all",
-  saveText: "Save",
-  defaultVisible: true,
-  defaultEnabled: {
-    essential: true,
-    analytics: false,
-    marketing: false,
-  },
+type CookieBannerCardProps = CookieBannerProps & {
+  /** Stored choices the toggles seed from. */
+  initialAnalytics: boolean;
+  initialExternal: boolean;
 };
 
-const CookieBanner = (props: Props) => {
-  const {
-    title,
-    description,
-    categories,
-    rejectText,
-    customizeText,
-    hideText,
-    acceptText,
-    saveText,
-    defaultVisible,
-    defaultEnabled,
-    className,
-  } = { ...defaultProps, ...props };
-
-  const [visible, setVisible] = useState(defaultVisible);
-  const [open, setOpen] = useState(false);
-  const [enabled, setEnabled] = useState<Record<string, boolean>>(
-    defaultEnabled ?? {},
-  );
+const CookieBanner = (props: CookieBannerProps) => {
+  const consent = useConsent();
+  // Hidden until a choice is due; re-opened anytime via the footer entry.
+  const visible = consent.settingsOpen || !consent.decided;
 
   if (!visible) return null;
+
+  // The key remounts the card when the stored record changes while open
+  // (e.g. a click-to-load grant behind the banner), reseeding the toggles;
+  // hiding unmounts it, so reopening always shows the current choices.
+  return (
+    <CookieBannerCard
+      key={`${consent.analytics}.${consent.external}`}
+      {...props}
+      initialAnalytics={consent.analytics}
+      initialExternal={consent.external}
+    />
+  );
+};
+
+const CookieBannerCard = ({
+  title,
+  description,
+  privacyLinkText,
+  categories,
+  rejectText,
+  customizeText,
+  hideText,
+  acceptText,
+  saveText,
+  privacyHref,
+  className,
+  initialAnalytics,
+  initialExternal,
+}: CookieBannerCardProps) => {
+  const [open, setOpen] = useState(false);
+  const [enabled, setEnabled] = useState<Record<string, boolean>>({
+    analytics: initialAnalytics,
+    external: initialExternal,
+  });
 
   return (
     <div
@@ -97,14 +92,19 @@ const CookieBanner = (props: Props) => {
     >
       <p className="text-sm font-semibold">{title}</p>
       <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+      <p className="mt-1 text-xs font-medium text-muted-foreground">
+        <Link href={privacyHref} className="text-primary hover:underline">
+          {privacyLinkText}
+        </Link>
+      </p>
       <div className="mt-4 flex flex-wrap gap-2">
-        <Button size="sm" variant="ghost" onClick={() => setVisible(false)}>
+        <Button size="sm" variant="ghost" onClick={rejectAll}>
           {rejectText}
         </Button>
         <Button size="sm" variant="outline" onClick={() => setOpen((v) => !v)}>
           {open ? hideText : customizeText}
         </Button>
-        <Button size="sm" onClick={() => setVisible(false)}>
+        <Button size="sm" onClick={acceptAll}>
           {acceptText}
         </Button>
       </div>
@@ -131,7 +131,7 @@ const CookieBanner = (props: Props) => {
                   </p>
                 </div>
                 <Switch
-                  checked={enabled[cat.id] ?? false}
+                  checked={cat.required || (enabled[cat.id] ?? false)}
                   disabled={cat.required}
                   onCheckedChange={(checked) =>
                     setEnabled((prev) => ({ ...prev, [cat.id]: checked }))
@@ -143,7 +143,12 @@ const CookieBanner = (props: Props) => {
             <Button
               size="sm"
               className="w-full"
-              onClick={() => setVisible(false)}
+              onClick={() =>
+                setConsent({
+                  analytics: enabled.analytics ?? false,
+                  external: enabled.external ?? false,
+                })
+              }
             >
               {saveText}
             </Button>

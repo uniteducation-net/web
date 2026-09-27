@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { hasLocale } from "@/i18n-config";
 import { getContent, getSlugs } from "@/lib/content";
+import { localeAlternates, siteName, siteUrl } from "@/lib/site";
 import { getDictionary } from "../../dictionaries";
 import { UpdateArticle } from "../_components/update-article";
 
@@ -30,10 +31,11 @@ const load = async (params: Promise<{ lang: string; slug: string }>) => {
 export async function generateMetadata({
   params,
 }: PageProps<"/[lang]/updates/[slug]">): Promise<Metadata> {
-  const { entry } = await load(params);
+  const { lang, entry } = await load(params);
   return {
     title: entry.frontmatter.title,
     description: entry.frontmatter.description,
+    alternates: localeAlternates(lang, `/updates/${entry.slug}`),
   };
 }
 
@@ -43,8 +45,29 @@ export default async function UpdatePage({
   const { lang, entry, dict, authorEntry } = await load(params);
   const { frontmatter, Content } = entry;
 
+  const articleLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: frontmatter.title,
+    description: frontmatter.description,
+    datePublished: frontmatter.date,
+    mainEntityOfPage: `${siteUrl}/${lang}/updates/${entry.slug}`,
+    author: authorEntry
+      ? {
+          "@type": "Person",
+          name: authorEntry.frontmatter.name,
+          url: `${siteUrl}/${lang}/team/${authorEntry.slug}`,
+        }
+      : { "@type": "Organization", name: siteName, url: siteUrl },
+  };
+
   return (
-    <UpdateArticle
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleLd) }}
+      />
+      <UpdateArticle
       lang={lang}
       title={frontmatter.title}
       date={frontmatter.date}
@@ -71,5 +94,6 @@ export default async function UpdatePage({
     >
       <Content />
     </UpdateArticle>
+    </>
   );
 }

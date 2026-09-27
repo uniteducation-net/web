@@ -16,10 +16,12 @@ import type { ResourceSummary } from "./resources";
 import { CATEGORY_NAMES, type ProfileEvaluation } from "./evaluation";
 import { fetchProviderExcerpt } from "./fetch-provider";
 import { getPublicFile, resourcesRepoCoords } from "./public-github";
+import { START_HERE_MAIN } from "./workspace-paths";
+
+export { START_HERE_MAIN };
 
 export const PROFILE_DIR = "00-Profile";
 export const START_HERE_DIR = "01-Start Here";
-export const START_HERE_MAIN = "01-Start Here/Start Here.md";
 
 const PROFILE_CONTEXT = `${PROFILE_DIR}/CONTEXT.md`;
 const PROFILE_MAIN = `${PROFILE_DIR}/profile.md`;

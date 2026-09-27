@@ -6,8 +6,12 @@
 
 import { NextResponse } from "next/server";
 import { clearSession } from "@/lib/session";
+import { isBotRequest } from "@/lib/botid";
 
 export async function POST() {
+  if (await isBotRequest()) {
+    return NextResponse.json({ error: "access_denied" }, { status: 403 });
+  }
   await clearSession();
   return NextResponse.json({ ok: true });
 }

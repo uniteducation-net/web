@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { BankAccountDetails } from "@/components/bank-account-details";
 import { hasLocale } from "@/i18n-config";
+import { localeAlternates } from "@/lib/site";
 import { getDictionary } from "../../dictionaries";
 import { DonateHero } from "./_components/donate-hero";
 
@@ -11,7 +12,11 @@ export async function generateMetadata({
 }: PageProps<"/[lang]/get-involved/donate">): Promise<Metadata> {
   const { lang } = await params;
   const dict = await getDictionary(hasLocale(lang) ? lang : "en");
-  return { title: dict.donatePage.metaTitle };
+  return {
+    title: dict.donatePage.metaTitle,
+    description: dict.donatePage.metaDescription,
+    alternates: localeAlternates(lang, "/get-involved/donate"),
+  };
 }
 
 export default async function DonatePage({

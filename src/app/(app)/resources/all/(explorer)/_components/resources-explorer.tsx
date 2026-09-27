@@ -9,7 +9,8 @@
 // but the tree floats over the canvas instead of being a grid column.
 
 import { useEffect, useMemo, useState } from "react";
-import { PanelLeftOpen } from "lucide-react";
+import { ArrowLeft, PanelLeftOpen } from "lucide-react";
+import Link from "next/link";
 import type { ResourcesSnapshotState } from "@/lib/resources-graph";
 import { Button } from "@/components/ui/button";
 import {
@@ -138,7 +139,8 @@ export function ResourcesExplorer({ state, className }: ResourcesExplorerProps) 
   // GitHub unreachable or rate-limited — a first-class state, not an error.
   if (state.status === "unavailable") {
     return (
-      <div className="flex h-dvh flex-col items-center justify-center gap-2 bg-background px-6 text-center">
+      <div className="relative flex h-dvh flex-col items-center justify-center gap-2 bg-background px-6 text-center">
+        <BackToResourcesLink />
         <h1 className="font-heading text-heading text-secondary">
           Resources are temporarily unavailable
         </h1>
@@ -219,6 +221,8 @@ export function ResourcesExplorer({ state, className }: ResourcesExplorerProps) 
           />
         )}
 
+        <BackToResourcesLink />
+
         {hydrated && !treeOpen && (
           <FloatingButton
             label="Open file tree (Ctrl+B)"
@@ -239,6 +243,22 @@ export function ResourcesExplorer({ state, className }: ResourcesExplorerProps) 
         )}
       </div>
     </TooltipProvider>
+  );
+}
+
+function BackToResourcesLink() {
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      asChild
+      className="absolute right-3 top-3 z-20 bg-background shadow-sm"
+    >
+      <Link href="/resources">
+        <ArrowLeft className="size-4" />
+        Back to resources
+      </Link>
+    </Button>
   );
 }
 

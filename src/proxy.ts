@@ -26,10 +26,12 @@ export function proxy(request: NextRequest) {
 
   if (pathnameHasLocale) return;
 
-  // Redirect if there is no locale, e.g. /products -> /en/products
+  // Redirect if there is no locale, e.g. /products -> /en/products.
+  // 308 (permanent): the localized URL is the canonical address of the
+  // content, so crawlers transfer signals instead of re-crawling the hop.
   const locale = getLocale(request);
   request.nextUrl.pathname = `/${locale}${pathname}`;
-  return NextResponse.redirect(request.nextUrl);
+  return NextResponse.redirect(request.nextUrl, 308);
 }
 
 export const config = {

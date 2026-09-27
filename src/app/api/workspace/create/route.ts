@@ -35,6 +35,7 @@ import {
   addFairUseTokens,
   getFairUse,
 } from "@/lib/fair-use";
+import { isBotRequest } from "@/lib/botid";
 
 // Repo creation + public-repo reads + a possible LLM pass + two commits can
 // outrun the default function budget on a cold start (99-known-issues #8;
@@ -61,6 +62,12 @@ export async function POST(req: Request) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "not_authenticated" }, { status: 401 });
+  }
+
+  // BotID after auth (no-op in local dev): unauthenticated traffic never
+  // triggers a check.
+  if (await isBotRequest()) {
+    return NextResponse.json({ error: "access_denied" }, { status: 403 });
   }
 
   // 2. Validate the onboarding profile.

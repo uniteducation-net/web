@@ -1,4 +1,8 @@
 import { Image } from "@imagekit/next";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+
+import { Button } from "@/components/ui/button";
 
 import { ChatDemo } from "./chat-demo";
 import { GraphDemo } from "./graph-demo";
@@ -15,6 +19,12 @@ const ResourcesLanding = () => {
   return (
     <section className="py-16 md:py-32">
       <div className="container">
+        <Button variant="ghost" size="sm" asChild className="mb-8 -ml-3">
+          <Link href="/en">
+            <ArrowLeft className="size-4" />
+            Back to website
+          </Link>
+        </Button>
         <div className="mx-auto mb-12 max-w-2xl text-center">
           <h1 className="font-heading text-title font-semibold">
             Resources for new teachers
