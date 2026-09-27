@@ -79,6 +79,8 @@
       "heading": "Newsletter",
       "emailPlaceholder": "Email",
       "submit": "Subscribe",
+      "success": "Almost there — check your inbox to confirm your subscription.",
+      "error": "Something went wrong. Please try again.",
       "agreePre": "By submitting, you agree to our",
       "agreePost": ""
     }
@@ -153,6 +155,18 @@
     "highlightsHeading": "Highlights",
     "latestHeading": "Latest updates",
     "latestDescription": "News, recaps, and notes from the UNITED team.",
+    "newsletter": {
+      "label": "Newsletter",
+      "heading": "Stay in the loop",
+      "description": "Teaching materials, project news, and stories from the community — once a month, straight to your inbox.",
+      "emailPlaceholder": "Email",
+      "subscribe": "Subscribe",
+      "success": "Almost there — check your inbox to confirm your subscription.",
+      "error": "Something went wrong. Please try again.",
+      "disclaimer": "Unsubscribe any time.",
+      "postsLabel": "Latest posts",
+      "allPostsLabel": "All"
+    },
     "onThisPage": "On this page",
     "shareArticle": "Share this article",
     "backToTop": "Back to top",

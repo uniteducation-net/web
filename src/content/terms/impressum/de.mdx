@@ -1,17 +1,21 @@
 ---
 title: "Impressum"
 description: "Angaben gemäß § 5 DDG – wer wir sind und wie Sie uns erreichen."
-lastUpdated: "2026-09-20"
+lastUpdated: "2026-09-27"
 ---
+
+import { BankAccountDetails } from "@/components/bank-account-details";
 
 ## Angaben gemäß § 5 DDG
 
-UnitEd – unite education e.V.
-Schwarzpappelweg 6a
-22391 Hamburg
+UnitEd – unite education e.V.\
+Schwarzpappelweg 6a\
+22391 Hamburg\
 Deutschland
 
-**E-Mail:** [hello@uniteducation.net](mailto:hello@uniteducation.net)
+**E-Mail:** [hello@uniteducation.net](mailto:hello@uniteducation.net)\
+**Telefon:** [+49 15203797292](tel:+4915203797292)\
+**Gerichtsstand:** Hamburg
 
 ## Vertretungsberechtigter Vorstand
 
@@ -30,6 +34,24 @@ Registernummer: VR [Nummer wird nachgetragen]
 ## Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV
 
 Der vertretungsberechtigte Vorstand (Janett, Fini und Kiarash), Anschrift wie oben.
+
+## Bankverbindung
+
+<BankAccountDetails
+  heading="Bankverbindung"
+  fields={[
+    { label: "Kontoinhaber", value: "UnitEd – unite education e.V." },
+    { label: "IBAN", value: "Demnächst verfügbar" },
+    { label: "BIC", value: "Demnächst verfügbar" },
+    { label: "Bank", value: "Demnächst verfügbar" },
+    {
+      label: "Gläubiger-Identifikationsnummer",
+      value: "DE33ZZZ00002939057",
+    },
+  ]}
+  copyLabel="Kopieren"
+  copiedLabel="Kopiert"
+/>
 
 ## Haftung für Inhalte
 

@@ -1,8 +1,10 @@
 ---
 title: "Impressum (Legal Notice)"
 description: "Information pursuant to § 5 DDG – who we are and how to reach us."
-lastUpdated: "2026-09-20"
+lastUpdated: "2026-09-27"
 ---
+
+import { BankAccountDetails } from "@/components/bank-account-details";
 
 > **Note:** This English version is a translation provided for your
 > convenience. The [German version](/de/terms/impressum) is the authoritative
@@ -10,12 +12,14 @@ lastUpdated: "2026-09-20"
 
 ## Information pursuant to § 5 DDG (German Digital Services Act)
 
-UnitEd – unite education e.V.
-Schwarzpappelweg 6a
-22391 Hamburg
+UnitEd – unite education e.V.\
+Schwarzpappelweg 6a\
+22391 Hamburg\
 Germany
 
-**Email:** [hello@uniteducation.net](mailto:hello@uniteducation.net)
+**Email:** [hello@uniteducation.net](mailto:hello@uniteducation.net)\
+**Phone:** [+49 15203797292](tel:+4915203797292)\
+**Place of jurisdiction:** Hamburg
 
 ## Board authorized to represent the association
 
@@ -35,6 +39,24 @@ Register number: VR [number to be added]
 
 The board authorized to represent the association (Janett, Fini and Kiarash),
 address as above.
+
+## Bank details
+
+<BankAccountDetails
+  heading="Bank details"
+  fields={[
+    { label: "Account Holder", value: "UnitEd – unite education e.V." },
+    { label: "IBAN", value: "Coming soon" },
+    { label: "BIC", value: "Coming soon" },
+    { label: "Bank Name", value: "Coming soon" },
+    {
+      label: "Creditor identifier",
+      value: "DE33ZZZ00002939057",
+    },
+  ]}
+  copyLabel="Copy"
+  copiedLabel="Copied"
+/>
 
 ## Liability for content
 

@@ -13,6 +13,11 @@ import { ChevronRight, FileImage, FileText, Folder } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
+/** Tree labels hide the ".md" extension — users see "CONTEXT", the path
+ *  keeps it (every file here is markdown by convention; other extensions
+ *  like .png stay visible since they signal a different kind of file). */
+const displayName = (name: string) => name.replace(/\.md$/i, "");
+
 interface TreeNode {
   name: string;
   path: string;
@@ -59,6 +64,8 @@ interface FileTreeProps {
   onSelect: (path: string) => void;
   /** Bump to re-fetch — the shell bumps it when the agent (11) writes files. */
   refreshKey?: number;
+  /** Bump to close every open folder at once (the "Files" row's button). */
+  collapseSignal?: number;
   className?: string;
 }
 
@@ -66,6 +73,7 @@ export function FileTree({
   selectedPath,
   onSelect,
   refreshKey = 0,
+  collapseSignal = 0,
   className,
 }: FileTreeProps) {
   // null = loading (skeleton); the previous tree is kept during a refresh.
@@ -139,6 +147,7 @@ export function FileTree({
           depth={0}
           selectedPath={selectedPath}
           onSelect={onSelect}
+          collapseSignal={collapseSignal}
         />
       ))}
     </div>
@@ -150,13 +159,24 @@ function TreeRow({
   depth,
   selectedPath,
   onSelect,
+  collapseSignal,
 }: {
   node: TreeNode;
   depth: number;
   selectedPath: string;
   onSelect: (path: string) => void;
+  collapseSignal: number;
 }) {
   const [open, setOpen] = useState(true);
+
+  // "Collapse all" — a bumped signal closes every mounted folder. Render-
+  // phase adjustment (React's prev-props pattern), not an effect: no flash
+  // of open folders, no cascading render. New folders still default to open.
+  const [lastSignal, setLastSignal] = useState(collapseSignal);
+  if (lastSignal !== collapseSignal) {
+    setLastSignal(collapseSignal);
+    setOpen(false);
+  }
 
   if (node.isFolder) {
     return (
@@ -185,6 +205,7 @@ function TreeRow({
                 depth={depth + 1}
                 selectedPath={selectedPath}
                 onSelect={onSelect}
+                collapseSignal={collapseSignal}
               />
             ))}
           </div>
@@ -213,7 +234,7 @@ function TreeRow({
       ) : (
         <FileText className="size-4 shrink-0 opacity-70" />
       )}
-      <span className="truncate">{node.name}</span>
+      <span className="truncate">{displayName(node.name)}</span>
     </button>
   );
 }

@@ -24,7 +24,9 @@ import {
   type PromptInputMessage,
 } from "@/components/ai-elements/prompt-input";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Logo } from "@/components/logo";
+import type { SessionUser } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import {
   OPENING_MESSAGE,
@@ -57,6 +59,9 @@ interface OnboardingScreenProps {
   /** From the server page (04). Decides whether "Go to workspace" starts the
       GitHub OAuth flow or provisions the repo directly. */
   authenticated: boolean;
+  /** Present when authenticated — shown in place of the login button so the
+      teacher can see which GitHub account they're pairing. */
+  user?: SessionUser;
 }
 
 function readDraft(): OnboardingUIMessage[] | null {
@@ -74,7 +79,7 @@ function readDraft(): OnboardingUIMessage[] | null {
   }
 }
 
-export function OnboardingScreen({ authenticated }: OnboardingScreenProps) {
+export function OnboardingScreen({ authenticated, user }: OnboardingScreenProps) {
   const transport = useMemo(
     () => new DefaultChatTransport<OnboardingUIMessage>({ api: "/api/chat" }),
     [],
@@ -300,7 +305,22 @@ export function OnboardingScreen({ authenticated }: OnboardingScreenProps) {
             {createError}
           </p>
         )}
-        {!authenticated && (
+        {authenticated && user ? (
+          <div className="mt-2 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <Avatar className="size-5">
+              <AvatarImage src={user.avatarUrl} alt={user.name ?? user.login} />
+              <AvatarFallback className="bg-secondary text-[9px] text-secondary-foreground">
+                {(user.name ?? user.login).slice(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <span>
+              Logged in as{" "}
+              <span className="font-medium text-foreground">
+                @{user.login}
+              </span>
+            </span>
+          </div>
+        ) : (
           <div className="mt-2 flex justify-center">
             <Button
               variant="ghost"

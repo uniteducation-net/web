@@ -40,10 +40,13 @@ const CollapsibleLetter = ({
 interface LogoProps {
   /** Play the "Unite Education" → "UnitEd" morph once on mount (header). */
   animateIntro?: boolean;
+  /** Intercept the home navigation (e.g. the workspace's unsaved-changes
+      guard calls preventDefault and confirms before leaving). */
+  onClick?: React.MouseEventHandler<HTMLAnchorElement>;
   className?: string;
 }
 
-const Logo = ({ animateIntro = false, className }: LogoProps) => {
+const Logo = ({ animateIntro = false, onClick, className }: LogoProps) => {
   const { lang } = useParams<{ lang: string }>();
   const [collapsed, setCollapsed] = useState(!animateIntro);
   const recollapseTimer = useRef<number | null>(null);
@@ -94,6 +97,7 @@ const Logo = ({ animateIntro = false, className }: LogoProps) => {
       // (app) routes (workspace) have no locale segment — fall back to /en.
       href={lang ? `/${lang}` : "/en"}
       aria-label="Unite Education — home"
+      onClick={onClick}
       onMouseEnter={expand}
       onMouseLeave={scheduleCollapse}
       onFocus={expand}

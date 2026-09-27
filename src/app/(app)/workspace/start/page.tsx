@@ -10,8 +10,8 @@ export const metadata: Metadata = {
 };
 
 // Onboarding (04 step 3). Works anonymously AND logged-in-without-repo:
-// `authenticated` hides the optional login button and decides whether "Go to
-// workspace" provisions directly or runs the OAuth chain first. Reverse
+// anonymous visitors get the optional login button, logged-in teachers see
+// who they're logged in as (and skip OAuth when provisioning). Reverse
 // guard: a session whose workspace repo already exists goes straight to
 // /workspace; onboarding is unreachable once the workspace exists.
 export default async function WorkspaceStartPage() {
@@ -20,5 +20,7 @@ export default async function WorkspaceStartPage() {
     const repo = await findExistingWorkspace(session);
     if (repo) redirect("/workspace");
   }
-  return <OnboardingScreen authenticated={Boolean(session)} />;
+  return (
+    <OnboardingScreen authenticated={Boolean(session)} user={session?.user} />
+  );
 }

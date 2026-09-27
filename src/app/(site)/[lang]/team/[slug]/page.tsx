@@ -1,11 +1,12 @@
-import { Image } from "@imagekit/next";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { ContentArticle } from "@/components/content/content-article";
 import { hasLocale } from "@/i18n-config";
 import { getContent, getSlugs } from "@/lib/content";
+import { getDictionary } from "../../dictionaries";
+import { TeamMemberProfile } from "../_components/team-member-profile";
 
+// Slugs only — the parent [lang] layout generates the locales.
 export function generateStaticParams() {
   return getSlugs("team").map((slug) => ({ slug }));
 }
@@ -17,40 +18,41 @@ const load = async (params: Promise<{ lang: string; slug: string }>) => {
   if (!hasLocale(lang)) notFound();
   const entry = await getContent("team", slug, lang);
   if (!entry) notFound();
-  return { lang, entry };
+  const dict = await getDictionary(lang);
+  return { lang, entry, dict };
 };
 
 export async function generateMetadata({
   params,
 }: PageProps<"/[lang]/team/[slug]">): Promise<Metadata> {
   const { entry } = await load(params);
-  return { title: entry.frontmatter.name };
+  const { frontmatter } = entry;
+  const endpoint = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
+  return {
+    title: frontmatter.name,
+    description: frontmatter.role,
+    openGraph:
+      endpoint && frontmatter.image
+        ? { images: [`${endpoint.replace(/\/$/, "")}${frontmatter.image}`] }
+        : undefined,
+  };
 }
 
 export default async function TeamMemberPage({
   params,
 }: PageProps<"/[lang]/team/[slug]">) {
-  const { entry } = await load(params);
-  const { frontmatter, Content } = entry;
+  const { lang, entry, dict } = await load(params);
 
   return (
-    <ContentArticle
-      title={frontmatter.name}
-      description={frontmatter.role}
-      tags={frontmatter.tags}
-    >
-      {frontmatter.image && (
-        <div className="not-prose relative mb-8 aspect-square w-40 overflow-hidden rounded-xl bg-muted">
-          <Image
-            src={frontmatter.image}
-            alt={frontmatter.name}
-            fill
-            sizes="160px"
-            className="object-cover"
-          />
-        </div>
-      )}
-      <Content />
-    </ContentArticle>
+    <TeamMemberProfile
+      lang={lang}
+      entry={entry}
+      labels={{
+        team: dict.team.heading,
+        whyUnited: dict.team.member.whyUnited,
+        bio: dict.team.member.bio,
+        other: dict.team.member.other,
+      }}
+    />
   );
 }

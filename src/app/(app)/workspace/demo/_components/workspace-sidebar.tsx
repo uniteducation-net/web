@@ -2,14 +2,18 @@
 
 import {
   ExternalLink,
+  ListCollapse,
   LogOut,
   MessageSquareHeart,
+  PanelLeftClose,
   PanelLeftOpen,
   Settings,
 } from "lucide-react";
+import { useState } from "react";
 import { openTallyPopup } from "@/components/feedback-button";
 import { Logo } from "@/components/logo";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,7 +38,10 @@ interface WorkspaceSidebarProps {
   selectedPath: string;
   onSelect: (path: string) => void;
   onExpand: () => void;
+  onCollapse: () => void;
   onOpenSettings: () => void;
+  /** Logo click — the shell guards unsaved changes before navigating away. */
+  onLeave: () => void;
   className?: string;
 }
 
@@ -43,9 +50,13 @@ export function WorkspaceSidebar({
   selectedPath,
   onSelect,
   onExpand,
+  onCollapse,
   onOpenSettings,
+  onLeave,
   className,
 }: WorkspaceSidebarProps) {
+  // Bump → every folder row in the tree closes (the "Files" row's button).
+  const [collapseSignal, setCollapseSignal] = useState(0);
   if (collapsed) {
     return (
       <TooltipProvider delayDuration={200}>
@@ -55,7 +66,13 @@ export function WorkspaceSidebar({
             className,
           )}
         >
-          <Logo className="mb-1 h-4 w-auto" />
+          <Logo
+            className="mb-1 [&_.logo-text]:text-xs"
+            onClick={(e) => {
+              e.preventDefault();
+              onLeave();
+            }}
+          />
           <RailButton label="Expand sidebar (Ctrl+B)" onClick={onExpand}>
             <PanelLeftOpen className="size-4" />
           </RailButton>
@@ -110,11 +127,37 @@ export function WorkspaceSidebar({
         className,
       )}
     >
-      <div className="flex items-center border-b border-border px-4 py-3">
-        <Logo className="h-5 w-auto" />
-        <span className="ml-2 font-heading text-sm font-semibold">
-          Workspace
-        </span>
+      <div className="flex h-12 items-center gap-2 border-b border-border px-4">
+        <Logo
+          onClick={(e) => {
+            e.preventDefault();
+            onLeave();
+          }}
+        />
+        <span className="font-heading text-sm font-semibold">Workspace</span>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Collapse sidebar (Ctrl+B)"
+          title="Collapse sidebar (Ctrl+B)"
+          onClick={onCollapse}
+          className="ml-auto"
+        >
+          <PanelLeftClose className="size-4" />
+        </Button>
+      </div>
+
+      <div className="flex items-center justify-between px-4 py-1.5">
+        <span className="text-xs text-muted-foreground">Files</span>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Collapse all folders"
+          title="Collapse all folders"
+          onClick={() => setCollapseSignal((n) => n + 1)}
+        >
+          <ListCollapse className="size-4" />
+        </Button>
       </div>
 
       <ScrollArea className="flex-1">
@@ -122,6 +165,7 @@ export function WorkspaceSidebar({
           files={mockFiles}
           selectedPath={selectedPath}
           onSelect={onSelect}
+          collapseSignal={collapseSignal}
         />
       </ScrollArea>
 

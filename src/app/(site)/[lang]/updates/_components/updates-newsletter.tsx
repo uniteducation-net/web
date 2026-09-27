@@ -1,11 +1,7 @@
-"use client";
-
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import * as React from "react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { NewsletterForm } from "@/components/newsletter-form";
 import { cn } from "@/lib/utils";
 
 export interface UpdatesNewsletterPost {
@@ -20,80 +16,39 @@ export interface UpdatesNewsletterPost {
 }
 
 interface UpdatesNewsletterProps {
-  newsletterLabel?: string;
-  newsletterHeading?: string;
-  newsletterDescription?: string;
-  emailPlaceholder?: string;
-  subscribeLabel?: string;
-  successLabel?: string;
-  disclaimer?: string;
-  postsLabel?: string;
-  allPostsLabel?: string;
+  newsletterLabel: string;
+  newsletterHeading: string;
+  newsletterDescription: string;
+  emailPlaceholder: string;
+  subscribeLabel: string;
+  successLabel: string;
+  errorLabel: string;
+  disclaimer: string;
+  postsLabel: string;
+  allPostsLabel: string;
   allPostsHref?: string;
   /** Latest updates, passed in from the server — newest first. */
   posts: UpdatesNewsletterPost[];
   className?: string;
 }
 
-const defaultProps: Required<
-  Pick<
-    UpdatesNewsletterProps,
-    | "newsletterLabel"
-    | "newsletterHeading"
-    | "newsletterDescription"
-    | "emailPlaceholder"
-    | "subscribeLabel"
-    | "successLabel"
-    | "disclaimer"
-    | "postsLabel"
-    | "allPostsLabel"
-    | "allPostsHref"
-  >
-> = {
-  newsletterLabel: "Newsletter",
-  newsletterHeading: "The weekly dispatch",
-  newsletterDescription:
-    "Editorial deep-dives, design notes, and publishing lessons. Sent every Tuesday. No filler.",
-  emailPlaceholder: "you@company.com",
-  subscribeLabel: "Subscribe",
-  successLabel: "You are on the list.",
-  disclaimer: "No tracking. Unsubscribe any time.",
-  postsLabel: "Latest posts",
-  allPostsLabel: "All",
-  allPostsHref: "#",
-};
-
 /** Newsletter signup card beside a list of the latest updates. Sits between
  *  the Highlights carousel and the full LatestUpdates grid. */
-const UpdatesNewsletter = (props: UpdatesNewsletterProps) => {
-  const {
-    newsletterLabel,
-    newsletterHeading,
-    newsletterDescription,
-    emailPlaceholder,
-    subscribeLabel,
-    successLabel,
-    disclaimer,
-    postsLabel,
-    allPostsLabel,
-    allPostsHref,
-    posts,
-    className,
-  } = {
-    ...defaultProps,
-    ...props,
-  };
-
-  const [email, setEmail] = React.useState("");
-  const [submitted, setSubmitted] = React.useState(false);
-
-  const handleSubmit = (event: React.SyntheticEvent) => {
-    event.preventDefault();
-    if (email) {
-      setSubmitted(true);
-    }
-  };
-
+const UpdatesNewsletter = ({
+  newsletterLabel,
+  newsletterHeading,
+  newsletterDescription,
+  emailPlaceholder,
+  subscribeLabel,
+  successLabel,
+  errorLabel,
+  disclaimer,
+  postsLabel,
+  allPostsLabel,
+  allPostsHref = "#",
+  posts,
+  className,
+}: UpdatesNewsletterProps) => {
   return (
     <section className={cn("py-32", className)}>
       <div className="container mx-auto">
@@ -112,28 +67,13 @@ const UpdatesNewsletter = (props: UpdatesNewsletterProps) => {
                 </p>
               </div>
 
-              {submitted ? (
-                <div
-                  role="status"
-                  className="rounded-xl bg-muted px-4 py-3 text-sm font-medium"
-                >
-                  {successLabel}
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-                  <Input
-                    type="email"
-                    required
-                    placeholder={emailPlaceholder}
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    aria-label="Email address"
-                  />
-                  <Button type="submit" className="w-full">
-                    {subscribeLabel}
-                  </Button>
-                </form>
-              )}
+              <NewsletterForm
+                variant="stacked"
+                emailPlaceholder={emailPlaceholder}
+                submitLabel={subscribeLabel}
+                successLabel={successLabel}
+                errorLabel={errorLabel}
+              />
 
               <p className="text-xs text-muted-foreground">{disclaimer}</p>
             </div>

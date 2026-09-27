@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { AgentPanel } from "./agent-panel";
+import { LeaveWorkspaceDialog } from "./editor/leave-workspace-dialog";
 import { UnsavedChangesDialog } from "./editor/unsaved-changes-dialog";
 import {
   WorkspaceEditor,
@@ -31,6 +32,8 @@ import { WorkspaceSidebar } from "./workspace-sidebar";
 
 const PANELS_KEY = "workspace-panels";
 const ONBOARDING_KEY = "onboarding-chat";
+/** Logo click destination — the public site's home (no locale in (app)). */
+const LEAVE_HREF = "/en";
 
 const isMobile = () =>
   typeof window !== "undefined" &&
@@ -89,6 +92,10 @@ export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
   const editorRef = useRef<WorkspaceEditorHandle>(null);
   const [pendingPath, setPendingPath] = useState<string | null>(null);
   const [switchSaving, setSwitchSaving] = useState(false);
+  // Leaving to the website (logo click) — same dirty guard as file switching:
+  // clean leaves immediately, dirty holds for the leave dialog.
+  const [leaveOpen, setLeaveOpen] = useState(false);
+  const [leaveSaving, setLeaveSaving] = useState(false);
   // Onboarding continuity (08 step 6): null until read post-mount; the agent
   // panel mounts only after hydration so useChat initializes with these.
   const [initialAgentMessages, setInitialAgentMessages] = useState<
@@ -219,6 +226,35 @@ export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
     setPendingPath(null);
   };
 
+  // Logo click → back to the website. The destination lives under a
+  // different root layout ((site), not (app)), so the router falls back to
+  // a full page load — same as the plain link the Logo renders.
+  const handleLeaveRequest = () => {
+    if (editorRef.current?.isDirty()) {
+      setLeaveOpen(true);
+      return;
+    }
+    router.push(LEAVE_HREF);
+  };
+  const handleLeaveSave = async () => {
+    setLeaveSaving(true);
+    const saved = (await editorRef.current?.save()) ?? false;
+    setLeaveSaving(false);
+    if (saved) {
+      setLeaveOpen(false);
+      router.push(LEAVE_HREF);
+      return;
+    }
+    // Not saved (409/401/network): stay — the editor's conflict banner or
+    // error pill explains why leaving didn't happen.
+    setLeaveOpen(false);
+  };
+  const handleLeaveDiscard = () => {
+    editorRef.current?.discard();
+    setLeaveOpen(false);
+    router.push(LEAVE_HREF);
+  };
+
   // Persist panel state (08 step 5) — a teacher who works collapsed stays collapsed.
   useEffect(() => {
     if (!hydrated) return;
@@ -283,7 +319,10 @@ export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
     <TooltipProvider delayDuration={200}>
       <div
         className={cn(
-          "relative grid h-dvh grid-cols-[auto_1fr_auto]",
+          // minmax(0,1fr) pins the row to the viewport — a long open document
+          // must scroll inside its panel, not stretch the page (body clips
+          // overflow, so a stretched row hides the panels' bottom zones).
+          "relative grid h-dvh grid-cols-[auto_1fr_auto] grid-rows-[minmax(0,1fr)]",
           !animated && "[&_*]:transition-none",
           className,
         )}
@@ -291,7 +330,7 @@ export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
         {/* Sidebar: in-flow grid column on lg, fixed overlay below lg */}
         <div
           className={cn(
-            "h-full max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-40",
+            "h-full min-h-0 max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-40",
             "transition-[width,transform] duration-200",
             sidebarOpen
               ? "max-lg:translate-x-0"
@@ -306,6 +345,8 @@ export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
             refreshKey={treeRefreshKey}
             onSelect={handleSelect}
             onExpand={() => setSidebarOpen(true)}
+            onCollapse={() => setSidebarOpen(false)}
+            onLeave={handleLeaveRequest}
             onOpenSettings={() => setSettingsOpen(true)}
             className="max-lg:shadow-xl"
           />
@@ -325,7 +366,7 @@ export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
         )}
 
         {/* Center preview — always visible, takes all remaining space */}
-        <main className="relative min-w-0">
+        <main className="relative min-w-0 min-h-0">
           {hydrated && !sidebarOpen && (
             <FloatingButton
               label="Open sidebar (Ctrl+B)"
@@ -357,7 +398,7 @@ export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
         <div
           inert={!agentOpen}
           className={cn(
-            "h-full overflow-hidden max-lg:fixed max-lg:inset-y-0 max-lg:right-0 max-lg:z-40",
+            "h-full min-h-0 overflow-hidden max-lg:fixed max-lg:inset-y-0 max-lg:right-0 max-lg:z-40",
             "transition-[width,transform] duration-200",
             "max-lg:w-[min(380px,90vw)]",
             agentOpen
@@ -400,6 +441,16 @@ export function WorkspaceShell({ repo, user, className }: WorkspaceShellProps) {
         onSave={() => void handleSwitchSave()}
         onDiscard={handleSwitchDiscard}
         onCancel={() => setPendingPath(null)}
+      />
+
+      {/* Dirty leave guard (logo click → back to the website). */}
+      <LeaveWorkspaceDialog
+        open={leaveOpen}
+        path={selectedPath}
+        saving={leaveSaving}
+        onSave={() => void handleLeaveSave()}
+        onLeave={handleLeaveDiscard}
+        onStay={() => setLeaveOpen(false)}
       />
     </TooltipProvider>
   );

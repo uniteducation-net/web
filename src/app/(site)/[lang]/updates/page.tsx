@@ -44,6 +44,16 @@ export default async function UpdatesPage({
         items={highlighted}
       />
       <UpdatesNewsletter
+        newsletterLabel={dict.updates.newsletter.label}
+        newsletterHeading={dict.updates.newsletter.heading}
+        newsletterDescription={dict.updates.newsletter.description}
+        emailPlaceholder={dict.updates.newsletter.emailPlaceholder}
+        subscribeLabel={dict.updates.newsletter.subscribe}
+        successLabel={dict.updates.newsletter.success}
+        errorLabel={dict.updates.newsletter.error}
+        disclaimer={dict.updates.newsletter.disclaimer}
+        postsLabel={dict.updates.newsletter.postsLabel}
+        allPostsLabel={dict.updates.newsletter.allPostsLabel}
         posts={updates.slice(0, 4).map((entry) => ({
           id: entry.slug,
           category: entry.frontmatter.tags?.[0] ?? "",

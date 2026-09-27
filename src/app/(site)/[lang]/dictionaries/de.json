@@ -79,6 +79,8 @@
       "heading": "Newsletter",
       "emailPlaceholder": "E-Mail",
       "submit": "Abonnieren",
+      "success": "Fast geschafft — bitte bestätigen Sie Ihre Anmeldung über den Link in Ihrem Posteingang.",
+      "error": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
       "agreePre": "Mit dem Absenden stimmen Sie unserer",
       "agreePost": " zu."
     }
@@ -153,6 +155,18 @@
     "highlightsHeading": "Highlights",
     "latestHeading": "Neueste Beiträge",
     "latestDescription": "Neuigkeiten, Rückblicke und Notizen vom UNITED-Team.",
+    "newsletter": {
+      "label": "Newsletter",
+      "heading": "Bleiben Sie auf dem Laufenden",
+      "description": "Neue Unterrichtsmaterialien, Projektneuigkeiten und Geschichten aus der Community — einmal im Monat direkt in Ihrem Posteingang.",
+      "emailPlaceholder": "E-Mail",
+      "subscribe": "Abonnieren",
+      "success": "Fast geschafft — bitte bestätigen Sie Ihre Anmeldung über den Link in Ihrem Posteingang.",
+      "error": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+      "disclaimer": "Jederzeit mit einem Klick abbestellbar.",
+      "postsLabel": "Neueste Beiträge",
+      "allPostsLabel": "Alle"
+    },
     "onThisPage": "Auf dieser Seite",
     "shareArticle": "Artikel teilen",
     "backToTop": "Nach oben",

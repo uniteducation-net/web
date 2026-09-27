@@ -6,6 +6,7 @@ import { FaGithub, FaLinkedin } from "react-icons/fa6";
 import { TagList } from "@/components/content/tag-list";
 import type { Locale } from "@/i18n-config";
 import type { ContentEntry, TeamFrontmatter } from "@/lib/content";
+import { cn } from "@/lib/utils";
 
 interface TeamCardProps {
   entry: ContentEntry<TeamFrontmatter>;
@@ -24,7 +25,7 @@ const TeamCard = ({ entry, locale }: TeamCardProps) => {
     <article className="group flex flex-col gap-4">
       <Link
         href={`/${locale}/team/${entry.slug}`}
-        className="relative block aspect-square overflow-hidden rounded-xl bg-muted"
+        className="relative block aspect-[4/5] overflow-hidden rounded-xl bg-muted"
       >
         {frontmatter.image && (
           <Image
@@ -32,7 +33,10 @@ const TeamCard = ({ entry, locale }: TeamCardProps) => {
             alt={frontmatter.name}
             fill
             sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-            className="object-cover transition-opacity duration-300 group-hover:opacity-0"
+            className={cn(
+              "object-cover object-top transition-opacity duration-300",
+              frontmatter.hoverImage && "group-hover:opacity-0",
+            )}
           />
         )}
         {frontmatter.hoverImage && (
@@ -41,7 +45,7 @@ const TeamCard = ({ entry, locale }: TeamCardProps) => {
             alt=""
             fill
             sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-            className="object-cover opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+            className="object-cover object-top opacity-0 transition-opacity duration-300 group-hover:opacity-100"
           />
         )}
       </Link>

@@ -12,7 +12,10 @@ function ScrollArea({
   return (
     <ScrollAreaPrimitive.Root
       data-slot="scroll-area"
-      className={cn("relative", className)}
+      // overflow-hidden is the canonical Radix root pattern — without it a
+      // flex-1 ScrollArea has min-height:auto and grows to its content
+      // instead of scrolling (clipped page bottoms in the workspace shell).
+      className={cn("relative overflow-hidden", className)}
       {...props}
     >
       <ScrollAreaPrimitive.Viewport

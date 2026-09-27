@@ -4,8 +4,7 @@ import { FaInstagram, FaLinkedin, FaYoutube } from "react-icons/fa";
 
 import { FeedbackButton } from "@/components/feedback-button";
 import { Logo } from "@/components/logo";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { NewsletterForm } from "@/components/newsletter-form";
 import type { Locale } from "@/i18n-config";
 import { cn } from "@/lib/utils";
 
@@ -62,6 +61,8 @@ interface FooterDict {
     heading: string;
     emailPlaceholder: string;
     submit: string;
+    success: string;
+    error: string;
     agreePre: string;
     agreePost: string;
   };
@@ -152,15 +153,12 @@ const Footer = ({ className, lang, dict }: FooterProps) => {
             ))}
             <div className="col-span-4 md:col-span-2">
               <h3 className="mb-5 font-medium">{dict.newsletter.heading}</h3>
-              <div className="grid gap-1.5">
-                <div className="flex w-full items-center space-x-2">
-                  <Input
-                    type="email"
-                    placeholder={dict.newsletter.emailPlaceholder}
-                />
-                  <Button type="submit">{dict.newsletter.submit}</Button>
-                </div>
-              </div>
+              <NewsletterForm
+                emailPlaceholder={dict.newsletter.emailPlaceholder}
+                submitLabel={dict.newsletter.submit}
+                successLabel={dict.newsletter.success}
+                errorLabel={dict.newsletter.error}
+              />
               <p className="mt-1 text-xs font-medium text-muted-foreground">
                 {dict.newsletter.agreePre}
                 <Link

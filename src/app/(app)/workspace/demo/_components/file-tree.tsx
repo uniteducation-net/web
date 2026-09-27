@@ -9,6 +9,10 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+/** Same label rule as the real tree: hide ".md" (every file here is markdown
+ *  by convention); other extensions like .png stay visible. */
+const displayName = (name: string) => name.replace(/\.md$/i, "");
+
 interface TreeNode {
   name: string;
   path: string;
@@ -52,6 +56,8 @@ interface FileTreeProps {
   files: string[];
   selectedPath: string;
   onSelect: (path: string) => void;
+  /** Bump to close every open folder at once (the "Files" row's button). */
+  collapseSignal?: number;
   className?: string;
 }
 
@@ -59,6 +65,7 @@ export function FileTree({
   files,
   selectedPath,
   onSelect,
+  collapseSignal = 0,
   className,
 }: FileTreeProps) {
   const tree = buildTree(files);
@@ -80,6 +87,7 @@ export function FileTree({
           depth={0}
           selectedPath={selectedPath}
           onSelect={onSelect}
+          collapseSignal={collapseSignal}
         />
       ))}
     </div>
@@ -91,13 +99,23 @@ function TreeRow({
   depth,
   selectedPath,
   onSelect,
+  collapseSignal,
 }: {
   node: TreeNode;
   depth: number;
   selectedPath: string;
   onSelect: (path: string) => void;
+  collapseSignal: number;
 }) {
   const [open, setOpen] = useState(true);
+
+  // "Collapse all" — a bumped signal closes every mounted folder (render-
+  // phase adjustment, same as the real tree).
+  const [lastSignal, setLastSignal] = useState(collapseSignal);
+  if (lastSignal !== collapseSignal) {
+    setLastSignal(collapseSignal);
+    setOpen(false);
+  }
 
   if (node.isFolder) {
     return (
@@ -126,6 +144,7 @@ function TreeRow({
                 depth={depth + 1}
                 selectedPath={selectedPath}
                 onSelect={onSelect}
+                collapseSignal={collapseSignal}
               />
             ))}
           </div>
@@ -154,7 +173,7 @@ function TreeRow({
       ) : (
         <FileText className="size-4 shrink-0 opacity-70" />
       )}
-      <span className="truncate">{node.name}</span>
+      <span className="truncate">{displayName(node.name)}</span>
     </button>
   );
 }

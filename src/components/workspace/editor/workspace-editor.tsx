@@ -209,6 +209,16 @@ export function WorkspaceEditor({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  // Tab close / refresh while dirty → the browser's native leave prompt.
+  // Covers the exit paths the in-app guards (file switch, logo click) can't.
+  useEffect(() => {
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (dirtyRef.current) e.preventDefault();
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, []);
+
   const handleReloadLatest = async () => {
     setConflictBusy(true);
     const fresh = await reloadLatest();
