@@ -21,8 +21,14 @@ const HREFS_ABOUT = [
   "/terms",
 ];
 
-// Order matches dict.header.getInvolved.items; "#" entries are future routes.
-const HREFS_GET_INVOLVED = ["/volunteers", "#", "/membership", "#", "#"];
+// Order matches dict.header.getInvolved.items.
+const HREFS_GET_INVOLVED = [
+  "/get-involved/volunteer",
+  "/get-involved/partner",
+  "/get-involved/membership",
+  "/get-involved/donate",
+  "/get-involved/share-knowledge",
+];
 
 const SOCIAL_LINKS = [
   {
@@ -84,10 +90,7 @@ const Footer = ({ className, lang, dict }: FooterProps) => {
       title: dict.getInvolved.label,
       links: dict.getInvolved.items.map((item, i) => ({
         name: item.title,
-        href:
-          HREFS_GET_INVOLVED[i] === "#"
-            ? "#"
-            : `${prefix}${HREFS_GET_INVOLVED[i]}`,
+        href: `${prefix}${HREFS_GET_INVOLVED[i]}`,
       })),
     },
   ];

@@ -52,7 +52,7 @@ export default async function RootLayout({
             languageLabel={dict.common.language}
             aboutHref={`/${lang}/about`}
             updatesHref={`/${lang}/updates`}
-            membershipHref={`/${lang}/membership`}
+            getInvolvedHref={`/${lang}/get-involved`}
           />
           {children}
           <Footer

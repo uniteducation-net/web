@@ -188,7 +188,12 @@
     }
   },
   "team": {
-    "heading": "Team"
+    "heading": "Team",
+    "member": {
+      "whyUnited": "Warum UnitEd?",
+      "bio": "Bio",
+      "other": "Mehr"
+    }
   },
   "activeMembers": {
     "heading": "Aktive Mitglieder",
@@ -309,7 +314,7 @@
         "items": [
           {
             "question": "Wie kann ich bei UnitEd mitmachen?",
-            "answer": "Kontaktieren Sie uns! Senden Sie uns entweder eine [E-Mail](mailto:hello@uniteducation.net) oder [kontaktieren Sie uns hier](/volunteers)."
+            "answer": "Kontaktieren Sie uns! Senden Sie uns entweder eine [E-Mail](mailto:hello@uniteducation.net) oder [kontaktieren Sie uns hier](/get-involved/volunteer)."
           },
           {
             "question": "Welche Ehrenamtsrollen gibt es?",
@@ -378,7 +383,7 @@
           },
           {
             "question": "Wie werde ich Mitglied?",
-            "answer": "Füllen Sie das [Mitgliedschaftsformular](/membership/join) aus."
+            "answer": "Füllen Sie das [Mitgliedschaftsformular](/get-involved/membership/join) aus."
           },
           {
             "question": "Müssen Mitglieder ehrenamtlich mitarbeiten?",
@@ -399,11 +404,11 @@
         "items": [
           {
             "question": "Wie kann ich UnitEd unterstützen?",
-            "answer": "Sie können uns unterstützen, indem Sie [ehrenamtlich mitmachen](/volunteers), [Mitglied werden](/membership), Partner werden, Ihr Wissen teilen oder [spenden](/donate)."
+            "answer": "Sie können uns unterstützen, indem Sie [ehrenamtlich mitmachen](/get-involved/volunteer), [Mitglied werden](/get-involved/membership), Partner werden, Ihr Wissen teilen oder [spenden](/get-involved/donate)."
           },
           {
             "question": "Kann ich an UnitEd spenden?",
-            "answer": "Ja. Spenden helfen uns, kostenlose Lernressourcen zu entwickeln und zu pflegen und den Zugang für Lehrkräfte weltweit zu verbessern. Spenderinnen und Spender können eine Spendenbescheinigung für ihre jährliche Steuererklärung erhalten (bitte prüfen Sie die Verfügbarkeit für Ihr Land). [Hier können Sie spenden](/donate)."
+            "answer": "Ja. Spenden helfen uns, kostenlose Lernressourcen zu entwickeln und zu pflegen und den Zugang für Lehrkräfte weltweit zu verbessern. Spenderinnen und Spender können eine Spendenbescheinigung für ihre jährliche Steuererklärung erhalten (bitte prüfen Sie die Verfügbarkeit für Ihr Land). [Hier können Sie spenden](/get-involved/donate)."
           },
           {
             "question": "Wie werden Spenden verwendet?",

@@ -188,7 +188,12 @@
     }
   },
   "team": {
-    "heading": "Team"
+    "heading": "Team",
+    "member": {
+      "whyUnited": "Why UnitEd?",
+      "bio": "Bio",
+      "other": "More"
+    }
   },
   "activeMembers": {
     "heading": "Active Members",
@@ -309,7 +314,7 @@
         "items": [
           {
             "question": "How can I volunteer with UnitEd?",
-            "answer": "Contact us! Either send an [e-mail](mailto:hello@uniteducation.net) or [contact us here](/volunteers)."
+            "answer": "Contact us! Either send an [e-mail](mailto:hello@uniteducation.net) or [contact us here](/get-involved/volunteer)."
           },
           {
             "question": "What volunteer roles are available?",
@@ -378,7 +383,7 @@
           },
           {
             "question": "How do I become a member?",
-            "answer": "Complete the [membership form](/membership/join)."
+            "answer": "Complete the [membership form](/get-involved/membership/join)."
           },
           {
             "question": "Do members have to volunteer?",
@@ -399,11 +404,11 @@
         "items": [
           {
             "question": "How can I support UnitEd?",
-            "answer": "You can support us by [volunteering](/volunteers), [becoming a member](/membership), partnering with us, sharing your knowledge, or [making a donation](/donate)."
+            "answer": "You can support us by [volunteering](/get-involved/volunteer), [becoming a member](/get-involved/membership), partnering with us, sharing your knowledge, or [making a donation](/get-involved/donate)."
           },
           {
             "question": "Can I donate to UnitEd?",
-            "answer": "Yes. Donations help us develop and maintain free learning resources and improve access for educators worldwide. Donors can get a donation receipt to deduct from their annual tax declaration (check if available for your country). Donations can be made [here](/donate)."
+            "answer": "Yes. Donations help us develop and maintain free learning resources and improve access for educators worldwide. Donors can get a donation receipt to deduct from their annual tax declaration (check if available for your country). Donations can be made [here](/get-involved/donate)."
           },
           {
             "question": "How are donations used?",
@@ -423,5 +428,84 @@
     "past": "Past",
     "details": "Details",
     "register": "Register"
+  },
+  "getInvolvedPage": {
+    "metaTitle": "Get Involved",
+    "heading": "Get Involved",
+    "subtitle": "Whether you give your time, your expertise or your support — there is a place for you at UnitEd."
+  },
+  "membershipPage": {
+    "metaTitle": "Become a Member",
+    "heading": "Become a Member",
+    "description": [
+      "No time to volunteer but you like our mission? Become a member of UnitEd e.V.",
+      "This way you will support us with a small monthly membership fee and get a vote in the membership meetings of the organization."
+    ],
+    "imageAlt": "Illustration of the UnitEd team",
+    "primaryText": "Join Now",
+    "pricing": {
+      "label": "Starting from",
+      "price": "€5",
+      "unit": "/month",
+      "description": "A small monthly fee that supports our mission — and gives you a vote at membership meetings."
+    },
+    "join": {
+      "metaTitle": "Membership Application",
+      "breadcrumbCurrent": "Join"
+    }
+  },
+  "volunteerPage": {
+    "metaTitle": "Become a Volunteer",
+    "heading": "Become a Volunteer",
+    "description": [
+      "No matter your background, you can support us. Just get in touch – we are happy to hear from you! Since this is a volunteer position, we cannot pay you but by volunteering you get the chance to be the part of UnitEd from the beginning and be part of a growing movement!",
+      "As long as you have a couple hours a week to spare, join us."
+    ],
+    "imageAlt": "Illustration of people collaborating",
+    "primaryText": "Join Now",
+    "join": {
+      "metaTitle": "Volunteer Application",
+      "breadcrumbCurrent": "Join"
+    }
+  },
+  "partnerPage": {
+    "metaTitle": "Become a Partner",
+    "heading": "Become a Partner",
+    "description": [
+      "UnitEd is built on collaboration. Whether you are an NGO, a school network, or a company that wants to create real impact — as a partner you help bring free, high-quality training resources to the educators who need them most.",
+      "Tell us what you do, and let's find out what we can build together."
+    ],
+    "imageAlt": "Illustration of a partnership agreement",
+    "primaryText": "Get in Touch"
+  },
+  "donatePage": {
+    "metaTitle": "Donate",
+    "heading": "Become a Sponsor",
+    "description": [
+      "As a non-profit organization we are reliant on donations to build UnitEd. Please consider supporting our GoFundMe campaign."
+    ],
+    "imageAlt": "Illustration of falling coins",
+    "primaryText": "Support on GoFundMe",
+    "secondaryText": "Bank Transfer",
+    "bankDetails": {
+      "sectionHeading": "Donate via Bank Transfer",
+      "accountHolder": "Account Holder",
+      "iban": "IBAN",
+      "bic": "BIC",
+      "bankName": "Bank Name",
+      "comingSoon": "Coming soon",
+      "copyLabel": "Copy",
+      "copiedLabel": "Copied"
+    }
+  },
+  "shareKnowledgePage": {
+    "metaTitle": "Share Your Knowledge",
+    "heading": "Share Your Knowledge",
+    "description": [
+      "You are a teacher and want to share your story, your experience or your knowledge with us? Please get in touch - we can't wait to talk to you. No matter where you are from or how long you have been teaching, or training to teach."
+    ],
+    "imageAlt": "Illustration of a group project",
+    "primaryText": "Contact Us",
+    "secondaryText": "See All Resources"
   }
 }

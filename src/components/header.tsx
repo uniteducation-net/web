@@ -56,12 +56,13 @@ const LINKS_ABOUT: NavLink[] = [
   { href: "#team", icon: Users },
 ];
 
+/** Get Involved routes, relative to the getInvolvedHref base; order matches dict.getInvolved.items. */
 const LINKS_GET_INVOLVED: NavLink[] = [
-  { href: "#", icon: HandHeart },
-  { href: "#", icon: Handshake },
-  { href: "#", icon: UserPlus },
-  { href: "#", icon: HandCoins },
-  { href: "#", icon: GraduationCap },
+  { href: "/volunteer", icon: HandHeart },
+  { href: "/partner", icon: Handshake },
+  { href: "/membership", icon: UserPlus },
+  { href: "/donate", icon: HandCoins },
+  { href: "/share-knowledge", icon: GraduationCap },
 ];
 
 interface HeaderDict {
@@ -86,8 +87,8 @@ interface HeaderProps {
   aboutHref: string;
   /** Locale-prefixed href for the Updates nav item, e.g. "/en/updates". */
   updatesHref: string;
-  /** Locale-prefixed href for the Membership page ("Become a Member" dropdown item), e.g. "/en/membership". */
-  membershipHref: string;
+  /** Locale-prefixed base href for the Get Involved pages (dropdown items append their route), e.g. "/en/get-involved". */
+  getInvolvedHref: string;
 }
 
 /** Same width + gutters as the header (`container` + `max-w-7xl`). */
@@ -103,7 +104,7 @@ const Header = ({
   languageLabel,
   aboutHref,
   updatesHref,
-  membershipHref,
+  getInvolvedHref,
 }: HeaderProps) => {
   const [open, setOpen] = useState(false);
   const dataAbout: DropdownItem[] = LINKS_ABOUT.map((link, i) => ({
@@ -111,12 +112,12 @@ const Header = ({
     href: `${aboutHref}${link.href}`,
     ...dict.about.items[i],
   }));
-  // Item order matches dict.getInvolved.items; "Become a Member" (index 2)
-  // links to the membership route.
+  // Item order matches dict.getInvolved.items; each appends its route to the
+  // getInvolvedHref base.
   const dataGetInvolved: DropdownItem[] = LINKS_GET_INVOLVED.map(
     (link, i) => ({
       ...link,
-      href: i === 2 ? membershipHref : link.href,
+      href: `${getInvolvedHref}${link.href}`,
       ...dict.getInvolved.items[i],
     }),
   );
@@ -193,7 +194,9 @@ const Header = ({
           </NavigationMenu>
           <div className="hidden items-center gap-4 lg:flex">
             <LanguageSwitcher languageLabel={languageLabel} />
-            <Button className="h-12 px-4 text-lg">{dict.donate}</Button>
+            <Button asChild className="h-12 px-4 text-lg">
+              <Link href={`${getInvolvedHref}/donate`}>{dict.donate}</Link>
+            </Button>
           </div>
           <div className="flex items-center gap-4 lg:hidden">
             <Button

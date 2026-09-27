@@ -12,7 +12,12 @@ const STATIC_ROUTES = [
   "/team",
   "/updates",
   "/events",
-  "/membership",
+  "/get-involved",
+  "/get-involved/volunteer",
+  "/get-involved/partner",
+  "/get-involved/membership",
+  "/get-involved/donate",
+  "/get-involved/share-knowledge",
   "/terms",
 ];
 
