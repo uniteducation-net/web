@@ -7,24 +7,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { RequestError } from "octokit";
 import { getSession } from "@/lib/session";
 import { GitHubRateLimitError, readFile, writeFile } from "@/lib/github";
+import { isValidPath } from "@/lib/workspace-paths";
 import { isBotRequest } from "@/lib/botid";
-
-/**
- * Repo-relative path guard. The client only ever sends paths from the tree
- * (09), but this is a public-ish endpoint reading a private repo — reject
- * traversal, absolute paths, and empty segments outright.
- */
-function isValidPath(path: string): boolean {
-  return (
-    path.length > 0 &&
-    path.length <= 500 &&
-    !path.startsWith("/") &&
-    !path.endsWith("/") &&
-    !path.includes("\\") &&
-    !/[\x00-\x1f]/.test(path) && // no control characters
-    path.split("/").every((seg) => seg !== "" && seg !== "." && seg !== "..")
-  );
-}
 
 export async function GET(request: NextRequest) {
   const session = await getSession();

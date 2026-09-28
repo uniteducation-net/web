@@ -40,6 +40,32 @@ export class GitHubRateLimitError extends Error {
   }
 }
 
+/** The app's permissions grew after the user authorized (e.g. Repository
+ *  creation granted later) — their user token predates the grant, so
+ *  POST /user/repos 403s with "Resource not accessible by integration"
+ *  (99-known-issues #11). Only fix: re-authorize; GitHub shows an
+ *  updated-permissions approval at the authorize step. */
+export class GitHubReauthorizationError extends Error {
+  constructor() {
+    super(
+      "GitHub needs updated permissions — the user must re-authorize the app.",
+    );
+    this.name = "GitHubReauthorizationError";
+  }
+}
+
+/** Pin every GitHub client to the current API version — silences the
+ *  2022-11-28 deprecation warning (sunset 2028-03-10). The 2026-03-10
+ *  breaking changes don't touch us: we read owner.login and default_branch
+ *  only, and the new 451 trade-controls status is mapped in 07's route. */
+export const GITHUB_API_VERSION = "2026-03-10";
+
+/** Octokit constructor defaults carrying the version header — merged into
+ *  every request the client makes. */
+const versionedRequest = {
+  request: { headers: { "X-GitHub-Api-Version": GITHUB_API_VERSION } },
+} as const;
+
 /**
  * Rate-limit guard: wrap every GitHub call in this. On 403 with
  * X-RateLimit-Remaining: 0, surface a friendly error instead of silently
@@ -62,7 +88,10 @@ export async function withGitHubGuard<T>(call: () => Promise<T>): Promise<T> {
   }
 }
 
-function isRequestError(err: unknown, ...statuses: number[]): boolean {
+function isRequestError(
+  err: unknown,
+  ...statuses: number[]
+): err is RequestError {
   return err instanceof RequestError && statuses.includes(err.status);
 }
 
@@ -80,7 +109,7 @@ export async function getUserOctokit(_session: Session): Promise<Octokit> {
     // Refresh token expired or revoked — treat as logged out.
     throw new Error("GitHub session expired — the user must re-authenticate.");
   }
-  return new Octokit({ auth: token });
+  return new Octokit({ auth: token, ...versionedRequest });
 }
 
 // The App caches and auto-renews the 1h installation tokens internally, so
@@ -96,6 +125,8 @@ function getApp(): App {
     cachedApp = new App({
       appId: requireEnv("GITHUB_APP_ID"),
       privateKey,
+      // Every installation octokit the app mints inherits the version pin.
+      Octokit: Octokit.defaults(versionedRequest),
     });
   }
   return cachedApp;
@@ -147,6 +178,15 @@ export async function createWorkspaceRepo(
     } catch (err) {
       // Name already taken → try the next suffix.
       if (isRequestError(err, 422)) continue;
+      // The user token predates a permission grant (99-known-issues #11) —
+      // the 403 is permanent until the teacher re-authorizes. Map to a typed
+      // error so the route answers with a reconnect CTA instead of a 500.
+      if (
+        isRequestError(err, 403) &&
+        err.message.includes("Resource not accessible by integration")
+      ) {
+        throw new GitHubReauthorizationError();
+      }
       throw err;
     }
   }

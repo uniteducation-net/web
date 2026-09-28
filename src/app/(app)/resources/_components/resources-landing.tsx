@@ -52,7 +52,7 @@ const ResourcesLanding = () => {
             <GraphDemo />
           </ResourceCard>
           <ResourceCard
-            href="/workspace"
+            href="/workspace/template"
             title="Open a blank template"
             description="Start from a clean canvas and shape it into your first lesson."
             className="md:col-span-2"

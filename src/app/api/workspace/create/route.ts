@@ -5,12 +5,16 @@
 // Idempotent: double-clicks, refreshes, and retries after a coverage fix
 // always return the existing repo, and each seed stage commits independently
 // so a mid-flight failure leaves resumable state.
+// Template carry-over (17): an optional `files` payload from the anonymous
+// template workspace replaces the corresponding seed stages verbatim —
+// WYSIWYG conversion, nothing the teacher saw locally is regenerated.
 
 import { NextResponse } from "next/server";
 import { RequestError } from "octokit";
 import { getSession } from "@/lib/session";
 import {
   GitHubRateLimitError,
+  GitHubReauthorizationError,
   WORKSPACE_REPO_NAME,
   checkInstallationCoverage,
   commitMany,
@@ -27,6 +31,8 @@ import {
   detectSeedState,
   generateStartHere,
 } from "@/lib/provisioning";
+import { STEP_FILE_PATH } from "@/lib/template-workspace";
+import { PROFILE_DIR, START_HERE_DIR, isValidPath } from "@/lib/workspace-paths";
 import { getResourcesIndex } from "@/lib/resources";
 import { evaluateProfile, pickResource } from "@/lib/evaluation";
 import { getIcmReference } from "@/lib/public-github";
@@ -46,6 +52,10 @@ const PROFILE_COMMIT_MESSAGE = "Add teacher profile from onboarding";
 const START_HERE_COMMIT_MESSAGE = "Add your getting-started guide";
 const STEP1_COMMIT_MESSAGE = "Add your first step";
 
+const MAX_TEMPLATE_FILES = 60;
+const MAX_TEMPLATE_FILE_CHARS = 100_000;
+const MAX_TEMPLATE_TOTAL_CHARS = 500_000;
+
 /** Replaces the auto_init default readme — short, warm, teacher-facing. */
 const README_CONTENT = `# My UnitEd Workspace
 
@@ -55,6 +65,45 @@ Everything here is created with you, and everything is yours to edit.
 
 function repoUrl(owner: string, repo: string): string {
   return `https://github.com/${owner}/${repo}`;
+}
+
+/**
+ * Template carry-over validation (17 step 7): allowlisted prefixes only
+ * (00-Profile/, 01-Start Here/, NN-Step N - *​/), isValidPath per entry,
+ * count/size caps. Returns null on any violation — the client only ever
+ * sends its own local draft, so a failure means a hand-crafted payload.
+ */
+function parseTemplateFiles(
+  raw: unknown,
+): { path: string; content: string }[] | null {
+  if (!Array.isArray(raw) || raw.length > MAX_TEMPLATE_FILES) return null;
+  let total = 0;
+  for (const entry of raw) {
+    if (typeof entry?.path !== "string" || typeof entry?.content !== "string") {
+      return null;
+    }
+    if (!isValidPath(entry.path)) return null;
+    const allowed =
+      entry.path.startsWith(`${PROFILE_DIR}/`) ||
+      entry.path.startsWith(`${START_HERE_DIR}/`) ||
+      STEP_FILE_PATH.test(entry.path);
+    if (!allowed) return null;
+    if (entry.content.length > MAX_TEMPLATE_FILE_CHARS) return null;
+    total += entry.content.length;
+  }
+  if (total > MAX_TEMPLATE_TOTAL_CHARS) return null;
+  return raw as { path: string; content: string }[];
+}
+
+/** Partition carry-over files by the seed stage they replace. */
+function splitTemplateFiles(files: { path: string; content: string }[]) {
+  return {
+    profile: files.filter((f) => f.path.startsWith(`${PROFILE_DIR}/`)),
+    startHere: files.filter((f) => f.path.startsWith(`${START_HERE_DIR}/`)),
+    steps: files
+      .filter((f) => STEP_FILE_PATH.test(f.path))
+      .sort((a, b) => a.path.localeCompare(b.path)),
+  };
 }
 
 export async function POST(req: Request) {
@@ -70,18 +119,25 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "access_denied" }, { status: 403 });
   }
 
-  // 2. Validate the onboarding profile.
-  let profile;
+  // 2. Validate the onboarding profile + the optional template carry-over.
+  let body: { profile?: unknown; files?: unknown };
   try {
-    const body = (await req.json()) as { profile?: unknown };
-    const parsed = teacherProfileSchema.safeParse(body?.profile);
-    if (!parsed.success) throw new Error("invalid profile");
-    profile = parsed.data;
+    body = (await req.json()) as { profile?: unknown; files?: unknown };
   } catch {
-    return NextResponse.json(
-      { error: "invalid_profile" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "invalid_profile" }, { status: 400 });
+  }
+  const parsed = teacherProfileSchema.safeParse(body?.profile);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "invalid_profile" }, { status: 400 });
+  }
+  const profile = parsed.data;
+  let provided: ReturnType<typeof splitTemplateFiles> | null = null;
+  if (body.files !== undefined) {
+    const files = parseTemplateFiles(body.files);
+    if (files === null) {
+      return NextResponse.json({ error: "invalid_files" }, { status: 400 });
+    }
+    provided = splitTemplateFiles(files);
   }
 
   try {
@@ -133,9 +189,13 @@ export async function POST(req: Request) {
     const seed = detectSeedState(treePaths);
 
     // 7. 00-Profile/ — deterministic, committed BEFORE any network/LLM work
-    // so a later failure still leaves resumable state.
+    // so a later failure still leaves resumable state. Template carry-over
+    // (17) replaces the generated files with the teacher's local draft.
     if (!seed.hasProfile) {
-      const files = buildProfileFiles(profile);
+      const files =
+        provided && provided.profile.length > 0
+          ? provided.profile
+          : buildProfileFiles(profile);
       if (needsInitialCommit) {
         const [first, ...rest] = files;
         await writeFile(
@@ -170,32 +230,41 @@ export async function POST(req: Request) {
     // a full deterministic fallback. Provisioning is NEVER blocked by fair
     // use, an unreachable Resources/ICM repo, or an LLM failure — it degrades.
     if (!seed.hasStartHere) {
-      // 8a-b. Neither read ever throws: [] = empty Resources, null = unreachable.
-      const resourceIndex = await getResourcesIndex();
-      const icm = await getIcmReference();
-      const icmExcerpt = icm ? `${icm.skill}\n\n${icm.core}`.slice(0, 3000) : null;
-
-      // 8c. Fair-use gate: the LLM pass spends the NGO's free tier, so skip
-      // it once the teacher is over today's ceiling (or no key is set).
-      const fu = await getFairUse();
       let files: { path: string; content: string }[];
-      let usageTokens = 0;
-      if (
-        process.env.AI_GATEWAY_API_KEY &&
-        fu.tokens < FREE_TIER_DAILY_TOKEN_LIMIT
-      ) {
-        ({ files, usageTokens } = await generateStartHere(
-          profile,
-          resourceIndex,
-          icmExcerpt,
-        ));
+      if (provided && provided.startHere.length > 0) {
+        // Template carry-over (17): the one-pager the teacher saw (and maybe
+        // edited) lands verbatim — the LLM-personalized Start Here is
+        // exclusive to the direct onboarding path.
+        files = provided.startHere;
       } else {
-        files = buildStartHereFallback(profile, resourceIndex);
-      }
+        // 8a-b. Neither read ever throws: [] = empty Resources, null = unreachable.
+        const resourceIndex = await getResourcesIndex();
+        const icm = await getIcmReference();
+        const icmExcerpt = icm
+          ? `${icm.skill}\n\n${icm.core}`.slice(0, 3000)
+          : null;
 
-      // 8d. Meter only real LLM spend (fallback returns usageTokens 0).
-      // Legal here — a plain JSON route can still set cookies.
-      if (usageTokens > 0) await addFairUseTokens(usageTokens);
+        // 8c. Fair-use gate: the LLM pass spends the NGO's free tier, so skip
+        // it once the teacher is over today's ceiling (or no key is set).
+        const fu = await getFairUse();
+        let usageTokens = 0;
+        if (
+          process.env.AI_GATEWAY_API_KEY &&
+          fu.tokens < FREE_TIER_DAILY_TOKEN_LIMIT
+        ) {
+          ({ files, usageTokens } = await generateStartHere(
+            profile,
+            resourceIndex,
+            icmExcerpt,
+          ));
+        } else {
+          files = buildStartHereFallback(profile, resourceIndex);
+        }
+
+        // 8d. Meter only real LLM spend (fallback returns usageTokens 0).
+        // Legal here — a plain JSON route can still set cookies.
+        if (usageTokens > 0) await addFairUseTokens(usageTokens);
+      }
 
       // 8e. One commit: the two Start Here files + our readme replacing the
       // auto_init default.
@@ -211,29 +280,40 @@ export async function POST(req: Request) {
     // 9. 02-Step 1/ — Jev classifies the profile in the background and the
     // first step lands with the workspace: one resource, one small task.
     // Never blocks provisioning: unreachable library (null/[]) or a failed
-    // evaluation simply skips or degrades the stage.
+    // evaluation simply skips or degrades the stage. Template carry-over
+    // (17) commits the step the teacher already saw locally instead.
     if (!seed.hasStep1) {
-      const resourceIndex = await getResourcesIndex();
-      if (resourceIndex && resourceIndex.length > 0) {
-        const evaluation = await evaluateProfile(profile);
-        const resource = pickResource(evaluation, resourceIndex);
-        if (resource) {
-          const stepFiles = await buildStepFiles({
-            stepNumber: 1,
-            folderNumber: 2,
-            resource,
-            evaluation,
-          });
-          await commitMany(
-            installationId,
-            target.owner,
-            target.name,
-            stepFiles,
-            STEP1_COMMIT_MESSAGE,
-          );
-          // Meter the (tiny) Jev spend like the Start Here LLM pass.
-          if (evaluation.usageTokens > 0) {
-            await addFairUseTokens(evaluation.usageTokens);
+      if (provided && provided.steps.length > 0) {
+        await commitMany(
+          installationId,
+          target.owner,
+          target.name,
+          provided.steps,
+          STEP1_COMMIT_MESSAGE,
+        );
+      } else {
+        const resourceIndex = await getResourcesIndex();
+        if (resourceIndex && resourceIndex.length > 0) {
+          const evaluation = await evaluateProfile(profile);
+          const resource = pickResource(evaluation, resourceIndex);
+          if (resource) {
+            const stepFiles = await buildStepFiles({
+              stepNumber: 1,
+              folderNumber: 2,
+              resource,
+              evaluation,
+            });
+            await commitMany(
+              installationId,
+              target.owner,
+              target.name,
+              stepFiles,
+              STEP1_COMMIT_MESSAGE,
+            );
+            // Meter the (tiny) Jev spend like the Start Here LLM pass.
+            if (evaluation.usageTokens > 0) {
+              await addFairUseTokens(evaluation.usageTokens);
+            }
           }
         }
       }
@@ -250,6 +330,21 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: "github_rate_limited", message: err.message },
         { status: 503 },
+      );
+    }
+    // The teacher's user token predates a permission grant (99-known-issues
+    // #11) — only re-authorization fixes it, so say so explicitly.
+    if (err instanceof GitHubReauthorizationError) {
+      return NextResponse.json(
+        { error: "github_reauthorization_needed" },
+        { status: 403 },
+      );
+    }
+    // 451 (trade controls) is new in API version 2026-03-10 — say it plainly.
+    if (err instanceof RequestError && err.status === 451) {
+      return NextResponse.json(
+        { error: "github_region_blocked" },
+        { status: 451 },
       );
     }
     if (err instanceof RequestError && err.status >= 500) {

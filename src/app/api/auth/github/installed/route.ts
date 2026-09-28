@@ -5,6 +5,7 @@
 // query param alone. Plan: 02-auth.md step 4.
 
 import { NextRequest, NextResponse } from "next/server";
+import { GITHUB_API_VERSION } from "@/lib/github";
 import { getSession, getValidUserToken, setSession } from "@/lib/session";
 
 type InstallationsResponse = {
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
     headers: {
       Authorization: `Bearer ${userToken}`,
       Accept: "application/vnd.github+json",
-      "X-GitHub-Api-Version": "2022-11-28",
+      "X-GitHub-Api-Version": GITHUB_API_VERSION,
     },
     cache: "no-store",
   });

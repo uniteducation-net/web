@@ -13,6 +13,7 @@
 
 import { Octokit, RequestError } from "octokit";
 import {
+  GITHUB_API_VERSION,
   GitHubRateLimitError,
   getInstallationOctokit,
   withGitHubGuard,
@@ -66,7 +67,13 @@ function getPublicOctokit(): Promise<Octokit> {
     const installationId = process.env.RESOURCES_INSTALLATION_ID;
     octokitPromise = installationId
       ? getInstallationOctokit(Number(installationId))
-      : Promise.resolve(new Octokit());
+      : Promise.resolve(
+          new Octokit({
+            request: {
+              headers: { "X-GitHub-Api-Version": GITHUB_API_VERSION },
+            },
+          }),
+        );
   }
   return octokitPromise;
 }

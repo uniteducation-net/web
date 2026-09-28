@@ -87,6 +87,20 @@ const CATEGORY_CRITERIA: Record<Category, string> = {
 };
 
 /**
+ * The matrix-priority fallback as a standalone export — for callers that
+ * must skip the LLM even when a gateway key exists (the anonymous
+ * template-step route over the fair-use ceiling, 17 step 4).
+ */
+export function fallbackEvaluation(
+  doneCategories: string[] = [],
+): ProfileEvaluation {
+  const done = new Set(doneCategories);
+  const category =
+    FALLBACK_ORDER.find((c) => !done.has(c)) ?? FALLBACK_ORDER[0];
+  return { category, source: "fallback", confidence: null, usageTokens: 0 };
+}
+
+/**
  * Evaluate a state (the onboarding answers, or the growing profile text plus
  * the latest reflection) with Jev and pick the category of the next step.
  * Never throws and never blocks: every failure mode degrades to the
@@ -98,12 +112,10 @@ export async function evaluateState(
 ): Promise<ProfileEvaluation> {
   const done = new Set(doneCategories);
 
-  const fallback = (usageTokens = 0): ProfileEvaluation => {
-    const category =
-      FALLBACK_ORDER.find((category) => !done.has(category)) ??
-      FALLBACK_ORDER[0];
-    return { category, source: "fallback", confidence: null, usageTokens };
-  };
+  const fallback = (usageTokens = 0): ProfileEvaluation => ({
+    ...fallbackEvaluation(doneCategories),
+    usageTokens,
+  });
 
   if (!process.env.AI_GATEWAY_API_KEY) return fallback();
 

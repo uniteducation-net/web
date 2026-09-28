@@ -1,25 +1,21 @@
 "use client";
 
+// 17 step 5 — the template workspace's sidebar: the real WorkspaceSidebar's
+// frame, minus everything session-coupled (settings, account menu, repo
+// link). The file tree renders the local draft via the FileTree's
+// files/folders props (no repo fetch). Bottom zone is Feedback only —
+// openTallyPopup needs no session.
+
 import {
-  ExternalLink,
   ListCollapse,
-  LogOut,
   MessageSquareHeart,
   PanelLeftClose,
   PanelLeftOpen,
-  Settings,
 } from "lucide-react";
 import { useState } from "react";
 import { openTallyPopup } from "@/components/feedback-button";
 import { Logo } from "@/components/logo";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Tooltip,
@@ -28,35 +24,37 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { mockFiles } from "../_lib/mock-workspace";
-import { FileTree } from "./file-tree";
+import { FileTree } from "@/components/workspace/file-tree";
 
-const mockUser = { name: "Ana Rivera", login: "anarivera" };
-
-interface WorkspaceSidebarProps {
+interface TemplateSidebarProps {
   collapsed: boolean;
   selectedPath: string;
+  /** The local draft's file paths (rendered instead of a repo fetch). */
+  files: string[];
+  /** Tree-only folders with no files yet (the step placeholder). */
+  folders: string[];
   onSelect: (path: string) => void;
   onExpand: () => void;
   onCollapse: () => void;
-  onOpenSettings: () => void;
-  /** Logo click — the shell guards unsaved changes before navigating away. */
+  /** Logo click — the shell guards the local draft before navigating away. */
   onLeave: () => void;
   className?: string;
 }
 
-export function WorkspaceSidebar({
+export function TemplateSidebar({
   collapsed,
   selectedPath,
+  files,
+  folders,
   onSelect,
   onExpand,
   onCollapse,
-  onOpenSettings,
   onLeave,
   className,
-}: WorkspaceSidebarProps) {
+}: TemplateSidebarProps) {
   // Bump → every folder row in the tree closes (the "Files" row's button).
   const [collapseSignal, setCollapseSignal] = useState(0);
+
   if (collapsed) {
     return (
       <TooltipProvider delayDuration={200}>
@@ -78,42 +76,9 @@ export function WorkspaceSidebar({
           </RailButton>
 
           <div className="mt-auto flex flex-col items-center gap-1">
-            <RailButton label="Settings" onClick={onOpenSettings}>
-              <Settings className="size-4" />
-            </RailButton>
             <RailButton label="Feedback" onClick={() => void openTallyPopup()}>
               <MessageSquareHeart className="size-4" />
             </RailButton>
-            <DropdownMenu>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      type="button"
-                      aria-label="Account"
-                      className="mt-1 rounded-full"
-                    >
-                      <Avatar className="size-7">
-                        <AvatarFallback className="bg-secondary text-[10px] text-secondary-foreground">
-                          AR
-                        </AvatarFallback>
-                      </Avatar>
-                    </button>
-                  </DropdownMenuTrigger>
-                </TooltipTrigger>
-                <TooltipContent side="right">{mockUser.name}</TooltipContent>
-              </Tooltip>
-              <DropdownMenuContent side="right" align="end" className="w-56">
-                <DropdownMenuItem>
-                  <ExternalLink className="size-4" />
-                  View repo on GitHub
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <LogOut className="size-4" />
-                  Unpair GitHub / Log out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
       </TooltipProvider>
@@ -134,7 +99,7 @@ export function WorkspaceSidebar({
             onLeave();
           }}
         />
-        <span className="font-heading text-sm font-semibold">Workspace</span>
+        <span className="font-heading text-sm font-semibold">Template</span>
         <Button
           variant="ghost"
           size="icon-sm"
@@ -162,23 +127,15 @@ export function WorkspaceSidebar({
 
       <ScrollArea className="flex-1">
         <FileTree
-          files={mockFiles}
           selectedPath={selectedPath}
           onSelect={onSelect}
+          files={files}
+          folders={folders}
           collapseSignal={collapseSignal}
         />
       </ScrollArea>
 
       <div className="mt-auto border-t border-border">
-        <button
-          type="button"
-          onClick={onOpenSettings}
-          className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-text hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-        >
-          <Settings className="size-4 text-muted-foreground" />
-          Settings
-        </button>
-
         <button
           type="button"
           onClick={() => void openTallyPopup()}
@@ -187,39 +144,6 @@ export function WorkspaceSidebar({
           <MessageSquareHeart className="size-4 text-muted-foreground" />
           Feedback
         </button>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className="flex w-full items-center gap-2 px-4 py-2.5 text-left hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            >
-              <Avatar className="size-7">
-                <AvatarFallback className="bg-secondary text-[10px] text-secondary-foreground">
-                  AR
-                </AvatarFallback>
-              </Avatar>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-text font-medium">
-                  {mockUser.name}
-                </span>
-                <span className="block truncate text-xs text-muted-foreground">
-                  @{mockUser.login}
-                </span>
-              </span>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="start" className="w-56">
-            <DropdownMenuItem>
-              <ExternalLink className="size-4" />
-              View repo on GitHub
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <LogOut className="size-4" />
-              Unpair GitHub / Log out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
     </div>
   );

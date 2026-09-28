@@ -6,6 +6,7 @@
 // step 3. IMPORTANT: no repo is created here — that happens in 07.
 
 import { NextRequest, NextResponse } from "next/server";
+import { GITHUB_API_VERSION } from "@/lib/github";
 import {
   OAUTH_STATE_COOKIE,
   requireEnv,
@@ -84,7 +85,7 @@ export async function GET(request: NextRequest) {
   const authHeaders = {
     Authorization: `Bearer ${token.access_token}`,
     Accept: "application/vnd.github+json",
-    "X-GitHub-Api-Version": "2022-11-28",
+    "X-GitHub-Api-Version": GITHUB_API_VERSION,
   };
 
   // Identify the user.

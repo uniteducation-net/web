@@ -11,7 +11,8 @@ route, `/workspace/start`. The client never has to guess.
 ```
 /workspace        → entry + guard (server-side redirect)
 /workspace/start  → onboarding (anonymous chat AND logged-in-no-repo)
-/workspace/demo   → UI preview (dev only; remove before 14)
+/workspace/template → anonymous local template workspace (17; supersedes demo)
+/workspace/demo   → next.config redirect (307) → /workspace/template (mock deleted, 17)
 ```
 
 ## Steps

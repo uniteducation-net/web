@@ -60,6 +60,17 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  async redirects() {
+    return [
+      // 17 retired the stale mock demo (deleted) — old links land on the
+      // real template workspace instead.
+      {
+        source: "/workspace/demo",
+        destination: "/workspace/template",
+        permanent: false,
+      },
+    ];
+  },
   turbopack: {
     rules: {
       // Import any .svg as a React component:

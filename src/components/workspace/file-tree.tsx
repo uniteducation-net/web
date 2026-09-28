@@ -26,16 +26,17 @@ interface TreeNode {
 }
 
 /** Flat paths → nested tree. Folders first, natural sort (ICM's numbered
- *  prefixes like 01-, 02- order correctly). */
-function buildTree(paths: string[]): TreeNode[] {
+ *  prefixes like 01-, 02- order correctly). `folders` adds folder-only
+ *  chains (17 — the template's empty step folder has no files yet). */
+function buildTree(paths: string[], folders: string[] = []): TreeNode[] {
   const root: TreeNode = { name: "", path: "", children: [], isFolder: true };
 
-  for (const path of paths) {
+  const insert = (path: string, leafIsFolder: boolean) => {
     const segments = path.split("/");
     let node = root;
     segments.forEach((segment, i) => {
       const segmentPath = segments.slice(0, i + 1).join("/");
-      const isFolder = i < segments.length - 1;
+      const isFolder = i < segments.length - 1 || leafIsFolder;
       let child = node.children.find(
         (c) => c.name === segment && c.isFolder === isFolder,
       );
@@ -45,7 +46,10 @@ function buildTree(paths: string[]): TreeNode[] {
       }
       node = child;
     });
-  }
+  };
+
+  for (const path of paths) insert(path, false);
+  for (const folder of folders) insert(folder, true);
 
   const sortNodes = (nodes: TreeNode[]) => {
     nodes.sort((a, b) => {
@@ -66,6 +70,12 @@ interface FileTreeProps {
   refreshKey?: number;
   /** Bump to close every open folder at once (the "Files" row's button). */
   collapseSignal?: number;
+  /** Template mode (17): render these paths instead of fetching the repo
+   *  tree. When set, the fetch effect (and its 401 redirect) never runs. */
+  files?: string[];
+  /** Extra folders to show even with no files inside (the template's empty
+   *  step placeholder). Merged into the tree as folder nodes. */
+  folders?: string[];
   className?: string;
 }
 
@@ -74,6 +84,8 @@ export function FileTree({
   onSelect,
   refreshKey = 0,
   collapseSignal = 0,
+  files,
+  folders,
   className,
 }: FileTreeProps) {
   // null = loading (skeleton); the previous tree is kept during a refresh.
@@ -82,6 +94,7 @@ export function FileTree({
   const router = useRouter();
 
   useEffect(() => {
+    if (files !== undefined) return; // template mode — no repo to fetch
     let cancelled = false;
     (async () => {
       try {
@@ -105,30 +118,32 @@ export function FileTree({
     return () => {
       cancelled = true;
     };
-  }, [refreshKey, router]);
+  }, [refreshKey, router, files]);
 
-  if (paths === null && !failed) {
-    return (
-      <div className="flex flex-col gap-2 p-4" aria-hidden>
-        {["w-3/4", "w-1/2", "w-2/3", "w-1/3", "w-1/2", "w-2/3"].map(
-          (width, i) => (
-            <Skeleton key={i} className={cn("h-4", width)} />
-          ),
-        )}
-      </div>
-    );
+  if (files === undefined) {
+    if (paths === null && !failed) {
+      return (
+        <div className="flex flex-col gap-2 p-4" aria-hidden>
+          {["w-3/4", "w-1/2", "w-2/3", "w-1/3", "w-1/2", "w-2/3"].map(
+            (width, i) => (
+              <Skeleton key={i} className={cn("h-4", width)} />
+            ),
+          )}
+        </div>
+      );
+    }
+
+    if (failed) {
+      return (
+        <p className="px-3 py-2 text-sm text-muted-foreground">
+          Couldn&apos;t load your files — collapse and reopen the sidebar to
+          try again.
+        </p>
+      );
+    }
   }
 
-  if (failed) {
-    return (
-      <p className="px-3 py-2 text-sm text-muted-foreground">
-        Couldn&apos;t load your files — collapse and reopen the sidebar to try
-        again.
-      </p>
-    );
-  }
-
-  const tree = buildTree(paths ?? []);
+  const tree = buildTree(files ?? paths ?? [], folders ?? []);
 
   if (tree.length === 0) {
     return (
@@ -208,6 +223,14 @@ function TreeRow({
                 collapseSignal={collapseSignal}
               />
             ))}
+            {node.children.length === 0 && (
+              <p
+                className="py-1 text-xs italic text-muted-foreground"
+                style={{ paddingLeft: `${(depth + 1) * 12 + 8 + 20}px` }}
+              >
+                No files yet
+              </p>
+            )}
           </div>
         )}
       </div>

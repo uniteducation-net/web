@@ -122,7 +122,12 @@ async function resolveDefaultBranch(
   try {
     const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      headers: { Accept: "application/vnd.github+json" },
+      headers: {
+        Accept: "application/vnd.github+json",
+        // Same pin as every other GitHub call (lib/github.ts owns the const;
+        // inlined here to keep this module dependency-free).
+        "X-GitHub-Api-Version": "2026-03-10",
+      },
     });
     if (!res.ok) return null;
     const data = (await res.json()) as { default_branch?: string };

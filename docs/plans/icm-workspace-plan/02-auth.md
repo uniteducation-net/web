@@ -72,3 +72,33 @@ Token split (important):
 - [ ] Token refresh rotates BOTH tokens and updates the cookie
 - [ ] Install callback rejects an `installation_id` not belonging to the session user
 - [ ] No repo is created during login (that happens in 07)
+
+## Permissions & re-authorization (2026-09-28)
+
+Required app permissions: **Contents: read & write** (steady-state repo ops
+via installation tokens) + **Repository creation: read & write**
+(`POST /user/repos` with the user access token — per GitHub's "Permissions
+required for GitHub Apps" reference this endpoint accepts
+`repository_creation=write` or `administration=write`, user tokens only).
+
+**GitHub App dashboard (manual step — cannot be done in code):**
+Settings → Developer settings → GitHub Apps → this app → Permissions & events
+→ Repository permissions → enable **Repository creation: Read and write** →
+Save. Repeat for any second app registration (staging/prod). A 2026-09-28
+audit found no admin-scope endpoint calls, so **Administration: read & write
+is droppable** (least privilege, known-issues #1) once Repository creation is
+verified end-to-end.
+
+**Re-authorization:** existing user authorizations keep their
+authorization-time permission set — after adding a permission, every
+already-authorized user must go through the OAuth authorize step once more
+(GitHub presents an "updated permissions" approval; see "Approving updated
+permissions for a GitHub App" in the GitHub docs). Until they do, repo
+creation 403s with "Resource not accessible by integration"; the app surfaces
+a reconnect CTA automatically (`github_reauthorization_needed`,
+known-issues #11).
+
+**API version:** all GitHub clients pin `X-GitHub-Api-Version: 2026-03-10`
+via `GITHUB_API_VERSION` (lib/github.ts) — including the raw fetches in this
+chain's callback/installed routes. The unversioned default (2022-11-28) is
+deprecated, sunset 2028-03-10.

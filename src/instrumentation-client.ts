@@ -18,6 +18,7 @@ if (process.env.NODE_ENV === "production") {
       { path: "/api/agent", method: "POST" },
       { path: "/api/settings", method: "POST" },
       { path: "/api/workspace/create", method: "POST" },
+      { path: "/api/workspace/template-step", method: "POST" },
       { path: "/api/workspace/file", method: "PUT" },
       { path: "/api/workspace/save-chat", method: "POST" },
       { path: "/api/auth/logout", method: "POST" },

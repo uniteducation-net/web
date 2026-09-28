@@ -11,6 +11,7 @@ import { MessageSquare, PanelLeftOpen } from "lucide-react";
 import type { UIMessage } from "ai";
 import type { SessionRepo, SessionUser } from "@/lib/session";
 import { START_HERE_MAIN } from "@/lib/workspace-paths";
+import { readOnboardingDraft } from "@/lib/onboarding-draft";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -51,20 +52,6 @@ const READY_MESSAGE: UIMessage = {
     },
   ],
 };
-
-/** Draft left by onboarding (05). Same light shape check as the draft writer. */
-function readOnboardingDraft(): UIMessage[] | null {
-  try {
-    const raw = window.localStorage.getItem(ONBOARDING_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as UIMessage[];
-    if (!Array.isArray(parsed) || parsed.length === 0) return null;
-    if (!parsed.every((m) => Array.isArray(m?.parts))) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
-}
 
 interface WorkspaceShellProps {
   repo: SessionRepo;

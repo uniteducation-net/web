@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, LogIn, LogOut, X } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
@@ -27,14 +28,18 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Logo } from "@/components/logo";
 import type { SessionUser } from "@/lib/session";
+import {
+  ONBOARDING_DRAFT_KEY,
+  draftProfile,
+  readOnboardingDraft,
+} from "@/lib/onboarding-draft";
+import { describeCreateError, type CreateErrorCopy } from "@/lib/create-error";
 import { cn } from "@/lib/utils";
 import {
   OPENING_MESSAGE,
   type OnboardingProfile,
   type OnboardingUIMessage,
 } from "../_lib/onboarding-chat";
-
-const STORAGE_KEY = "onboarding-chat";
 
 /** Sent when the teacher skips (or cuts short) the interview: every field is
     nullable per teacherProfileSchema, and provisioning fills the gaps. */
@@ -56,30 +61,16 @@ const layoutMotion =
 const GITHUB_LOGIN_HREF = "/api/auth/github?next=/workspace/start";
 
 interface OnboardingScreenProps {
-  /** From the server page (04). Decides whether "Go to workspace" starts the
-      GitHub OAuth flow or provisions the repo directly. */
+  /** From the server page (04). Decides whether "Go to workspace" opens the
+      local template (logged out) or provisions the repo (logged in). */
   authenticated: boolean;
   /** Present when authenticated — shown in place of the login button so the
       teacher can see which GitHub account they're pairing. */
   user?: SessionUser;
 }
 
-function readDraft(): OnboardingUIMessage[] | null {
-  try {
-    const saved = window.localStorage.getItem(STORAGE_KEY);
-    if (!saved) return null;
-    const parsed = JSON.parse(saved) as OnboardingUIMessage[];
-    // Light shape check — ignore drafts from older (mock) formats.
-    if (!Array.isArray(parsed) || parsed.length === 0) return null;
-    if (!parsed.every((m) => Array.isArray(m?.parts))) return null;
-    return parsed;
-  } catch {
-    // Corrupt or unavailable storage — start fresh.
-    return null;
-  }
-}
-
 export function OnboardingScreen({ authenticated, user }: OnboardingScreenProps) {
+  const router = useRouter();
   const transport = useMemo(
     () => new DefaultChatTransport<OnboardingUIMessage>({ api: "/api/chat" }),
     [],
@@ -95,7 +86,7 @@ export function OnboardingScreen({ authenticated, user }: OnboardingScreenProps)
   // Provisioning state (07): the create call runs template generation +
   // personalization, so it can take several seconds.
   const [creating, setCreating] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<CreateErrorCopy | null>(null);
   // Inline two-step logout confirm — the icon swaps to "Sure? ✓ ✗" in place.
   const [confirmLogout, setConfirmLogout] = useState(false);
 
@@ -107,7 +98,7 @@ export function OnboardingScreen({ authenticated, user }: OnboardingScreenProps)
   // Restore the draft conversation after mount (survives the OAuth round-trip).
   // Declared before the persist effect so it runs first on mount.
   useEffect(() => {
-    const draft = readDraft();
+    const draft = readOnboardingDraft();
     if (draft) setMessages(draft);
     restoredRef.current = true;
   }, [setMessages]);
@@ -117,7 +108,7 @@ export function OnboardingScreen({ authenticated, user }: OnboardingScreenProps)
   useEffect(() => {
     if (!restoredRef.current) return;
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+      window.localStorage.setItem(ONBOARDING_DRAFT_KEY, JSON.stringify(messages));
     } catch {
       // Storage full/unavailable — the draft is a convenience, not critical.
     }
@@ -125,15 +116,10 @@ export function OnboardingScreen({ authenticated, user }: OnboardingScreenProps)
 
   // Readiness signal (05 step 5): the chat API appends a `data-profile` part
   // when the interviewer is done (06 step 4). Latest one wins.
-  const profileSignal = useMemo(() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const part = messages[i].parts.find((p) => p.type === "data-profile");
-      if (part?.type === "data-profile") return part.data;
-    }
-    return null;
-  }, [messages]);
-  const profile: OnboardingProfile | null =
-    profileSignal?.complete === true ? profileSignal.profile : null;
+  const profile: OnboardingProfile | null = useMemo(
+    () => draftProfile(messages),
+    [messages],
+  );
 
   const handleSubmit = (message: PromptInputMessage) => {
     const text = message.text.trim();
@@ -160,12 +146,10 @@ export function OnboardingScreen({ authenticated, user }: OnboardingScreenProps)
 
   const goToWorkspace = async () => {
     if (!authenticated) {
-      // Mid-onboarding OAuth (04 step 4): hard-nav into the GitHub App flow
-      // and come straight back here. The draft conversation survives in
-      // localStorage and is restored on return. Must be a full document
-      // navigation — this is an API route that 302s to GitHub, not a page.
-      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-      window.location.href = GITHUB_LOGIN_HREF;
+      // Anonymous visitors get the local template workspace (17) — no OAuth
+      // wall. The draft chat survives in localStorage: the template reads
+      // the profile from it and pre-fills what it can.
+      router.push("/workspace/template");
       return;
     }
     if (creating) return;
@@ -195,14 +179,7 @@ export function OnboardingScreen({ authenticated, user }: OnboardingScreenProps)
         return;
       }
       if (!res.ok) {
-        setCreateError(
-          data.message ??
-            (data.error === "github_unavailable"
-              ? "GitHub is having trouble right now — please try again in a moment."
-              : data.error === "app_not_installed"
-                ? "GitHub isn't fully connected yet — press the button again to reconnect."
-                : "Something went wrong while creating your workspace — please try again."),
-        );
+        setCreateError(describeCreateError(data));
         return;
       }
 
@@ -212,9 +189,9 @@ export function OnboardingScreen({ authenticated, user }: OnboardingScreenProps)
       // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.href = "/workspace";
     } catch {
-      setCreateError(
-        "Couldn't reach the server — check your connection and try again.",
-      );
+      setCreateError({
+        message: "Couldn't reach the server — check your connection and try again.",
+      });
     } finally {
       setCreating(false);
     }
@@ -320,9 +297,28 @@ export function OnboardingScreen({ authenticated, user }: OnboardingScreenProps)
         </PromptInput>
 
         {createError && (
-          <p className="pt-2 text-center text-xs text-destructive">
-            {createError}
-          </p>
+          <div className="pt-2 text-center text-xs">
+            <p className="text-destructive">{createError.message}</p>
+            <div className="mt-1 flex items-center justify-center gap-3">
+              {createError.reconnect && (
+                // Plain <a>: the OAuth chain wants a full-document navigation.
+                <a
+                  href={GITHUB_LOGIN_HREF}
+                  className="font-medium text-primary underline underline-offset-2"
+                >
+                  Reconnect GitHub
+                </a>
+              )}
+              {/* Escape hatch on every create failure (17): the local
+                  template works without login and keeps the chat profile. */}
+              <Link
+                href="/workspace/template"
+                className="text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground"
+              >
+                Open a local template instead
+              </Link>
+            </div>
+          </div>
         )}
         {authenticated && user ? (
           <div className="mt-2 flex items-center justify-center gap-2 text-sm text-muted-foreground">

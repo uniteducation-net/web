@@ -4,6 +4,9 @@
 // detectSeedState replaces the old `{{`-placeholder gate as the create
 // route's idempotency check. Later content is NOT seeded — the workspace
 // agent grows the repo one numbered micro-step folder at a time.
+// The deterministic builders (buildProfileFiles, the Start Here contract)
+// live in lib/template-workspace.ts so the anonymous template workspace (17)
+// shares them — re-exported here for existing importers.
 // Plan: docs/plans/icm-workspace-plan/00-overview.md (final adjustments, step 3)
 
 // Server-only module — never import from client components.
@@ -16,18 +19,19 @@ import type { ResourceSummary } from "./resources";
 import { CATEGORY_NAMES, type ProfileEvaluation } from "./evaluation";
 import { fetchProviderExcerpt } from "./fetch-provider";
 import { getPublicFile, resourcesRepoCoords } from "./public-github";
-import { START_HERE_MAIN } from "./workspace-paths";
+import {
+  buildProfileFiles,
+  buildStartHereContextContract,
+} from "./template-workspace";
+import {
+  PROFILE_DIR,
+  PROFILE_MAIN,
+  START_HERE_CONTEXT,
+  START_HERE_DIR,
+  START_HERE_MAIN,
+} from "./workspace-paths";
 
-export { START_HERE_MAIN };
-
-export const PROFILE_DIR = "00-Profile";
-export const START_HERE_DIR = "01-Start Here";
-
-const PROFILE_CONTEXT = `${PROFILE_DIR}/CONTEXT.md`;
-const PROFILE_MAIN = `${PROFILE_DIR}/profile.md`;
-const START_HERE_CONTEXT = `${START_HERE_DIR}/CONTEXT.md`;
-
-const NOT_SHARED = "Not shared during onboarding";
+export { buildProfileFiles, PROFILE_DIR, START_HERE_DIR, START_HERE_MAIN };
 
 /**
  * Idempotency check for provisioning: which seed stages already exist in the
@@ -44,47 +48,6 @@ export function detectSeedState(treePaths: string[]): {
     hasStartHere: treePaths.some((path) => path.startsWith(`${START_HERE_DIR}/`)),
     hasStep1: treePaths.some((path) => /^02-Step 1 - .+\//.test(path)),
   };
-}
-
-// ─── 00-Profile (deterministic, no LLM) ──────────────────────────────────
-
-/**
- * The permanent record of who this workspace serves. Committed FIRST so a
- * later failure still leaves resumable state. Plain, warm, teacher-facing —
- * never mention ICM, GitHub, or templates.
- */
-export function buildProfileFiles(
-  profile: TeacherProfile,
-): { path: string; content: string }[] {
-  const show = (value: string | null): string => value ?? NOT_SHARED;
-
-  const context = `# ${PROFILE_DIR} — folder contract
-
-**What this folder is:** the permanent record of who this workspace serves.
-
-**Who reads it:** every later stage reads this folder first, before drafting anything.
-
-**Who writes it:** you — edit profile.md whenever an answer is missing, wrong, or out of date. Everything else in this workspace follows what it says here.
-`;
-
-  const main = `# About ${profile.name ?? "you"}
-
-This is what you shared when your workspace was set up. Everything your assistant creates for you starts from these answers.
-
-- **Name:** ${show(profile.name)}
-- **Age group you'll teach:** ${show(profile.ageGroup)}
-- **Worked with children before:** ${show(profile.workedWithChildren)}
-- **Work or academic background:** ${show(profile.background)}
-- **What and where you'll teach:** ${show(profile.teachingWhatWhere)}
-- **Study schedule and time commitment:** ${show(profile.schedule)}
-
-If any of this changes, just edit this file — your assistant reads it before every new piece of work.
-`;
-
-  return [
-    { path: PROFILE_CONTEXT, content: context },
-    { path: PROFILE_MAIN, content: main },
-  ];
 }
 
 // ─── 01-Start Here: deterministic fallback ───────────────────────────────
@@ -137,20 +100,9 @@ Your first step is already waiting — open \`02-Step 1\` in the file list on th
 
 ${resourcesSection}`;
 
-  const context = `# ${START_HERE_DIR} — stage contract
-
-**Input:** ${PROFILE_DIR}/ — who this workspace serves.
-
-**What this folder is:** the orientation the teacher reads first.
-
-**Output:** the teacher knows their next move — ask the assistant for it, and it arrives as a new numbered step folder.
-
-**Done when:** the teacher has asked for (or decided against) their first step.
-`;
-
   return [
     { path: START_HERE_MAIN, content: main },
-    { path: START_HERE_CONTEXT, content: context },
+    { path: START_HERE_CONTEXT, content: buildStartHereContextContract() },
   ];
 }
 

@@ -12,15 +12,16 @@ this prominently. Privacy-conscious teachers (our exact audience) would bounce.
 
 **Decision (2026-09-13, folded into plans 00/01/02/03/07/12/14):** GitHub App
 with fine-grained permissions instead of an OAuth App:
-- Permissions: `Contents: read & write` + `Administration: read & write` (Admin
-  was required for template-repo generation into a personal account — template
-  generation is gone since the 2026-09-14 rebuild, so Administration may be
-  droppable; **verify before removing**, see 01 step 3), nothing else
+- Permissions: `Contents: read & write` + `Repository creation: read & write`
+  (added 2026-09-28 — `POST /user/repos` with a user access token requires it
+  or Administration per GitHub's permissions reference; audit the same day
+  found NO admin-scope endpoint calls, so `Administration: read & write` —
+  historically kept for template-repo generation — is **droppable** once
+  Repository creation is verified end-to-end. Repo creation uses the USER
+  token: installation tokens can't create repos in personal accounts)
 - Auth chain: OAuth web flow (user access token, 8h + 6-month refresh token,
   rotated on refresh) → app installation on the user's personal account
-- Repo creation uses the USER token (installation tokens can't create repos in
-  personal accounts — serverToServer is orgs-only, confirmed in GitHub docs +
-  community); all steady-state repo ops use the INSTALLATION token minted
+- all steady-state repo ops use the INSTALLATION token minted
   on demand from the app private key (1h TTL, no refresh in the cookie)
 - Residual trust note: install defaults to "All repositories" (needed so the
   repo we create after install is covered). The consent screen still shows
@@ -98,6 +99,9 @@ in the teacher's own repo. History travels with the workspace, on every
 device, owned by the user — no database needed.
 - Saved chats appear in the file tree and render in the preview like any other file
 - localStorage remains only a *draft* buffer for the anonymous onboarding round-trip
+- The 17 template workspace's local draft (`workspace-template-v1`) is
+  intentionally device-locked the same way; conversion (create-with-files)
+  is the unlock, and the anonymous close warning is the cheap mitigation
 - **Affects:** 05 (step 3), 11 (steps 6–7)
 
 ## 🟡 7. No diff/approval on agent writes
@@ -157,6 +161,30 @@ same IP can exhaust the budget for everyone on it.
 - Escape hatch: set `RESOURCES_INSTALLATION_ID` (app installed on the org) to
   read with an installation token → 5,000 req/h (01 step 5)
 - **Affects:** 07 (step 4), 11 (agent tools), 03 (step 10)
+
+## 🟠 11. Permission grants added after user authorization are not retroactive — **MITIGATED (2026-09-28)**
+
+**Problem:** `Repository creation: read & write` was added to the GitHub App
+after users had already authorized it. Their user access tokens keep the
+authorization-time permission set, so `POST /user/repos` fails with 403
+"Resource not accessible by integration" (`x-accepted-github-permissions:
+administration=write; repository_creation=write`). Only re-authorization
+upgrades the token — GitHub shows an "updated permissions" approval at the
+authorize step; there is no direct approval link and no API-side fix.
+
+**Fix (shipped):**
+- `createWorkspaceRepo` maps that exact 403 to a typed
+  `GitHubReauthorizationError` → the create route answers 403
+  `github_reauthorization_needed` → both clients (onboarding screen, template
+  banner) show "GitHub needs updated permissions — reconnect your account"
+  with a Reconnect CTA through the OAuth chain (`lib/create-error.ts`)
+- The 451 trade-controls status (new in API 2026-03-10) maps to
+  `github_region_blocked` with plain copy
+- All GitHub clients pin `X-GitHub-Api-Version: 2026-03-10` (silences the
+  2022-11-28 deprecation warning; sunset 2028-03-10)
+- Prevention: any FUTURE permission addition needs the same re-authorization
+  push — expect the 403, the CTA path handles it
+- **Affects:** 02 (permissions section), 03 (step 5), 07 (error mapping)
 
 ---
 
