@@ -190,9 +190,7 @@
     "forTeachers": "For Teachers",
     "getInvolved": "Get Involved",
     "playLabel": "Play video",
-    "videoTitle": "YouTube video player",
-    "videoConsentText": "Load a video from YouTube (Google)? The thumbnail and player only load with your consent.",
-    "videoConsentButton": "Load video"
+    "videoTitle": "YouTube video player"
   },
   "aboutHero": {
     "metaTitle": "About",

@@ -6,17 +6,25 @@
 //   the BotID security challenge, and this consent cookie itself.
 // - analytics — gates Vercel Analytics events (see consent-analytics.tsx).
 // - external — GENERAL bucket for ALL third-party content. Every embed that
-//   phones a third party (YouTube facade on the homepage, Tally forms on the
-//   join pages, and any future embed) MUST check this category before
-//   loading. Click-to-load placeholders grant it for the session via
-//   grantExternalForSession (a deliberate click = consenting to that
-//   content). The one deliberate exception: the feedback button loads Tally
-//   only on click — user-initiated by design (see feedback-button.tsx).
+//   phones a third party (Tally forms on the join pages, and any future
+//   embed) MUST check this category before loading. Click-to-load
+//   placeholders grant it for the session via grantExternalForSession (a
+//   deliberate click = consenting to that content). Two deliberate
+//   exceptions: the feedback button loads Tally only on click —
+//   user-initiated by design (see feedback-button.tsx) — and the home hero
+//   video (home-hero.tsx), whose thumbnail loads from Google without consent
+//   but whose play button grants external persistently via acceptExternal
+//   (pressing play = consenting to that content).
 //
 // Storage: a `ue_consent` cookie (JSON, Path=/ so all root layouts share it,
 // 180 days, SameSite=Lax). A cookie rather than localStorage so the record
-// expires as regulators expect. Bump CONSENT_VERSION when the categories
-// change — old records are then treated as undecided and the banner re-asks.
+// expires as regulators expect. The JSON carries an explicit `decided` flag
+// so acceptExternal can persist the external grant WITHOUT marking the
+// record decided — an undecided visitor who plays the video has still not
+// chosen analytics, so the banner keeps asking. Records predating the flag
+// (written only by setConsent) read as decided. Bump CONSENT_VERSION when
+// the categories change — old records are then treated as undecided and the
+// banner re-asks.
 
 import { useSyncExternalStore } from "react";
 
@@ -56,11 +64,14 @@ const readRecord = (): Pick<ConsentState, "decided" | "analytics" | "external"> 
       v?: number;
       analytics?: boolean;
       external?: boolean;
+      decided?: boolean;
     };
     // Unknown/old format: treat as never asked — the banner re-prompts.
     if (record.v !== CONSENT_VERSION) return fallback;
     return {
-      decided: true,
+      // Records written before the explicit flag existed came only from
+      // setConsent — they all represent a deliberate choice.
+      decided: record.decided !== false,
       analytics: record.analytics === true,
       external: record.external === true,
     };
@@ -69,9 +80,9 @@ const readRecord = (): Pick<ConsentState, "decided" | "analytics" | "external"> 
   }
 };
 
-const writeRecord = (choices: ConsentChoices) => {
+const writeRecord = (choices: ConsentChoices, decided: boolean) => {
   const value = encodeURIComponent(
-    JSON.stringify({ v: CONSENT_VERSION, ...choices }),
+    JSON.stringify({ v: CONSENT_VERSION, ...choices, decided }),
   );
   const secure =
     typeof location !== "undefined" && location.protocol === "https:"
@@ -102,7 +113,7 @@ export const getConsent = (): Pick<
 
 /** Persists the choices and closes the banner (also after footer re-open). */
 export const setConsent = (choices: ConsentChoices) => {
-  writeRecord(choices);
+  writeRecord(choices, true);
   update({ ...choices, decided: true, settingsOpen: false });
 };
 
@@ -116,6 +127,19 @@ export const rejectAll = () => setConsent({ analytics: false, external: false })
  * rejects, or saves — no implicit decisions get persisted.
  */
 export const grantExternalForSession = () => update({ external: true });
+
+/**
+ * Persistent grant of the external category, for deliberate play-click
+ * consent (the home hero video exception). Writes the record so the choice
+ * shows in the cookie settings, but preserves `decided`: an undecided
+ * visitor keeps getting the banner (analytics still unchosen); a decided
+ * one keeps their analytics choice untouched.
+ */
+export const acceptExternal = () => {
+  if (state.external) return;
+  writeRecord({ analytics: state.analytics, external: true }, state.decided);
+  update({ external: true });
+};
 
 /** Re-opens the banner even though a choice was already recorded. */
 export const requestConsentSettings = () => update({ settingsOpen: true });

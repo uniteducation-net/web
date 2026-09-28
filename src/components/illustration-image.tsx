@@ -10,6 +10,9 @@ interface IllustrationImageProps {
   className?: string;
   /** Classes for the <img> itself. `object-contain` by default; pass `object-cover` to crop-fill. */
   imageClassName?: string;
+  /** Responsive `sizes` for the fill image — pass an accurate value at hot
+   *  spots; defaults to "100vw" (the browser's assumption when omitted). */
+  sizes?: string;
   priority?: boolean;
 }
 
@@ -24,6 +27,7 @@ const IllustrationImage = ({
   alt,
   className,
   imageClassName,
+  sizes,
   priority,
 }: IllustrationImageProps) => {
   return (
@@ -32,6 +36,7 @@ const IllustrationImage = ({
         src={src}
         alt={alt}
         fill
+        sizes={sizes ?? "100vw"}
         unoptimized={src.endsWith(".svg")}
         priority={priority}
         className={cn("object-contain", imageClassName)}

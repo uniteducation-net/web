@@ -73,6 +73,7 @@ export default async function UpdatePage({
       date={frontmatter.date}
       readingTime={entry.readingTime}
       cover={frontmatter.cover}
+      coverPosition={frontmatter.coverPosition}
       author={
         authorEntry
           ? {

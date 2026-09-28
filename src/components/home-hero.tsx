@@ -2,12 +2,11 @@
 import { Play } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { FaYoutube } from "react-icons/fa";
 
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/i18n-config";
-import { grantExternalForSession, useConsent } from "@/lib/consent";
+import { acceptExternal } from "@/lib/consent";
 import { cn } from "@/lib/utils";
 
 interface HomeHeroDict {
@@ -17,8 +16,6 @@ interface HomeHeroDict {
   getInvolved: string;
   playLabel: string;
   videoTitle: string;
-  videoConsentText: string;
-  videoConsentButton: string;
 }
 
 interface HomeHeroProps {
@@ -35,7 +32,6 @@ const VIDEO_IDS: Record<Locale, string> = {
 
 const HomeHero = ({ className, dict, lang }: HomeHeroProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const { external } = useConsent();
   const videoId = VIDEO_IDS[lang] ?? VIDEO_IDS.en;
 
   return (
@@ -78,24 +74,13 @@ const HomeHero = ({ className, dict, lang }: HomeHeroProps) => {
                 className="overflow-hidden rounded-t-sm"
               >
                 <div className="relative size-full">
-                  {/* Consent gate: nothing may phone Google (not even the
-                      poster image) before the visitor allows external
-                      content. The placeholder's button grants it — a
-                      deliberate click = consenting to this content. */}
-                  {!external ? (
-                    <div className="flex size-full flex-col items-center justify-center gap-4 rounded-t-sm bg-muted p-6 text-center">
-                      <FaYoutube
-                        aria-hidden
-                        className="size-12 text-muted-foreground md:size-16"
-                      />
-                      <p className="max-w-md text-sm text-muted-foreground">
-                        {dict.videoConsentText}
-                      </p>
-                      <Button type="button" onClick={grantExternalForSession}>
-                        {dict.videoConsentButton}
-                      </Button>
-                    </div>
-                  ) : isPlaying ? (
+                  {/* Deliberate exception to the external-content gate (see
+                      src/lib/consent.ts): the cover loads from Google without
+                      consent so the hero never shows an empty placeholder.
+                      Pressing play is the consent signal — it persists the
+                      external category via acceptExternal, then the
+                      youtube-nocookie iframe mounts. */}
+                  {isPlaying ? (
                     <iframe
                       src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`}
                       title={dict.videoTitle}
@@ -116,7 +101,10 @@ const HomeHero = ({ className, dict, lang }: HomeHeroProps) => {
                       />
                       <Button
                         type="button"
-                        onClick={() => setIsPlaying(true)}
+                        onClick={() => {
+                          acceptExternal();
+                          setIsPlaying(true);
+                        }}
                         size="icon"
                         aria-label={dict.playLabel}
                         className="absolute top-1/2 left-1/2 z-30 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full bg-secondary text-secondary-foreground shadow-[0_0_0_14px_var(--color-border)] transition-all hover:bg-secondary/90 hover:shadow-[0_0_0_0px_var(--color-border)] md:h-14 md:w-14 lg:h-20 lg:w-20"

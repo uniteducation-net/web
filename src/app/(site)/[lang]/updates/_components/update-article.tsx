@@ -47,12 +47,20 @@ interface UpdateArticleProps {
   /** Cover shown in a contain box under the header — ImageKit path relative
    *  to the urlEndpoint. */
   cover?: string;
+  /** Crop anchor for raster covers (CSS object-position); default "center". */
+  coverPosition?: "top" | "center" | "bottom";
   labels: UpdateArticleLabels;
   children: ReactNode;
   className?: string;
 }
 
 const BODY_ID = "update-article-body";
+
+const COVER_POSITION = {
+  top: "object-top",
+  center: "object-center",
+  bottom: "object-bottom",
+} as const;
 
 const initials = (name: string) =>
   name
@@ -71,6 +79,7 @@ const UpdateArticle = ({
   readingTime,
   author,
   cover,
+  coverPosition,
   labels,
   children,
   className,
@@ -145,9 +154,12 @@ const UpdateArticle = ({
             src={cover}
             alt={title}
             priority
+            sizes="(min-width: 1536px) 1472px, 100vw"
             className="mt-10 h-64 w-full rounded-xl border bg-muted md:h-96"
             imageClassName={
-              cover.endsWith(".svg") ? "object-contain p-6 md:p-8" : "object-cover"
+              cover.endsWith(".svg")
+                ? "object-contain p-6 md:p-8"
+                : cn("object-cover", COVER_POSITION[coverPosition ?? "center"])
             }
           />
         )}

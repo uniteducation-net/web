@@ -38,6 +38,9 @@ export interface UpdateFrontmatter {
   tags?: string[];
   /** ImageKit path relative to the urlEndpoint, e.g. "/illustrations/together.svg" */
   cover?: string;
+  /** Cover crop anchor in the article hero (CSS object-position) — raster
+   *  covers only; SVG covers stay centered in their contain box. */
+  coverPosition?: "top" | "center" | "bottom";
   /** Featured in the "Highlights" carousel on the updates overview. */
   highlight?: boolean;
   draft?: boolean;

@@ -190,9 +190,7 @@
     "forTeachers": "Für Lehrkräfte",
     "getInvolved": "Mitmachen",
     "playLabel": "Video abspielen",
-    "videoTitle": "YouTube-Videoplayer",
-    "videoConsentText": "Ein Video von YouTube (Google) laden? Vorschaubild und Player werden nur mit Ihrer Einwilligung geladen.",
-    "videoConsentButton": "Video laden"
+    "videoTitle": "YouTube-Videoplayer"
   },
   "aboutHero": {
     "metaTitle": "Über uns",
