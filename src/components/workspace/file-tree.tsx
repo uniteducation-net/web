@@ -11,6 +11,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronRight, FileImage, FileText, Folder } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  authStartUrl,
+  fetchAuthStatus,
+  openAuthPopup,
+} from "@/lib/auth-popup";
 import { cn } from "@/lib/utils";
 
 /** Tree labels hide the ".md" extension — users see "CONTEXT", the path
@@ -96,14 +101,28 @@ export function FileTree({
   useEffect(() => {
     if (files !== undefined) return; // template mode — no repo to fetch
     let cancelled = false;
-    (async () => {
+    const loadTree = async (reconnected = false): Promise<void> => {
       try {
         const res = await fetch("/api/workspace/tree", { cache: "no-store" });
         if (res.status === 401) {
-          // Expired session (09 step 6): re-auth is one click and GitHub
-          // remembers them — redirect instead of showing a dead screen.
-          router.replace("/api/auth/github");
-          return; // skeleton stays up until the redirect lands
+          // Expired session: reconnect in the small window (lib/auth-popup.ts)
+          // — the workspace never navigates away. Mount-time calls usually
+          // lack user activation, so most browsers block the popup → the old
+          // full-page redirect is the fallback. One reconnect attempt, then
+          // we stop looping.
+          if (reconnected) {
+            router.replace(authStartUrl("/workspace"));
+            return;
+          }
+          const outcome = await openAuthPopup();
+          if (outcome === "blocked") {
+            router.replace(authStartUrl("/workspace"));
+            return; // skeleton stays up until the redirect lands
+          }
+          const status = await fetchAuthStatus();
+          if (status.authenticated) return loadTree(true);
+          router.replace(authStartUrl("/workspace"));
+          return;
         }
         if (!res.ok) throw new Error(`tree fetch failed: ${res.status}`);
         const entries = (await res.json()) as { path: string; sha: string }[];
@@ -114,7 +133,8 @@ export function FileTree({
       } catch {
         if (!cancelled) setFailed(true);
       }
-    })();
+    };
+    void loadTree();
     return () => {
       cancelled = true;
     };

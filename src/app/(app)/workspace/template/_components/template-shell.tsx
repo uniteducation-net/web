@@ -22,6 +22,13 @@ import {
 } from "@/lib/template-workspace";
 import { draftProfile, readOnboardingDraft } from "@/lib/onboarding-draft";
 import { describeCreateError } from "@/lib/create-error";
+import {
+  authStartUrl,
+  connectGitHub,
+  consumeUnloadPromptSuppression,
+  openPopup,
+  suppressNextUnloadPrompt,
+} from "@/lib/auth-popup";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -213,8 +220,12 @@ export function TemplateShell({ authState, className }: TemplateShellProps) {
   // Anonymous close warning (17 step 6): the draft is browser-only — nudge
   // before the tab closes when there's anything worth keeping. Logged-in
   // visitors never get the prompt (their path to keeping it is the banner).
+  // INTENTIONAL full-page hops suppress it (lib/auth-popup.ts): the auth-chain
+  // fallback (the draft survives in localStorage) and the post-create nav
+  // (the draft was just converted into the repo) are false positives.
   useEffect(() => {
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (consumeUnloadPromptSuppression()) return;
       if (authState === "anonymous" && hasContentRef.current) {
         e.preventDefault();
       }
@@ -289,42 +300,76 @@ export function TemplateShell({ authState, className }: TemplateShellProps) {
 
   // WYSIWYG conversion (17 step 7): the whole local draft becomes the create
   // payload's files — the repo lands exactly what the teacher sees here.
+  // Two attempts max: a recoverable auth/coverage failure opens the small
+  // GitHub window (lib/auth-popup.ts) and retries ONCE — the main page
+  // never navigates away.
   const createWorkspace = async () => {
     if (creating) return;
     setCreating(true);
     setCreateError(null);
     try {
-      const res = await fetch("/api/workspace/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          profile: profile ?? EMPTY_TEMPLATE_PROFILE,
-          files: Object.entries(store.getState().files).map(
-            ([path, { content }]) => ({ path, content }),
-          ),
-        }),
-      });
-      const data = (await res.json().catch(() => ({}))) as {
-        error?: string;
-        message?: string;
-        fixUrl?: string;
-      };
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const res = await fetch("/api/workspace/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            profile: profile ?? EMPTY_TEMPLATE_PROFILE,
+            files: Object.entries(store.getState().files).map(
+              ([path, { content }]) => ({ path, content }),
+            ),
+          }),
+        });
+        const data = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          message?: string;
+          fixUrl?: string;
+        };
 
-      if (res.status === 409 && data.fixUrl) {
-        // Installation coverage fix (07 step 5) — one click, then retry.
-        window.location.href = data.fixUrl;
-        return;
-      }
-      if (!res.ok) {
+        if (res.ok) {
+          // The draft is safely in the repo — drop the local copy and hard-nav
+          // (deliberate full reload: stale router cache, same as onboarding).
+          // Suppress the unload prompt: the draft was just converted.
+          clearTemplateEnvelope();
+          suppressNextUnloadPrompt();
+          // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+          window.location.href = "/workspace";
+          return;
+        }
+
+        // Installation coverage fix (07 step 5): grant access in the small
+        // window (github.com can't message us; closing it fires the retry).
+        if (res.status === 409 && data.fixUrl && attempt === 0) {
+          await openPopup(data.fixUrl);
+          continue;
+        }
+
+        // Stale/expired session or a pre-permission-grant token (99 #11):
+        // reconnect in the small window and retry once.
+        if (
+          attempt === 0 &&
+          (res.status === 401 ||
+            (res.status === 403 &&
+              data.error === "github_reauthorization_needed") ||
+            (res.status === 409 && data.error === "app_not_installed"))
+        ) {
+          const result = await connectGitHub();
+          if (result.outcome === "blocked") {
+            // Popup refused → the old full-page chain (draft survives).
+            suppressNextUnloadPrompt();
+            window.location.assign(authStartUrl("/workspace/template"));
+            return;
+          }
+          if (result.outcome === "connected") continue;
+          setCreateError({
+            message:
+              "Nothing changed — log in from the small window when you're ready, then press the button again.",
+          });
+          return;
+        }
+
         setCreateError(describeCreateError(data));
         return;
       }
-
-      // The draft is safely in the repo — drop the local copy and hard-nav
-      // (deliberate full reload: stale router cache, same as onboarding).
-      clearTemplateEnvelope();
-      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-      window.location.href = "/workspace";
     } catch {
       setCreateError({
         message:
@@ -400,6 +445,12 @@ export function TemplateShell({ authState, className }: TemplateShellProps) {
             creating={creating}
             error={createError}
             onCreate={() => void createWorkspace()}
+            onConnectAborted={() =>
+              setCreateError({
+                message:
+                  "Nothing changed — log in from the small window when you're ready, then press the button again.",
+              })
+            }
           />
           <div className="min-h-0 flex-1">
             {/* Mount only after hydration: the editor reads its file on mount,
@@ -441,6 +492,7 @@ export function TemplateShell({ authState, className }: TemplateShellProps) {
       <LeaveTemplateDialog
         open={draftLeaveOpen}
         onStay={() => setDraftLeaveOpen(false)}
+        onConnectAndCreate={() => void createWorkspace()}
       />
     </TooltipProvider>
   );

@@ -3,11 +3,14 @@
 // 17 step 5 — the template workspace's persistent banner: the local-draft
 // notice plus the one call to action that fits the visitor's auth state
 // (server-computed in page.tsx). Presentational — the shell owns the
-// create conversion and hands down its state.
+// create conversion and hands down its state. Auth CTAs go through
+// GitHubConnectButton (lib/auth-popup.ts): GitHub opens in a small
+// auto-closing window; this page never navigates.
 
 import Link from "next/link";
-import { LogIn, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { GitHubConnectButton } from "@/components/github-connect-button";
 
 export interface TemplateBannerError {
   message: string;
@@ -19,18 +22,16 @@ interface TemplateBannerProps {
   creating: boolean;
   error: TemplateBannerError | null;
   onCreate(): void;
+  /** The visitor closed the small GitHub window without connecting. */
+  onConnectAborted?(): void;
 }
-
-/** Full-document nav into the GitHub OAuth chain; the local draft survives
- *  in localStorage and the flow returns here (`next`). Plain <a>, not Link —
- *  an API route that 302s to GitHub wants a document navigation. */
-const LOGIN_HREF = "/api/auth/github?next=/workspace/template";
 
 export function TemplateBanner({
   authState,
   creating,
   error,
   onCreate,
+  onConnectAborted,
 }: TemplateBannerProps) {
   return (
     <div className="shrink-0 border-b border-border bg-muted">
@@ -40,14 +41,26 @@ export function TemplateBanner({
             ? "You already have a workspace — this draft stays in this browser."
             : "This template is a local draft — it lives only in this browser."}
         </p>
-        {authState === "anonymous" && (
-          <Button size="sm" asChild className="shrink-0">
-            <a href={LOGIN_HREF}>
-              <LogIn className="size-4" />
-              Log in to save your workspace
-            </a>
-          </Button>
-        )}
+        {authState === "anonymous" &&
+          (creating ? (
+            <Button size="sm" className="shrink-0" disabled>
+              <Sparkles className="size-4" />
+              Creating your workspace…
+            </Button>
+          ) : (
+            // Single click total: connect in the small window, then the
+            // shell POSTs the create immediately (onConnected = onCreate).
+            <GitHubConnectButton
+              next="/workspace/template"
+              variant="default"
+              size="sm"
+              className="shrink-0"
+              onConnected={onCreate}
+              onAborted={onConnectAborted}
+            >
+              Create my workspace
+            </GitHubConnectButton>
+          ))}
         {authState === "no-repo" && (
           <Button
             size="sm"
@@ -69,12 +82,13 @@ export function TemplateBanner({
         <div className="flex items-center justify-center gap-3 border-t border-border px-4 py-1.5 text-xs">
           <span className="text-destructive">{error.message}</span>
           {error.reconnect && (
-            <a
-              href={LOGIN_HREF}
-              className="font-medium text-primary underline underline-offset-2"
+            <GitHubConnectButton
+              inline
+              next="/workspace/template"
+              onConnected={onCreate}
             >
               Reconnect GitHub
-            </a>
+            </GitHubConnectButton>
           )}
         </div>
       )}

@@ -6,7 +6,14 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { GITHUB_API_VERSION } from "@/lib/github";
-import { getSession, getValidUserToken, setSession } from "@/lib/session";
+import {
+  AUTH_NEXT_COOKIE,
+  getSession,
+  getValidUserToken,
+  sanitizeNext,
+  setSession,
+  unsealAuthNext,
+} from "@/lib/session";
 
 type InstallationsResponse = {
   installations: { id: number }[];
@@ -61,5 +68,15 @@ export async function GET(request: NextRequest) {
   }
 
   await setSession({ ...session, installationId });
-  return NextResponse.redirect(new URL("/workspace", request.nextUrl.origin));
+  // Return where the flow started: the callback stashed `next` in the signed
+  // auth_next cookie before the install-screen bounce (popup flows land on
+  // the auto-close page). Signature-verified AND re-sanitized — never trust
+  // a cookie blindly. Falls back to /workspace (the pre-popup behavior).
+  const rawNext = request.cookies.get(AUTH_NEXT_COOKIE)?.value;
+  const sealedNext = rawNext ? await unsealAuthNext(rawNext) : null;
+  const response = NextResponse.redirect(
+    new URL(sanitizeNext(sealedNext), request.nextUrl.origin),
+  );
+  response.cookies.delete(AUTH_NEXT_COOKIE);
+  return response;
 }

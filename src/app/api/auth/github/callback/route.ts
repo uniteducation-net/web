@@ -8,9 +8,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GITHUB_API_VERSION } from "@/lib/github";
 import {
+  AUTH_NEXT_COOKIE,
+  AUTH_NEXT_MAX_AGE,
   OAUTH_STATE_COOKIE,
   requireEnv,
   sanitizeNext,
+  sealAuthNext,
   setSession,
   unsealOAuthState,
 } from "@/lib/session";
@@ -37,14 +40,34 @@ export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const code = searchParams.get("code");
   const state = searchParams.get("state");
-  if (!code || !state) return badRequest("Missing code or state.");
+  if (!code) return badRequest("Missing code.");
 
-  const rawState = request.cookies.get(OAUTH_STATE_COOKIE)?.value;
-  if (!rawState) return badRequest("Missing oauth_state cookie.");
-  // The cookie is signed (02 step 2) — a forged or expired one never parses.
-  const oauthState = await unsealOAuthState(rawState);
-  if (!oauthState) return badRequest("Corrupt oauth_state cookie.");
-  if (oauthState.state !== state) return badRequest("State mismatch.");
+  // Two callback shapes (02-auth):
+  // - User-initiated: code + state — state verified against the sealed
+  //   cookie, the exchange uses its PKCE verifier, `next` restored from it.
+  // - GitHub-initiated (install / permission update with "Request user
+  //   authorization during installation" enabled): code + installation_id +
+  //   setup_action, NO state — GitHub started the flow, so there is no cookie
+  //   to verify against and no PKCE challenge was sent. Rejecting these
+  //   strands the user right after they approve permissions on GitHub — the
+  //   fresh code carrying the upgraded token gets discarded (99 #11).
+  let verifier: string | undefined;
+  let next = "/workspace";
+  if (state) {
+    const rawState = request.cookies.get(OAUTH_STATE_COOKIE)?.value;
+    if (!rawState) return badRequest("Missing oauth_state cookie.");
+    // The cookie is signed (02 step 2) — a forged or expired one never parses.
+    const oauthState = await unsealOAuthState(rawState);
+    if (!oauthState) return badRequest("Corrupt oauth_state cookie.");
+    if (oauthState.state !== state) return badRequest("State mismatch.");
+    verifier = oauthState.verifier;
+    next = oauthState.next;
+  } else if (
+    !searchParams.get("installation_id") &&
+    !searchParams.get("setup_action")
+  ) {
+    return badRequest("Missing code or state.");
+  }
 
   let clientId: string;
   let clientSecret: string;
@@ -70,7 +93,9 @@ export async function GET(request: NextRequest) {
       client_id: clientId,
       client_secret: clientSecret,
       code,
-      code_verifier: oauthState.verifier,
+      // Only the user-initiated flow sent a PKCE challenge — GitHub-initiated
+      // callbacks exchange without a verifier.
+      ...(verifier ? { code_verifier: verifier } : {}),
     }),
     cache: "no-store",
   });
@@ -129,9 +154,11 @@ export async function GET(request: NextRequest) {
   });
 
   const destination = installationId
-    ? // Already installed → continue where the flow started. Re-sanitized
-      // here too (defense in depth) — never redirect off-site.
-      new URL(sanitizeNext(oauthState.next), appUrl)
+    ? // Already installed → continue where the flow started (user-initiated)
+      // or to the workspace entry (GitHub-initiated — no `next` exists
+      // without state). Re-sanitized here too (defense in depth) — never
+      // redirect off-site.
+      new URL(sanitizeNext(next), appUrl)
     : // Not installed → one click on GitHub's install screen (personal
       // account, "All repositories" pre-selected). GitHub then bounces to
       // the app's Setup URL = /api/auth/github/installed.
@@ -139,5 +166,20 @@ export async function GET(request: NextRequest) {
 
   const response = NextResponse.redirect(destination);
   response.cookies.delete(OAUTH_STATE_COOKIE);
+  if (installationId) {
+    response.cookies.delete(AUTH_NEXT_COOKIE); // stale cookie from an older attempt
+  } else {
+    // The install screen bounces to the Setup URL without our query params —
+    // stash `next` (signed) so /installed can return the user where the flow
+    // started. Popup flows (lib/auth-popup.ts) pass the auto-close page as
+    // next, so the small window closes itself even after an install.
+    response.cookies.set(AUTH_NEXT_COOKIE, await sealAuthNext(sanitizeNext(next)), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: AUTH_NEXT_MAX_AGE,
+    });
+  }
   return response;
 }

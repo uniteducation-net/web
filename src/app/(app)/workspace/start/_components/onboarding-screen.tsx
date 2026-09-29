@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check, LogIn, LogOut, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, LogOut, X } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import {
@@ -34,6 +34,12 @@ import {
   readOnboardingDraft,
 } from "@/lib/onboarding-draft";
 import { describeCreateError, type CreateErrorCopy } from "@/lib/create-error";
+import {
+  authStartUrl,
+  connectGitHub,
+  openPopup,
+} from "@/lib/auth-popup";
+import { GitHubConnectButton } from "@/components/github-connect-button";
 import { cn } from "@/lib/utils";
 import {
   OPENING_MESSAGE,
@@ -55,10 +61,6 @@ const EMPTY_PROFILE: OnboardingProfile = {
 /** Centered → bottom glide: animates the flex-grow regions around the chat. */
 const layoutMotion =
   "motion-safe:transition-all motion-safe:duration-700 motion-safe:ease-in-out";
-
-/** Full-document nav into the GitHub OAuth chain; the draft chat survives in
-    localStorage and is restored on return to `next`. */
-const GITHUB_LOGIN_HREF = "/api/auth/github?next=/workspace/start";
 
 interface OnboardingScreenProps {
   /** From the server page (04). Decides whether "Go to workspace" opens the
@@ -87,6 +89,9 @@ export function OnboardingScreen({ authenticated, user }: OnboardingScreenProps)
   // personalization, so it can take several seconds.
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<CreateErrorCopy | null>(null);
+  // Popup connect flow (lib/auth-popup.ts): status line shown while the
+  // small GitHub window is open, plus the gentle "nothing changed" note.
+  const [connectNote, setConnectNote] = useState<string | null>(null);
   // Inline two-step logout confirm — the icon swaps to "Sure? ✓ ✗" in place.
   const [confirmLogout, setConfirmLogout] = useState(false);
 
@@ -157,37 +162,75 @@ export function OnboardingScreen({ authenticated, user }: OnboardingScreenProps)
     // Provision (07): create + personalize the teacher's repo, then hard-nav
     // to /workspace — the guard (04) finds the repo and renders the shell.
     // Without a finished interview the workspace is seeded from EMPTY_PROFILE.
+    // Two attempts max: a recoverable auth/coverage failure opens the small
+    // GitHub window (lib/auth-popup.ts) and retries ONCE — the main page
+    // never navigates away.
     setCreating(true);
     setCreateError(null);
     try {
-      const res = await fetch("/api/workspace/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profile: profile ?? EMPTY_PROFILE }),
-      });
-      const data = (await res.json().catch(() => ({}))) as {
-        error?: string;
-        message?: string;
-        fixUrl?: string;
-      };
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const res = await fetch("/api/workspace/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ profile: profile ?? EMPTY_PROFILE }),
+        });
+        const data = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          message?: string;
+          fixUrl?: string;
+        };
 
-      if (res.status === 409 && data.fixUrl) {
-        // The app installation doesn't cover the new repo yet — GitHub's
-        // page grants access in one click, then the teacher retries (the
-        // create call is idempotent).
-        window.location.href = data.fixUrl;
-        return;
-      }
-      if (!res.ok) {
+        if (res.ok) {
+          // Full reload is deliberate: the teacher was redirected away from
+          // /workspace moments ago, so its payload sits in the client router
+          // cache and router.push could serve the stale pre-provision state.
+          // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+          window.location.href = "/workspace";
+          return;
+        }
+
+        // The app installation doesn't cover the new repo yet — grant access
+        // in the small window (github.com can't message us; closing it fires
+        // the retry), then the server's coverage check decides.
+        if (res.status === 409 && data.fixUrl && attempt === 0) {
+          setConnectNote(
+            "Grant access in the small window, then close it — we'll take it from there.",
+          );
+          await openPopup(data.fixUrl);
+          setConnectNote(null);
+          continue;
+        }
+
+        // Stale/expired session or a pre-permission-grant token (99 #11):
+        // reconnect in the small window and retry once.
+        if (
+          attempt === 0 &&
+          (res.status === 401 ||
+            (res.status === 403 &&
+              data.error === "github_reauthorization_needed") ||
+            (res.status === 409 && data.error === "app_not_installed"))
+        ) {
+          setConnectNote(
+            "Finish the one GitHub step in the small window — it closes by itself.",
+          );
+          const result = await connectGitHub();
+          setConnectNote(null);
+          if (result.outcome === "blocked") {
+            // Popup refused → the old full-page chain (draft survives).
+            window.location.assign(authStartUrl("/workspace/start"));
+            return;
+          }
+          if (result.outcome === "connected") continue;
+          setCreateError({
+            message:
+              "Nothing changed — log in from the small window when you're ready, then press the button again.",
+          });
+          return;
+        }
+
         setCreateError(describeCreateError(data));
         return;
       }
-
-      // Full reload is deliberate: the teacher was redirected away from
-      // /workspace moments ago, so its payload sits in the client router
-      // cache and router.push could serve the stale pre-provision state.
-      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-      window.location.href = "/workspace";
     } catch {
       setCreateError({
         message: "Couldn't reach the server — check your connection and try again.",
@@ -296,18 +339,26 @@ export function OnboardingScreen({ authenticated, user }: OnboardingScreenProps)
           </PromptInputFooter>
         </PromptInput>
 
+        {connectNote && (
+          <p className="pt-2 text-center text-xs text-muted-foreground">
+            {connectNote}
+          </p>
+        )}
         {createError && (
           <div className="pt-2 text-center text-xs">
             <p className="text-destructive">{createError.message}</p>
             <div className="mt-1 flex items-center justify-center gap-3">
               {createError.reconnect && (
-                // Plain <a>: the OAuth chain wants a full-document navigation.
-                <a
-                  href={GITHUB_LOGIN_HREF}
-                  className="font-medium text-primary underline underline-offset-2"
+                <GitHubConnectButton
+                  inline
+                  next="/workspace/start"
+                  onConnected={() => {
+                    setCreateError(null);
+                    void goToWorkspace();
+                  }}
                 >
                   Reconnect GitHub
-                </a>
+                </GitHubConnectButton>
               )}
               {/* Escape hatch on every create failure (17): the local
                   template works without login and keeps the chat profile. */}
@@ -369,20 +420,18 @@ export function OnboardingScreen({ authenticated, user }: OnboardingScreenProps)
             )}
           </div>
         ) : (
-          <div className="mt-2 flex justify-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              asChild
+          <div className="mt-2 flex flex-col items-center justify-center">
+            <GitHubConnectButton
+              next="/workspace/start"
+              showHelper
+              onConnected={() => router.refresh()}
+              onAborted={() =>
+                setConnectNote("Nothing changed — try again when you're ready.")
+              }
               className="text-muted-foreground"
             >
-              {/* Plain <a>, not Link: an API route that 302s to GitHub wants a
-                  full-document navigation. */}
-              <a href={GITHUB_LOGIN_HREF}>
-                <LogIn className="size-4" />
-                Optional: Log in to save progress
-              </a>
-            </Button>
+              Optional: Log in to save progress
+            </GitHubConnectButton>
           </div>
         )}
         <p className="mt-2 text-center text-xs text-muted-foreground">

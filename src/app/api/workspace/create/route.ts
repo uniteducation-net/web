@@ -20,6 +20,7 @@ import {
   commitMany,
   createWorkspaceRepo,
   findExistingWorkspace,
+  getAppPermissions,
   getTree,
   writeFile,
 } from "@/lib/github";
@@ -335,6 +336,17 @@ export async function POST(req: Request) {
     // The teacher's user token predates a permission grant (99-known-issues
     // #11) — only re-authorization fixes it, so say so explicitly.
     if (err instanceof GitHubReauthorizationError) {
+      // Diagnostics for 99 #11: the registration's configured permissions.
+      // Compare with the 403 log in createWorkspaceRepo — if repository_creation
+      // isn't "write" HERE, no token can ever work (dashboard step pending).
+      try {
+        console.warn(
+          "[workspace/create] app registration permissions:",
+          await getAppPermissions(),
+        );
+      } catch {
+        // Diagnostics must never mask the real error.
+      }
       return NextResponse.json(
         { error: "github_reauthorization_needed" },
         { status: 403 },

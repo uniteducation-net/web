@@ -156,6 +156,38 @@ export async function unsealOAuthState(
   }
 }
 
+// ---------------------------------------------------------------------------
+// Post-install destination. When the OAuth callback must bounce the user to
+// GitHub's install screen, GitHub's Setup-URL redirect does NOT round-trip
+// our query params — so the callback stashes `next` in this short-lived
+// SIGNED cookie (same HS256 posture as oauth_state: a planted cookie fails
+// verification) and /installed consumes it. This is what lets the popup
+// connect flow (lib/auth-popup.ts) end on the auto-close page even when an
+// install happens mid-flow.
+// ---------------------------------------------------------------------------
+
+export const AUTH_NEXT_COOKIE = "auth_next";
+export const AUTH_NEXT_MAX_AGE = 60 * 10; // 10 min — one install round-trip
+
+export async function sealAuthNext(next: string): Promise<string> {
+  return new SignJWT({ next })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime(`${AUTH_NEXT_MAX_AGE}s`)
+    .sign(sessionKey());
+}
+
+/** Returns the verified `next`, or null if absent/invalid/expired. Callers
+ *  must still run it through sanitizeNext (defense in depth). */
+export async function unsealAuthNext(raw: string): Promise<string | null> {
+  try {
+    const { payload } = await jwtVerify(raw, sessionKey());
+    return typeof payload.next === "string" ? payload.next : null;
+  } catch {
+    return null;
+  }
+}
+
 type RefreshResponse = {
   access_token?: string;
   expires_in?: number;

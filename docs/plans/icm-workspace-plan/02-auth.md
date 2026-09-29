@@ -102,3 +102,26 @@ known-issues #11).
 via `GITHUB_API_VERSION` (lib/github.ts) — including the raw fetches in this
 chain's callback/installed routes. The unversioned default (2022-11-28) is
 deprecated, sunset 2028-03-10.
+
+**Org-owned apps:** if the app is registered under an organization, permission
+changes may sit as a **pending request** until an organization owner approves
+them (org Settings → GitHub Apps, plus an email to owners) — saving the
+dashboard form alone is not enough.
+
+**GitHub-initiated callbacks (2026-09-28):** with "Request user authorization
+(OAuth) during installation" enabled, GitHub itself runs the OAuth flow after
+a user installs the app or approves updated permissions, and redirects to the
+callback URL with `code` + `installation_id` + `setup_action` but **no
+`state`** (state is only echoed when we initiate the flow). The callback
+accepts this shape: it exchanges the code without a PKCE verifier, resolves
+`installationId` from `/user/installations` (never trusting the query param,
+same rule as step 4), and lands the user on `/workspace`. Rejecting it (the
+pre-fix behavior) discarded the post-approval code and stranded the user with
+their old, under-privileged token — the live cause of #11 persisting after
+approval.
+
+**Dashboard URL fields:** Homepage URL is a single cosmetic URL (OAuth never
+uses it). Callback URLs: up to 10 allowed — keep one per environment
+(`http://localhost:3000/api/auth/github/callback`, prod equivalent); the auth
+route passes `redirect_uri` explicitly, which must match a registered entry
+exactly.

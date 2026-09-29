@@ -4,11 +4,12 @@
 // content: the draft is browser-only, so the dialog nudges the login that
 // would keep it. Distinct from LeaveWorkspaceDialog (that one guards an
 // unsaved editor buffer; this one guards the whole local draft).
+// The login runs in the small popup window (lib/auth-popup.ts) and chains
+// straight into the create conversion — the page never navigates.
 
 import Link from "next/link";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -17,15 +18,20 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { buttonVariants } from "@/components/ui/button";
+import { GitHubConnectButton } from "@/components/github-connect-button";
 
 interface LeaveTemplateDialogProps {
   open: boolean;
   onStay(): void;
+  /** After a successful connect: the shell converts the draft immediately. */
+  onConnectAndCreate?(): void;
 }
 
-const LOGIN_HREF = "/api/auth/github?next=/workspace/template";
-
-export function LeaveTemplateDialog({ open, onStay }: LeaveTemplateDialogProps) {
+export function LeaveTemplateDialog({
+  open,
+  onStay,
+  onConnectAndCreate,
+}: LeaveTemplateDialogProps) {
   return (
     <AlertDialog
       open={open}
@@ -49,13 +55,22 @@ export function LeaveTemplateDialog({ open, onStay }: LeaveTemplateDialogProps) 
           >
             Leave anyway
           </Link>
-          {/* Plain <a>: an API route that 302s to GitHub wants a full-document
-              navigation (same convention as the onboarding login link). */}
-          <AlertDialogAction asChild>
-            <a href={LOGIN_HREF}>Log in to save</a>
-          </AlertDialogAction>
+          {/* Deliberately NOT AlertDialogAction asChild: Radix Slot-cloning a
+              composite is fragile, and the dialog must stay open while the
+              popup is pending (the button shows "Waiting for GitHub…"). */}
+          <GitHubConnectButton
+            next="/workspace/template"
+            variant="default"
+            onConnected={() => {
+              onStay();
+              onConnectAndCreate?.();
+            }}
+          >
+            Log in to save
+          </GitHubConnectButton>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );
 }
+

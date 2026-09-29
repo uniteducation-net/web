@@ -186,6 +186,22 @@ authorize step; there is no direct approval link and no API-side fix.
   push — expect the 403, the CTA path handles it
 - **Affects:** 02 (permissions section), 03 (step 5), 07 (error mapping)
 
+**Update (2026-09-28, second root cause found):** approving the permissions on
+GitHub's side still didn't fix users — with "Request user authorization (OAuth)
+during installation" enabled, GitHub's post-approval redirect hits our callback
+with `code` + `installation_id` + `setup_action=update` but **no `state`**, and
+the callback 400'd ("Missing code or state"), discarding the fresh code that
+carried the upgraded token. The session kept the pre-approval token and every
+`POST /user/repos` kept 403ing. Fixed: the callback now accepts the
+GitHub-initiated shape (exchange without PKCE verifier, installation resolved
+via `/user/installations`, redirect `/workspace`). Also noted: for
+**org-owned apps** the permission change itself may pend org-owner approval —
+verify the dashboard shows it as current, not requested. Server-side
+diagnostics now log the 403's `x-accepted-github-permissions` /
+`x-oauth-client-id` / `x-github-request-id` (createWorkspaceRepo) and the app
+registration's configured permissions via `GET /app` (create route) on every
+occurrence.
+
 ---
 
 ## Priority summary

@@ -16,6 +16,11 @@ import { useEffect, useImperativeHandle, useRef, useState } from "react";
 import type { Editor } from "@tiptap/core";
 import { Sparkles } from "lucide-react";
 import type { SessionRepo } from "@/lib/session";
+import {
+  authStartUrl,
+  fetchAuthStatus,
+  openAuthPopup,
+} from "@/lib/auth-popup";
 import { cn } from "@/lib/utils";
 import { EditorConflictBanner } from "./editor-conflict-banner";
 import { EditorHeader } from "./editor-header";
@@ -103,6 +108,39 @@ export function WorkspaceEditor({
     setConflict(null);
   };
 
+  // Popup reconnect (lib/auth-popup.ts): a 401 anywhere in the editor opens
+  // the small GitHub window instead of yanking the page away — the dirty
+  // buffer never leaves memory, and callers retry the failed op once.
+  // reconnectingRef prevents stacked popups; a blocked popup falls back to
+  // the old full-page redirect.
+  const reconnectingRef = useRef(false);
+  const reconnect = async (): Promise<boolean> => {
+    if (reconnectingRef.current) return false;
+    reconnectingRef.current = true;
+    try {
+      const outcome = await openAuthPopup();
+      if (outcome === "blocked") {
+        router.replace(authStartUrl("/workspace"));
+        return false;
+      }
+      const status = await fetchAuthStatus();
+      if (status.authenticated) {
+        router.refresh();
+        return true;
+      }
+      return false;
+    } finally {
+      reconnectingRef.current = false;
+    }
+  };
+  // Ref mirrors so the hook callback below always calls the CURRENT
+  // reconnect/refresh (both are defined around the useEditorFile call).
+  const reconnectRef = useRef(reconnect);
+  useEffect(() => {
+    reconnectRef.current = reconnect;
+  });
+  const refreshRef = useRef<() => void>(() => {});
+
   const {
     file,
     failed,
@@ -122,7 +160,14 @@ export function WorkspaceEditor({
       if (meta.refreshed) applyExternal(data);
     },
     onConflictExternal: () => setConflict({ reason: "external" }),
-    onUnauthorized: () => router.replace("/api/auth/github"),
+    onUnauthorized: () => {
+      void reconnectRef.current().then((ok) => {
+        if (ok) refreshRef.current();
+      });
+    },
+  });
+  useEffect(() => {
+    refreshRef.current = refresh;
   });
 
   // New file → editing state resets via the remount's onCreate (onBaseline
@@ -148,25 +193,30 @@ export function WorkspaceEditor({
     setSaving(true);
     try {
       const markdown = ed.getMarkdown();
-      const res = await api.write({
-        path: file.path,
-        content: markdown,
-        sha: file.sha,
-      });
-      if (res === "unauthorized") {
-        router.replace("/api/auth/github");
-        return false;
+      // Two attempts: a 401 opens the reconnect popup once, then the write
+      // retries with the same in-memory buffer — nothing is lost.
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const res = await api.write({
+          path: file.path,
+          content: markdown,
+          sha: file.sha,
+        });
+        if (res === "unauthorized") {
+          if (attempt === 0 && (await reconnect())) continue;
+          return false;
+        }
+        if (res === "sha_mismatch") {
+          setConflict({ reason: "sha_mismatch" });
+          return false;
+        }
+        markSaved({ path: file.path, content: markdown, sha: res.sha });
+        baselineRef.current = normalizeMarkdown(markdown);
+        dirtyRef.current = false;
+        setDirty(false);
+        setConflict(null);
+        return true;
       }
-      if (res === "sha_mismatch") {
-        setConflict({ reason: "sha_mismatch" });
-        return false;
-      }
-      markSaved({ path: file.path, content: markdown, sha: res.sha });
-      baselineRef.current = normalizeMarkdown(markdown);
-      dirtyRef.current = false;
-      setDirty(false);
-      setConflict(null);
-      return true;
+      return false;
     } catch {
       setSaveError("Couldn't save — try again.");
       return false;
@@ -234,24 +284,28 @@ export function WorkspaceEditor({
     if (!ed) return;
     setConflictBusy(true);
     try {
-      // Re-read purely for the fresh sha, then overwrite the remote change.
-      const fresh = await api.read(path);
-      if (fresh === "unauthorized") {
-        router.replace("/api/auth/github");
-        return;
-      }
       const markdown = ed.getMarkdown();
-      const res = await api.write({ path, content: markdown, sha: fresh.sha });
-      if (res === "unauthorized") {
-        router.replace("/api/auth/github");
+      // Two attempts: a 401 (read OR write) opens the reconnect popup once.
+      for (let attempt = 0; attempt < 2; attempt++) {
+        // Re-read purely for the fresh sha, then overwrite the remote change.
+        const fresh = await api.read(path);
+        if (fresh === "unauthorized") {
+          if (attempt === 0 && (await reconnect())) continue;
+          return;
+        }
+        const res = await api.write({ path, content: markdown, sha: fresh.sha });
+        if (res === "unauthorized") {
+          if (attempt === 0 && (await reconnect())) continue;
+          return;
+        }
+        if (res === "sha_mismatch") return; // raced again — keep the banner up
+        markSaved({ path, content: markdown, sha: res.sha });
+        baselineRef.current = normalizeMarkdown(markdown);
+        dirtyRef.current = false;
+        setDirty(false);
+        setConflict(null);
         return;
       }
-      if (res === "sha_mismatch") return; // raced again — keep the banner up
-      markSaved({ path, content: markdown, sha: res.sha });
-      baselineRef.current = normalizeMarkdown(markdown);
-      dirtyRef.current = false;
-      setDirty(false);
-      setConflict(null);
     } catch {
       setSaveError("Couldn't save — try again.");
     } finally {

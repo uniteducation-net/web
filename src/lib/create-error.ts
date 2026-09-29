@@ -35,6 +35,19 @@ export function describeCreateError(data: {
         message:
           "GitHub isn't fully connected yet — press the button again to reconnect.",
       };
+    case "not_authenticated":
+      return {
+        message:
+          "Log in with GitHub to continue — one small window, then you're back here.",
+        reconnect: true,
+      };
+    case "installation_not_covering_repo":
+      // Shown when the coverage-fix round-trip already ran once (a second
+      // consecutive 409) — the generic copy would be misleading.
+      return {
+        message:
+          "GitHub hasn't granted access to the new workspace yet — press the button again to retry.",
+      };
     default:
       return {
         message:

@@ -1,10 +1,13 @@
 // The ONLY module in the app that talks to api.github.com. All repo access
 // goes through these helpers. Two token types, two clients (see 02):
-//   - User token (ghu_…, 8h + refresh)  → repo creation + installation lookup.
-//     Creating a repo in a personal account requires user auth.
+//   - User token (ghu_…, 8h + refresh)  → installation lookup + the FALLBACK
+//     repo-creation path (POST /user/repos is user-token-only and needs a
+//     retroactive permission grant — 99-known-issues #11).
 //   - Installation token (minted on demand, 1h) → all steady-state repo ops
-//     (tree, read, write, commit). Scoped to exactly what the teacher
-//     installed — the trust win over OAuth's broad `repo` scope.
+//     (tree, read, write, commit) AND the PRIMARY repo-creation path:
+//     POST /repos/{template}/generate accepts installation tokens (Contents
+//     suffices) when creating in the installation's own account from a public
+//     template — no user-token permission upgrades, ever.
 // Plan: docs/plans/icm-workspace-plan/03-github-api.md
 
 // Server-only module — never import from client components.
@@ -137,16 +140,116 @@ export async function getInstallationOctokit(installationId: number) {
   return getApp().getInstallationOctokit(installationId);
 }
 
-// ─── Repo creation (user token) ──────────────────────────────────────────
+/**
+ * The app registration's configured permissions (GET /app, JWT-authed).
+ * Diagnostics for 99-known-issues #11: logged on the reauthorization path to
+ * settle "registration lacks the permission" vs "token predates the grant".
+ */
+export async function getAppPermissions(): Promise<
+  Record<string, string | undefined>
+> {
+  const { data } = await getApp().octokit.request("GET /app");
+  return data?.permissions ?? {};
+}
+
+// ─── Repo creation ───────────────────────────────────────────────────────
 
 const MAX_NAME_ATTEMPTS = 5;
 
+/** Optional "owner/repo" of a PUBLIC, nearly-empty template repo used purely
+ *  as a creation vehicle: POST /repos/{t_owner}/{t_repo}/generate accepts
+ *  INSTALLATION tokens (Contents:read suffices per GitHub's permissions
+ *  reference) when creating in the installation's own account — unlike
+ *  POST /user/repos, which needs the user token AND retroactive permission
+ *  grants (99 #11). The template's lone README is replaced by provisioning's
+ *  Start-Here commit; no placeholder/content machinery is reintroduced
+ *  (99 #5 stays resolved). Exported for unit tests. */
+export function parseWorkspaceTemplateEnv(
+  raw: string | undefined = process.env.GITHUB_WORKSPACE_TEMPLATE,
+): { owner: string; repo: string } | null {
+  if (!raw) return null;
+  const parts = raw.split("/");
+  if (parts.length !== 2) return null;
+  const [owner, repo] = parts;
+  return owner && repo ? { owner, repo } : null;
+}
+
 /**
- * Create the teacher's private workspace repo with the USER token (creating
- * a repo in a personal account requires user auth). No template: the repo
- * starts nearly empty — `auto_init` lands the initial commit (a default
- * README.md) that commitMany's HEAD requirement needs, and provisioning (07)
- * seeds 00-Profile/ and 01-Start Here/ itself.
+ * PRIMARY creation path (env-gated): template-generate with the installation
+ * token. Returns null — caller falls back to the user-token path with
+ * byte-identical behavior — when unconfigured, unusable, or failed. Throws
+ * only the names-exhausted error (a 422 set the fallback would re-hit
+ * identically) and GitHubRateLimitError (never double-hit a rate-limited API).
+ */
+async function createWorkspaceRepoFromTemplate(
+  session: Session,
+  repoName: string,
+): Promise<SessionRepo | null> {
+  const template = parseWorkspaceTemplateEnv();
+  if (!template || !session.installationId) return null;
+
+  let octokit: Awaited<ReturnType<typeof getInstallationOctokit>>;
+  try {
+    octokit = await getInstallationOctokit(session.installationId);
+  } catch (err) {
+    console.warn(
+      "[createWorkspaceRepo] installation client unavailable, falling back to user-token create:",
+      err,
+    );
+    return null;
+  }
+
+  for (let attempt = 0; attempt < MAX_NAME_ATTEMPTS; attempt++) {
+    const name = attempt === 0 ? repoName : `${repoName}-${attempt + 1}`;
+    try {
+      const { data } = await withGitHubGuard(() =>
+        octokit.rest.repos.createUsingTemplate({
+          template_owner: template.owner,
+          template_repo: template.repo,
+          owner: session.user.login,
+          name,
+          description: WORKSPACE_DESCRIPTION,
+          private: true,
+          include_all_branches: false,
+        }),
+      );
+      const repo: SessionRepo = { owner: data.owner.login, name: data.name };
+      // Same fresh-session re-read as the user-token path (getValidUserToken
+      // may have rotated tokens elsewhere just now).
+      const fresh = await getSession();
+      if (fresh) await setSession({ ...fresh, repo });
+      return repo;
+    } catch (err) {
+      // Name already taken → try the next suffix.
+      if (isRequestError(err, 422)) continue;
+      if (err instanceof GitHubRateLimitError) throw err;
+      // 403 (suspended/select-repos edge), 404 (template renamed/private),
+      // 5xx, network → the user-token fallback behaves exactly as before.
+      console.warn(
+        "[createWorkspaceRepo] template-generate failed, falling back to user-token create:",
+        {
+          status: err instanceof RequestError ? err.status : "network",
+          requestId:
+            err instanceof RequestError
+              ? err.response?.headers["x-github-request-id"]
+              : undefined,
+        },
+      );
+      return null;
+    }
+  }
+  throw new Error(
+    `Could not create workspace: every name ${repoName}…${repoName}-${MAX_NAME_ATTEMPTS} is taken.`,
+  );
+}
+
+/**
+ * Create the teacher's private workspace repo. PRIMARY: template-generate
+ * with the installation token (above) — every existing installation can
+ * create repos with zero permission upgrades. FALLBACK (unchanged): the
+ * USER token (creating via POST /user/repos in a personal account requires
+ * user auth). No template content is personalized: the repo starts nearly
+ * empty — provisioning (07) seeds 00-Profile/ and 01-Start Here/ itself.
  * On a 422 name collision, retries as `<repoName>-2`, `-3`, …
  * Persists the result into the session's `repo` field — it becomes the
  * primary workspace lookup (99 issue 4).
@@ -155,6 +258,15 @@ export async function createWorkspaceRepo(
   session: Session,
   repoName: string = WORKSPACE_REPO_NAME,
 ): Promise<SessionRepo> {
+  // Primary: installation-token template-generate (env-gated).
+  const fromTemplate = await createWorkspaceRepoFromTemplate(
+    session,
+    repoName,
+  );
+  if (fromTemplate) return fromTemplate;
+
+  // Fallback: user-token createForAuthenticatedUser — unchanged, including
+  // the 99 #11 diagnostics and GitHubReauthorizationError mapping.
   const octokit = await getUserOctokit(session);
 
   for (let attempt = 0; attempt < MAX_NAME_ATTEMPTS; attempt++) {
@@ -185,6 +297,15 @@ export async function createWorkspaceRepo(
         isRequestError(err, 403) &&
         err.message.includes("Resource not accessible by integration")
       ) {
+        // Diagnostics for 99 #11 — what GitHub would accept, which app the
+        // token belongs to, and the request id for support. Pair with the
+        // create route's app-permissions log to tell "registration lacks the
+        // permission" from "token predates the grant".
+        console.warn("[createWorkspaceRepo] POST /user/repos 403:", {
+          accepted: err.response?.headers["x-accepted-github-permissions"],
+          clientId: err.response?.headers["x-oauth-client-id"],
+          requestId: err.response?.headers["x-github-request-id"],
+        });
         throw new GitHubReauthorizationError();
       }
       throw err;
