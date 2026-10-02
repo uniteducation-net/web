@@ -174,6 +174,27 @@ export function parseWorkspaceTemplateEnv(
   return owner && repo ? { owner, repo } : null;
 }
 
+/** The /user/installations entries we inspect during auth (02 step 3–4). */
+export type UserInstallation = {
+  id: number;
+  account: { login: string } | null;
+};
+
+/**
+ * Workspace repos live in the teacher's PERSONAL account ("Your Account,
+ * Your data") — an installation on an organization they admin is not a
+ * substitute: repo ops and IAT minting against it target the wrong account
+ * (cross-account template-generate fails, coverage checks never pass). The
+ * /installed route uses this to refuse binding org installations into the
+ * session. Exported for unit tests.
+ */
+export function isPersonalInstallation(
+  installation: UserInstallation,
+  login: string,
+): boolean {
+  return installation.account?.login === login;
+}
+
 /**
  * PRIMARY creation path (env-gated): template-generate with the installation
  * token. Returns null — caller falls back to the user-token path with

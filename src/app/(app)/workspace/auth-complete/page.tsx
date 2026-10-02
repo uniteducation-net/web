@@ -7,6 +7,7 @@
 // is scoped to the workspace segment.
 
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { AuthCompleteClient } from "./auth-complete-client";
 
 export const metadata: Metadata = {
@@ -15,5 +16,11 @@ export const metadata: Metadata = {
 };
 
 export default function AuthCompletePage() {
-  return <AuthCompleteClient />;
+  // useSearchParams (the ?connect=wrong-account state) bails out of
+  // prerendering without a Suspense boundary.
+  return (
+    <Suspense>
+      <AuthCompleteClient />
+    </Suspense>
+  );
 }

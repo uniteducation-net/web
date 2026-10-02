@@ -146,10 +146,13 @@ export async function POST(req: Request) {
     // existing repo may still be unseeded if a previous attempt died after
     // creation (coverage fix, network drop) — that is finished below.
     const existing = await findExistingWorkspace(session);
-    const target =
-      existing ?? (await createWorkspaceRepo(session, WORKSPACE_REPO_NAME));
 
     // 4. Auth flow should always set this; without it no repo ops are possible.
+    // Checked BEFORE creating: with no personal-account installation the
+    // create attempt can only fail, and its 403 misreports as
+    // "reauthorization needed" when the real state is "not installed (on the
+    // teacher's own account)" — the clients turn app_not_installed into the
+    // connect popup, which is the actual fix.
     if (!session.installationId) {
       return NextResponse.json(
         { error: "app_not_installed" },
@@ -157,6 +160,9 @@ export async function POST(req: Request) {
       );
     }
     const installationId = session.installationId;
+
+    const target =
+      existing ?? (await createWorkspaceRepo(session, WORKSPACE_REPO_NAME));
 
     // 5. "Only select repositories" installs may not cover the new repo (03
     // step 8): hand the teacher a one-click fix link and let them retry.
