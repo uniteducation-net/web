@@ -361,6 +361,45 @@ export async function listAccessibleRepos(
 }
 
 /**
+ * True when the error is the IAT mint failing because the installation itself
+ * is gone on GitHub's side: 404 = deleted, 403 = suspended. Detected on the
+ * mint request URL (octokit lazy-mints on the first call with the client), so
+ * it surfaces from ANY repo op with a stale `session.installationId`. A 401
+ * there means OUR app credentials are broken — deliberately not matched, that
+ * must stay a loud 500. Exported for unit tests.
+ */
+export function isInstallationGoneError(err: unknown): boolean {
+  return (
+    err instanceof RequestError &&
+    (err.status === 404 || err.status === 403) &&
+    typeof err.request?.url === "string" &&
+    err.request.url.includes("/app/installations/") &&
+    err.request.url.endsWith("/access_tokens")
+  );
+}
+
+/**
+ * The installation was deleted/suspended on GitHub's side — drop the stale
+ * binding so the connect flow re-prompts. `repo` goes too: it lived behind
+ * that installation, and after a reinstall the prefix scan rebinds it
+ * (idempotent). Best effort: re-reads before writing (never resurrect a
+ * concurrent token rotation), and swallows failures — the /workspace guard
+ * runs in Server Component render, where cookie writes are rejected; the next
+ * Route Handler call persists instead.
+ */
+async function stripInstallationFromSession(): Promise<void> {
+  try {
+    const fresh = await getSession();
+    if (!fresh) return;
+    delete fresh.installationId;
+    delete fresh.repo;
+    await setSession(fresh);
+  } catch {
+    // Best effort — see above.
+  }
+}
+
+/**
  * Detect a returning user without a database — their GitHub account is the
  * user store. Primary: verify the session's `repo` still exists (one cheap
  * GET). Fallback: scan the installation's repositories for one whose name
@@ -369,57 +408,69 @@ export async function listAccessibleRepos(
  * the page guard calls this on every /workspace load, which heals a session
  * whose `repo` binding was lost (e.g. written before the callback learned to
  * merge) — the tree/file APIs read only `session.repo`.
+ * Returns null (never throws) when the installation itself was deleted or
+ * suspended on GitHub's side — the stale binding is stripped so the guard
+ * routes to onboarding and the connect flow re-prompts.
  */
 export async function findExistingWorkspace(
   session: Session,
 ): Promise<SessionRepo | null> {
   if (!session.installationId) return null;
 
-  if (session.repo) {
-    try {
-      const octokit = await getInstallationOctokit(session.installationId);
-      await withGitHubGuard(() =>
-        octokit.rest.repos.get({
-          owner: session.repo!.owner,
-          repo: session.repo!.name,
-        }),
-      );
-      return session.repo;
-    } catch (err) {
-      // 404/403: deleted, renamed, or no longer covered by the installation
-      // → fall through to the scan. Anything else is a real failure.
-      if (!isRequestError(err, 404, 403)) throw err;
-    }
-  }
-
-  // Prefix scan is case-sensitive: match the current name and the legacy
-  // pre-rename one so a repo created by an earlier deploy is still found.
-  const NAME_PREFIXES = [WORKSPACE_REPO_NAME, "united-workspace"];
-  const repos = await listAccessibleRepos(session.installationId);
-  const match = repos.find(
-    (r) =>
-      NAME_PREFIXES.some((prefix) => r.name.startsWith(prefix)) &&
-      r.description === WORKSPACE_DESCRIPTION,
-  );
-  if (!match) return null;
-  const repo: SessionRepo = { owner: match.owner, name: match.name };
-
-  // Persist the rediscovered binding. Re-read first so a concurrent token
-  // rotation is never resurrected; swallow failures — during Server Component
-  // render (the /workspace guard) cookie writes are rejected, and the next
-  // Route Handler call persists instead.
   try {
-    const fresh = await getSession();
-    if (
-      fresh &&
-      (fresh.repo?.owner !== repo.owner || fresh.repo.name !== repo.name)
-    ) {
-      await setSession({ ...fresh, repo });
+    if (session.repo) {
+      try {
+        const octokit = await getInstallationOctokit(session.installationId);
+        await withGitHubGuard(() =>
+          octokit.rest.repos.get({
+            owner: session.repo!.owner,
+            repo: session.repo!.name,
+          }),
+        );
+        return session.repo;
+      } catch (err) {
+        // Installation deleted/suspended → handled by the outer catch.
+        if (isInstallationGoneError(err)) throw err;
+        // 404/403 on the repo: deleted, renamed, or no longer covered by the
+        // installation → fall through to the scan. Anything else is a real
+        // failure.
+        if (!isRequestError(err, 404, 403)) throw err;
+      }
     }
-  } catch {
-    // Best effort — see above.
+
+    // Prefix scan is case-sensitive: match the current name and the legacy
+    // pre-rename one so a repo created by an earlier deploy is still found.
+    const NAME_PREFIXES = [WORKSPACE_REPO_NAME, "united-workspace"];
+    const repos = await listAccessibleRepos(session.installationId);
+    const match = repos.find(
+      (r) =>
+        NAME_PREFIXES.some((prefix) => r.name.startsWith(prefix)) &&
+        r.description === WORKSPACE_DESCRIPTION,
+    );
+    if (!match) return null;
+    const repo: SessionRepo = { owner: match.owner, name: match.name };
+
+    // Persist the rediscovered binding. Re-read first so a concurrent token
+    // rotation is never resurrected; swallow failures — during Server
+    // Component render (the /workspace guard) cookie writes are rejected, and
+    // the next Route Handler call persists instead.
+    try {
+      const fresh = await getSession();
+      if (
+        fresh &&
+        (fresh.repo?.owner !== repo.owner || fresh.repo.name !== repo.name)
+      ) {
+        await setSession({ ...fresh, repo });
+      }
+    } catch {
+      // Best effort — see above.
+    }
+    return repo;
+  } catch (err) {
+    if (!isInstallationGoneError(err)) throw err;
+    await stripInstallationFromSession();
+    return null;
   }
-  return repo;
 }
 
 // ─── Steady-state repo ops (installation token) ──────────────────────────

@@ -22,6 +22,7 @@ import {
   findExistingWorkspace,
   getAppPermissions,
   getTree,
+  isInstallationGoneError,
   writeFile,
 } from "@/lib/github";
 import { teacherProfileSchema } from "@/lib/onboarding";
@@ -333,6 +334,16 @@ export async function POST(req: Request) {
       url: repoUrl(target.owner, target.name),
     });
   } catch (err) {
+    // The session's installation was deleted/suspended on GitHub's side (the
+    // in-memory session passed step 4 before the mint failed) — same answer
+    // as a missing installation: the client opens the connect popup and the
+    // reinstall rebinds a fresh id.
+    if (isInstallationGoneError(err)) {
+      return NextResponse.json(
+        { error: "app_not_installed" },
+        { status: 409 },
+      );
+    }
     if (err instanceof GitHubRateLimitError) {
       return NextResponse.json(
         { error: "github_rate_limited", message: err.message },
