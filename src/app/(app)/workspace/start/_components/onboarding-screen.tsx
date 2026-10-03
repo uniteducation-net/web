@@ -34,6 +34,8 @@ import {
   readOnboardingDraft,
 } from "@/lib/onboarding-draft";
 import { describeCreateError, type CreateErrorCopy } from "@/lib/create-error";
+import { CreateProgress } from "@/components/workspace/create-progress";
+import type { CreateStage } from "@/lib/create-progress-copy";
 import {
   authStartUrl,
   connectGitHub,
@@ -89,11 +91,22 @@ export function OnboardingScreen({ authenticated, user }: OnboardingScreenProps)
   // personalization, so it can take several seconds.
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<CreateErrorCopy | null>(null);
+  // Staged progress for the full-screen overlay (CreateProgress): which
+  // phase of the connect → create → seed → open chain is running.
+  const [createStage, setCreateStage] = useState<CreateStage | null>(null);
   // Popup connect flow (lib/auth-popup.ts): status line shown while the
   // small GitHub window is open, plus the gentle "nothing changed" note.
   const [connectNote, setConnectNote] = useState<string | null>(null);
   // Inline two-step logout confirm — the icon swaps to "Sure? ✓ ✗" in place.
   const [confirmLogout, setConfirmLogout] = useState(false);
+
+  // The create POST is single-shot — once it outlives the usual repo-create
+  // time, honestly advance the overlay to the seeding phase.
+  useEffect(() => {
+    if (createStage !== "creating") return;
+    const timer = setTimeout(() => setCreateStage("seeding"), 6000);
+    return () => clearTimeout(timer);
+  }, [createStage]);
 
   const busy = status === "submitted" || status === "streaming";
   // Centered until the teacher sends their first message, then the input
@@ -167,8 +180,10 @@ export function OnboardingScreen({ authenticated, user }: OnboardingScreenProps)
     // never navigates away.
     setCreating(true);
     setCreateError(null);
+    setCreateStage("creating");
     try {
       for (let attempt = 0; attempt < 2; attempt++) {
+        setCreateStage("creating");
         const res = await fetch("/api/workspace/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -184,6 +199,7 @@ export function OnboardingScreen({ authenticated, user }: OnboardingScreenProps)
           // Full reload is deliberate: the teacher was redirected away from
           // /workspace moments ago, so its payload sits in the client router
           // cache and router.push could serve the stale pre-provision state.
+          setCreateStage("opening");
           // eslint-disable-next-line @next/next/no-location-assign-relative-destination
           window.location.href = "/workspace";
           return;
@@ -193,6 +209,7 @@ export function OnboardingScreen({ authenticated, user }: OnboardingScreenProps)
         // in the small window (github.com can't message us; closing it fires
         // the retry), then the server's coverage check decides.
         if (res.status === 409 && data.fixUrl && attempt === 0) {
+          setCreateStage("connecting");
           setConnectNote(
             "Grant access in the small window, then close it — we'll take it from there.",
           );
@@ -210,6 +227,7 @@ export function OnboardingScreen({ authenticated, user }: OnboardingScreenProps)
               data.error === "github_reauthorization_needed") ||
             (res.status === 409 && data.error === "app_not_installed"))
         ) {
+          setCreateStage("connecting");
           setConnectNote(
             "Finish the one GitHub step in the small window — it closes by itself.",
           );
@@ -237,11 +255,13 @@ export function OnboardingScreen({ authenticated, user }: OnboardingScreenProps)
       });
     } finally {
       setCreating(false);
+      setCreateStage(null);
     }
   };
 
   return (
     <main className="mx-auto flex h-full w-full max-w-2xl flex-col px-4">
+      {creating && createStage && <CreateProgress stage={createStage} />}
       <div className="flex shrink-0 items-center justify-between pt-4">
         <Button variant="ghost" size="sm" asChild>
           <Link href="/en">

@@ -22,6 +22,8 @@ import {
 } from "@/lib/template-workspace";
 import { draftProfile, readOnboardingDraft } from "@/lib/onboarding-draft";
 import { describeCreateError } from "@/lib/create-error";
+import { CreateProgress } from "@/components/workspace/create-progress";
+import type { CreateStage } from "@/lib/create-progress-copy";
 import {
   authStartUrl,
   connectGitHub,
@@ -110,6 +112,17 @@ export function TemplateShell({ authState, className }: TemplateShellProps) {
   const [createError, setCreateError] = useState<TemplateBannerError | null>(
     null,
   );
+  // Staged progress for the full-screen overlay (CreateProgress): which
+  // phase of the connect → create → seed → open chain is running.
+  const [createStage, setCreateStage] = useState<CreateStage | null>(null);
+
+  // The create POST is single-shot — once it outlives the usual repo-create
+  // time, honestly advance the overlay to the seeding phase.
+  useEffect(() => {
+    if (createStage !== "creating") return;
+    const timer = setTimeout(() => setCreateStage("seeding"), 6000);
+    return () => clearTimeout(timer);
+  }, [createStage]);
 
   const { files, touched, step1ProfileHash } = storeState;
   const stepFilesExist = Object.keys(files).some((p) =>
@@ -307,8 +320,10 @@ export function TemplateShell({ authState, className }: TemplateShellProps) {
     if (creating) return;
     setCreating(true);
     setCreateError(null);
+    setCreateStage("creating");
     try {
       for (let attempt = 0; attempt < 2; attempt++) {
+        setCreateStage("creating");
         const res = await fetch("/api/workspace/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -331,6 +346,7 @@ export function TemplateShell({ authState, className }: TemplateShellProps) {
           // Suppress the unload prompt: the draft was just converted.
           clearTemplateEnvelope();
           suppressNextUnloadPrompt();
+          setCreateStage("opening");
           // eslint-disable-next-line @next/next/no-location-assign-relative-destination
           window.location.href = "/workspace";
           return;
@@ -339,6 +355,7 @@ export function TemplateShell({ authState, className }: TemplateShellProps) {
         // Installation coverage fix (07 step 5): grant access in the small
         // window (github.com can't message us; closing it fires the retry).
         if (res.status === 409 && data.fixUrl && attempt === 0) {
+          setCreateStage("connecting");
           await openPopup(data.fixUrl);
           continue;
         }
@@ -352,6 +369,7 @@ export function TemplateShell({ authState, className }: TemplateShellProps) {
               data.error === "github_reauthorization_needed") ||
             (res.status === 409 && data.error === "app_not_installed"))
         ) {
+          setCreateStage("connecting");
           const result = await connectGitHub();
           if (result.outcome === "blocked") {
             // Popup refused → the old full-page chain (draft survives).
@@ -377,11 +395,13 @@ export function TemplateShell({ authState, className }: TemplateShellProps) {
       });
     } finally {
       setCreating(false);
+      setCreateStage(null);
     }
   };
 
   return (
     <TooltipProvider delayDuration={200}>
+      {creating && createStage && <CreateProgress stage={createStage} />}
       <div
         className={cn(
           "relative grid h-dvh grid-cols-[auto_1fr] grid-rows-[minmax(0,1fr)]",
