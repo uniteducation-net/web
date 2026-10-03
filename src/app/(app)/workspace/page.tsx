@@ -18,8 +18,14 @@ export default async function WorkspacePage() {
   try {
     repo = await findExistingWorkspace(session);
   } catch (err) {
-    // Logged server-side (digest stays searchable in Vercel logs).
-    console.error("workspace guard failed:", err);
+    // Classified, credential-safe metadata (never headers/tokens/key
+    // material) — one grep in Vercel logs names the failure class.
+    console.error("workspace guard failed:", {
+      name: (err as Error)?.name,
+      status: (err as { status?: number })?.status,
+      url: (err as { request?: { url?: string } })?.request?.url,
+      message: (err as Error)?.message?.slice(0, 200),
+    });
     return <WorkspaceUnavailable />;
   }
   if (!repo) redirect("/workspace/start");
