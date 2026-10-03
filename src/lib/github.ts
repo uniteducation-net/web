@@ -365,6 +365,10 @@ export async function listAccessibleRepos(
  * user store. Primary: verify the session's `repo` still exists (one cheap
  * GET). Fallback: scan the installation's repositories for one whose name
  * starts with our workspace prefix AND whose description matches our marker.
+ * A repo found by the scan is persisted back into the session (best effort):
+ * the page guard calls this on every /workspace load, which heals a session
+ * whose `repo` binding was lost (e.g. written before the callback learned to
+ * merge) — the tree/file APIs read only `session.repo`.
  */
 export async function findExistingWorkspace(
   session: Session,
@@ -397,7 +401,25 @@ export async function findExistingWorkspace(
       NAME_PREFIXES.some((prefix) => r.name.startsWith(prefix)) &&
       r.description === WORKSPACE_DESCRIPTION,
   );
-  return match ? { owner: match.owner, name: match.name } : null;
+  if (!match) return null;
+  const repo: SessionRepo = { owner: match.owner, name: match.name };
+
+  // Persist the rediscovered binding. Re-read first so a concurrent token
+  // rotation is never resurrected; swallow failures — during Server Component
+  // render (the /workspace guard) cookie writes are rejected, and the next
+  // Route Handler call persists instead.
+  try {
+    const fresh = await getSession();
+    if (
+      fresh &&
+      (fresh.repo?.owner !== repo.owner || fresh.repo.name !== repo.name)
+    ) {
+      await setSession({ ...fresh, repo });
+    }
+  } catch {
+    // Best effort — see above.
+  }
+  return repo;
 }
 
 // ─── Steady-state repo ops (installation token) ──────────────────────────

@@ -11,10 +11,13 @@ import {
   AUTH_NEXT_COOKIE,
   AUTH_NEXT_MAX_AGE,
   OAUTH_STATE_COOKIE,
+  getSession,
+  mergeAuthSession,
   requireEnv,
   sanitizeNext,
   sealAuthNext,
   setSession,
+  unsealAuthNext,
   unsealOAuthState,
 } from "@/lib/session";
 
@@ -141,33 +144,47 @@ export async function GET(request: NextRequest) {
   }
 
   const now = Math.floor(Date.now() / 1000);
-  await setSession({
-    user: {
-      login: githubUser.login,
-      name: githubUser.name,
-      avatarUrl: githubUser.avatar_url,
-    },
-    userToken: token.access_token,
-    userTokenExpiresAt: now + (token.expires_in ?? 28800),
-    refreshToken: token.refresh_token,
-    ...(installationId ? { installationId } : {}),
-  });
+  // Merge, never replace (lib/session.ts#mergeAuthSession): this route runs on
+  // every connect leg, and a wholesale write would drop `repo`/BYOK state a
+  // concurrent request just persisted.
+  await setSession(
+    mergeAuthSession(await getSession(), {
+      user: {
+        login: githubUser.login,
+        name: githubUser.name,
+        avatarUrl: githubUser.avatar_url,
+      },
+      userToken: token.access_token,
+      userTokenExpiresAt: now + (token.expires_in ?? 28800),
+      refreshToken: token.refresh_token,
+      ...(installationId ? { installationId } : {}),
+    }),
+  );
 
-  const destination = installationId
-    ? // Already installed → continue where the flow started (user-initiated)
-      // or to the workspace entry (GitHub-initiated — no `next` exists
-      // without state). Re-sanitized here too (defense in depth) — never
-      // redirect off-site.
-      new URL(sanitizeNext(next), appUrl)
-    : // Not installed → one click on GitHub's install screen (personal
-      // account, "All repositories" pre-selected). GitHub then bounces to
-      // the app's Setup URL = /api/auth/github/installed.
-      new URL(`https://github.com/apps/${appSlug}/installations/new`);
+  let destination: URL;
+  if (installationId) {
+    // Already installed → continue where the flow started. The stashed
+    // auth_next (set by the not-installed branch of an earlier leg) wins over
+    // the state `next`: it carries the popup flow's auto-close page, so the
+    // post-install leg — GitHub-initiated, no state, when the registration
+    // has OAuth-during-install on and no Setup URL — still lands on
+    // /workspace/auth-complete and the small window closes itself instead of
+    // loading the full app inside the popup. Re-sanitized (defense in depth).
+    const rawAuthNext = request.cookies.get(AUTH_NEXT_COOKIE)?.value;
+    const sealedNext = rawAuthNext ? await unsealAuthNext(rawAuthNext) : null;
+    destination = new URL(sanitizeNext(sealedNext ?? next), appUrl);
+  } else {
+    // Not installed → one click on GitHub's install screen (personal
+    // account, "All repositories" pre-selected). GitHub then bounces to
+    // the app's Setup URL = /api/auth/github/installed (when configured) or
+    // back here GitHub-initiated.
+    destination = new URL(`https://github.com/apps/${appSlug}/installations/new`);
+  }
 
   const response = NextResponse.redirect(destination);
   response.cookies.delete(OAUTH_STATE_COOKIE);
   if (installationId) {
-    response.cookies.delete(AUTH_NEXT_COOKIE); // stale cookie from an older attempt
+    response.cookies.delete(AUTH_NEXT_COOKIE); // consumed above (or stale)
   } else {
     // The install screen bounces to the Setup URL without our query params —
     // stash `next` (signed) so /installed can return the user where the flow

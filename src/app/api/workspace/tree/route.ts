@@ -8,7 +8,11 @@
 import { NextResponse } from "next/server";
 import { RequestError } from "octokit";
 import { getSession } from "@/lib/session";
-import { GitHubRateLimitError, getTree } from "@/lib/github";
+import {
+  GitHubRateLimitError,
+  findExistingWorkspace,
+  getTree,
+} from "@/lib/github";
 
 const CACHE_TTL_MS = 30_000;
 
@@ -20,11 +24,19 @@ export async function GET() {
   if (!session) {
     return NextResponse.json({ error: "not_authenticated" }, { status: 401 });
   }
-  if (!session.installationId || !session.repo) {
+  if (!session.installationId) {
     // The /workspace guard (04) normally prevents this state entirely.
     return NextResponse.json({ error: "no_workspace" }, { status: 409 });
   }
-  const { installationId, repo } = session;
+  const { installationId } = session;
+  // Self-heal a lost repo binding (e.g. the session was written before the
+  // auth callback learned to merge — the shell renders from the page guard's
+  // scan while this API reads session.repo): findExistingWorkspace finds and
+  // re-persists it.
+  const repo = session.repo ?? (await findExistingWorkspace(session));
+  if (!repo) {
+    return NextResponse.json({ error: "no_workspace" }, { status: 409 });
+  }
 
   const cacheKey = `${installationId}:${repo.owner}/${repo.name}`;
   const cached = treeCache.get(cacheKey);

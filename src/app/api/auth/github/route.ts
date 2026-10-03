@@ -35,11 +35,14 @@ export async function GET(request: NextRequest) {
   const authorizeUrl = new URL("https://github.com/login/oauth/authorize");
   authorizeUrl.searchParams.set("client_id", clientId);
   // new URL (not string concat): a trailing slash on APP_URL must not turn
-  // into "//api/..." — GitHub matches registered callback URLs exactly.
-  authorizeUrl.searchParams.set(
-    "redirect_uri",
-    new URL("/api/auth/github/callback", appUrl).toString(),
-  );
+  // into "//api/..." — GitHub matches registered callback URLs exactly
+  // (wildcard matching defaults OFF for apps created after 2026-08-03; docs:
+  // about-the-user-authorization-callback-url). An unregistered redirect_uri
+  // makes GitHub Apps render a 404 AT the authorize URL — no redirect, no
+  // error parameter — so the exact value is logged for terminal diagnosis.
+  const redirectUri = new URL("/api/auth/github/callback", appUrl).toString();
+  console.log("[auth] redirect_uri:", redirectUri);
+  authorizeUrl.searchParams.set("redirect_uri", redirectUri);
   authorizeUrl.searchParams.set("state", state);
   authorizeUrl.searchParams.set("code_challenge", challenge);
   authorizeUrl.searchParams.set("code_challenge_method", "S256");

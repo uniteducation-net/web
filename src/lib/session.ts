@@ -105,6 +105,46 @@ export async function clearSession(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Session merge on (re)authorization. The OAuth callback runs on EVERY connect
+// leg — the popup flow can hit it twice (user-initiated, then GitHub-initiated
+// post-install) — and must never wholesale-replace the session: a leg
+// completing after the create route persisted `repo` would clobber it, leaving
+// the workspace shell rendering while every repo API 409s (no_workspace).
+// ---------------------------------------------------------------------------
+
+/** The fields a (re)authorization is authoritative for. */
+export type AuthSessionFields = {
+  user: SessionUser;
+  userToken: string;
+  userTokenExpiresAt: number;
+  refreshToken: string;
+  installationId?: number;
+};
+
+/**
+ * Merge fresh auth fields into the existing session. Same GitHub login →
+ * preserve everything else (`repo`, BYOK keys, model choice). Different login
+ * (account switch) or no existing session → fresh object: never carry one
+ * account's workspace or keys into another account's session.
+ */
+export function mergeAuthSession(
+  existing: Session | null,
+  auth: AuthSessionFields,
+): Session {
+  if (!existing || existing.user.login !== auth.user.login) {
+    return { ...auth };
+  }
+  const merged: Session = { ...existing, ...auth };
+  if (!auth.installationId) {
+    // No personal installation found this leg — a real uninstall must not
+    // leave a stale id behind. `repo` is kept: the workspace still exists
+    // and rebinds on reinstall.
+    delete merged.installationId;
+  }
+  return merged;
+}
+
+// ---------------------------------------------------------------------------
 // OAuth bounce state. The short-lived `oauth_state` cookie carries
 // { state, verifier, next } through the GitHub authorize redirect. It is
 // SIGNED (HS256, same SESSION_SECRET) so a planted cookie — cookie tossing

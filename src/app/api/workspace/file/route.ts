@@ -6,7 +6,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { RequestError } from "octokit";
 import { getSession } from "@/lib/session";
-import { GitHubRateLimitError, readFile, writeFile } from "@/lib/github";
+import {
+  GitHubRateLimitError,
+  findExistingWorkspace,
+  readFile,
+  writeFile,
+} from "@/lib/github";
 import { isValidPath } from "@/lib/workspace-paths";
 import { isBotRequest } from "@/lib/botid";
 
@@ -15,11 +20,17 @@ export async function GET(request: NextRequest) {
   if (!session) {
     return NextResponse.json({ error: "not_authenticated" }, { status: 401 });
   }
-  if (!session.installationId || !session.repo) {
+  if (!session.installationId) {
     // The /workspace guard (04) normally prevents this state entirely.
     return NextResponse.json({ error: "no_workspace" }, { status: 409 });
   }
-  const { installationId, repo } = session;
+  const { installationId } = session;
+  // Same self-heal as the tree route: re-find and re-persist a lost repo
+  // binding instead of stranding the shell on a bare 409.
+  const repo = session.repo ?? (await findExistingWorkspace(session));
+  if (!repo) {
+    return NextResponse.json({ error: "no_workspace" }, { status: 409 });
+  }
 
   const path = request.nextUrl.searchParams.get("path") ?? "";
   if (!isValidPath(path)) {
@@ -59,7 +70,7 @@ export async function PUT(request: NextRequest) {
   if (!session) {
     return NextResponse.json({ error: "not_authenticated" }, { status: 401 });
   }
-  if (!session.installationId || !session.repo) {
+  if (!session.installationId) {
     return NextResponse.json({ error: "no_workspace" }, { status: 409 });
   }
 
@@ -69,7 +80,11 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "access_denied" }, { status: 403 });
   }
 
-  const { installationId, repo } = session;
+  const { installationId } = session;
+  const repo = session.repo ?? (await findExistingWorkspace(session));
+  if (!repo) {
+    return NextResponse.json({ error: "no_workspace" }, { status: 409 });
+  }
 
   let body: {
     path?: string;
