@@ -129,7 +129,7 @@
         "id": "impressum",
         "title": "Impressum",
         "description": "Wer wir sind und wie Sie uns erreichen.",
-        "lastUpdated": "10.09.2026"
+        "lastUpdated": "21.10.2026"
       },
       {
         "id": "privacy",
@@ -182,7 +182,8 @@
     "backToTop": "Nach oben",
     "minRead": "Min. Lesezeit",
     "copyLink": "Link kopieren",
-    "linkCopied": "Kopiert!"
+    "linkCopied": "Kopiert!",
+    "publishedOn": "am"
   },
   "homeHero": {
     "heading": "Kostenlose Fortbildungsmaterialien für Lehrkräfte",
@@ -436,7 +437,7 @@
           },
           {
             "question": "Kann ich an UnitEd spenden?",
-            "answer": "Ja. Spenden helfen uns, kostenlose Lernressourcen zu entwickeln und zu pflegen und den Zugang für Lehrkräfte weltweit zu verbessern. Spenderinnen und Spender können eine Spendenbescheinigung für ihre jährliche Steuererklärung erhalten (bitte prüfen Sie die Verfügbarkeit für Ihr Land). [Hier können Sie spenden](/get-involved/donate)."
+            "answer": "Ja. Spenden helfen uns, kostenlose Lernressourcen zu entwickeln und zu pflegen und den Zugang für Lehrkräfte weltweit zu verbessern. [Hier können Sie spenden](/get-involved/donate).\nUnitEd ist beim Finanzamt Kiel als gemeinnützig anerkannt. Wir können daher Zuwendungsbestätigungen (Spendenbescheinigungen) für Ihre Steuererklärung in Deutschland ausstellen. Mitglieder setzen dazu das Häkchen im [Mitgliedsformular](/get-involved/membership/join). Alle anderen Spenderinnen und Spender, auch bei Spenden über GoFundMe, wenden sich an [hello@uniteducation.net](mailto:hello@uniteducation.net). Außerhalb Deutschlands gelten andere Regeln, bitte prüfen Sie, was in Ihrem Land gilt. [Was das für Sie bedeutet](/updates/recognized-as-non-profit)."
           },
           {
             "question": "Wie werden Spenden verwendet?",
@@ -532,7 +533,9 @@
       "bankName": "Bank",
       "comingSoon": "Demnächst verfügbar",
       "copyLabel": "Kopieren",
-      "copiedLabel": "Kopiert"
+      "copiedLabel": "Kopiert",
+      "nonProfitStatus": "Gemeinnützig anerkannt beim Finanzamt Kiel",
+      "nonProfitStatusTranslation": ""
     }
   },
   "shareKnowledgePage": {

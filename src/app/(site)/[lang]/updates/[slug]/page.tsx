@@ -91,6 +91,7 @@ export default async function UpdatePage({
         backToTop: dict.updates.backToTop,
         copyLink: dict.updates.copyLink,
         linkCopied: dict.updates.linkCopied,
+        publishedOn: dict.updates.publishedOn,
       }}
     >
       <Content />

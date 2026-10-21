@@ -129,7 +129,7 @@
         "id": "impressum",
         "title": "Impressum (Legal Notice)",
         "description": "Who we are and how to reach us.",
-        "lastUpdated": "10.09.2026"
+        "lastUpdated": "21.10.2026"
       },
       {
         "id": "privacy",
@@ -182,7 +182,8 @@
     "backToTop": "Back to top",
     "minRead": "min. read",
     "copyLink": "Copy link",
-    "linkCopied": "Copied!"
+    "linkCopied": "Copied!",
+    "publishedOn": "on"
   },
   "homeHero": {
     "heading": "Free Training Resources for Educators",
@@ -436,7 +437,7 @@
           },
           {
             "question": "Can I donate to UnitEd?",
-            "answer": "Yes. Donations help us develop and maintain free learning resources and improve access for educators worldwide. Donors can get a donation receipt to deduct from their annual tax declaration (check if available for your country). Donations can be made [here](/get-involved/donate)."
+            "answer": "Yes. Donations help us develop and maintain free learning resources and improve access for educators worldwide. Donations can be made [here](/get-involved/donate).\nUnitEd is \"Gemeinnützig anerkannt beim Finanzamt Kiel\" (recognized as a non-profit by the Kiel tax office), so we can issue official donation receipts for German tax returns. Members can tick the box in the [membership form](/get-involved/membership/join). All other donors, including those who gave via GoFundMe, can request one at [hello@uniteducation.net](mailto:hello@uniteducation.net). Tax rules outside Germany differ, so please check what applies in your country. [Read what this means for you](/updates/recognized-as-non-profit)."
           },
           {
             "question": "How are donations used?",
@@ -532,7 +533,9 @@
       "bankName": "Bank Name",
       "comingSoon": "Coming soon",
       "copyLabel": "Copy",
-      "copiedLabel": "Copied"
+      "copiedLabel": "Copied",
+      "nonProfitStatus": "Gemeinnützig anerkannt beim Finanzamt Kiel",
+      "nonProfitStatusTranslation": "Recognized as a non-profit by the Kiel tax office"
     }
   },
   "shareKnowledgePage": {

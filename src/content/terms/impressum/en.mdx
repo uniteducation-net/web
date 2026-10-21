@@ -1,7 +1,7 @@
 ---
 title: "Impressum (Legal Notice)"
 description: "Information pursuant to § 5 DDG – who we are and how to reach us."
-lastUpdated: "2026-09-27"
+lastUpdated: "2026-10-21"
 ---
 
 import { BankAccountDetails } from "@/components/bank-account-details";
@@ -35,6 +35,14 @@ Register number: VR [number to be added]
 
 {/* TODO: insert register number once available */}
 
+## Non-profit status
+
+Gemeinnützig anerkannt beim Finanzamt Kiel\
+(Recognized as a non-profit by the Kiel tax office)
+
+What this means for donors and members:
+[Read the article](/en/updates/recognized-as-non-profit)
+
 ## Responsible for content pursuant to § 18(2) MStV (German Interstate Media Treaty)
 
 The board authorized to represent the association (Janett, Fini and Kiarash),
@@ -51,11 +59,16 @@ address as above.
     { label: "Bank Name", value: "Coming soon" },
     {
       label: "Creditor identifier",
-      value: "DE33ZZZ00002939057",
+      value: "Coming soon",
     },
   ]}
   copyLabel="Copy"
   copiedLabel="Copied"
+  status={{
+    text: "Gemeinnützig anerkannt beim Finanzamt Kiel",
+    translation: "Recognized as a non-profit by the Kiel tax office",
+    href: "/en/updates/recognized-as-non-profit",
+  }}
 />
 
 ## Liability for content

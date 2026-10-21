@@ -1,4 +1,5 @@
-import { Landmark } from "lucide-react";
+import { BadgeCheck, Landmark } from "lucide-react";
+import Link from "next/link";
 
 import { CopyValueButton } from "@/components/copy-value-button";
 import { cn } from "@/lib/utils";
@@ -8,12 +9,23 @@ interface BankAccountField {
   value: string;
 }
 
+interface BankAccountStatus {
+  /** Shown verbatim, e.g. the official non-profit status line. */
+  text: string;
+  /** Optional second line (e.g. an English translation); hidden when empty. */
+  translation?: string;
+  /** Optional link on `text`, e.g. an article explaining the status. */
+  href?: string;
+}
+
 interface BankAccountDetailsProps {
   heading: string;
   /** Rows shown in order, each with its own copy button. */
   fields: BankAccountField[];
   copyLabel: string;
   copiedLabel: string;
+  /** Badge row at the bottom of the card. */
+  status?: BankAccountStatus;
   className?: string;
 }
 
@@ -23,6 +35,7 @@ const BankAccountDetails = ({
   fields,
   copyLabel,
   copiedLabel,
+  status,
   className,
 }: BankAccountDetailsProps) => {
   return (
@@ -56,6 +69,26 @@ const BankAccountDetails = ({
           </div>
         ))}
       </dl>
+      {status && (
+        <div className="mt-4 flex items-start gap-3 border-t border-border pt-4 text-sm text-muted-foreground">
+          <BadgeCheck className="mt-0.5 size-4 shrink-0" aria-hidden />
+          <p>
+            {status.href ? (
+              <Link
+                href={status.href}
+                className="underline underline-offset-4 transition-colors hover:text-foreground"
+              >
+                {status.text}
+              </Link>
+            ) : (
+              status.text
+            )}
+            {status.translation && (
+              <span className="block">{status.translation}</span>
+            )}
+          </p>
+        </div>
+      )}
     </div>
   );
 };

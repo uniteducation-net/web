@@ -51,6 +51,11 @@ export default async function DonatePage({
           ]}
           copyLabel={bank.copyLabel}
           copiedLabel={bank.copiedLabel}
+          status={{
+            text: bank.nonProfitStatus,
+            translation: bank.nonProfitStatusTranslation,
+            href: `/${lang}/updates/recognized-as-non-profit`,
+          }}
         />
       </section>
     </>

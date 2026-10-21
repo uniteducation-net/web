@@ -35,6 +35,7 @@ interface UpdateArticleLabels {
   backToTop: string;
   copyLink: string;
   linkCopied: string;
+  publishedOn: string;
 }
 
 interface UpdateArticleProps {
@@ -133,7 +134,7 @@ const UpdateArticle = ({
                   {author.name}
                 </Link>
                 <span className="ml-1 text-muted-foreground">
-                  on{" "}
+                  {labels.publishedOn}{" "}
                   <time dateTime={date}>{formatDate(date, lang)}</time>
                 </span>
               </span>
